@@ -1,0 +1,1 @@
+export async function login(r:any){await new Promise(x=>setTimeout(x,500));if(r.username==='admin'&&r.password==='admin123')return{success:true,user:{id:1,username:'admin',fullName:'Administrator',role:'ADMIN'},accessToken:'mock-token'};throw new Error('Invalid username or password');}

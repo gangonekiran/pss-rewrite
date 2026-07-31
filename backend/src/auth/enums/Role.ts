@@ -1,0 +1,11 @@
+export enum Role {
+
+    ADMIN="ADMIN",
+
+    SUPERVISOR="SUPERVISOR",
+
+    CASE_WORKER="CASE_WORKER",
+
+    READ_ONLY="READ_ONLY"
+
+}

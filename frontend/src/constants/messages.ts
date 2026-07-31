@@ -1,0 +1,1 @@
+export const MESSAGES={SAVE_SUCCESS:'Record saved successfully.',UPDATE_SUCCESS:'Record updated successfully.',DELETE_SUCCESS:'Record deleted successfully.',SOMETHING_WENT_WRONG:'Something went wrong.'} as const;

@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@import "./variables.css";
+@import "./utilities.css";
+@import "./typography.css";
+
+html, body, #root {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  @apply bg-gray-50 text-gray-900 antialiased;
+}

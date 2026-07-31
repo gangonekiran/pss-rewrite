@@ -1,0 +1,1 @@
+export const ROLES={ADMIN:'ADMIN',MANAGER:'MANAGER',USER:'USER',READ_ONLY:'READ_ONLY'} as const;
