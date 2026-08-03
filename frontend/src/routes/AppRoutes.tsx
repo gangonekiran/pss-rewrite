@@ -1,7 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { MainLayout, AuthLayout } from '../layouts';
 import DashboardPage from '../features/dashboard/pages/DashboardPage';
-import ClientsPage from '../features/clients/pages/ClientsPage';
+import ClientPage from '../features/client/pages/ClientPage';
 import LoginPage from './LoginPage';
 import NotFoundPage from './NotFoundPage';
 
@@ -14,7 +14,7 @@ export default function AppRoutes() {
 
       <Route element={<MainLayout />}>
         <Route path="/" element={<DashboardPage />} />
-        <Route path="/clients" element={<ClientsPage />} />
+        <Route path="/clients" element={<ClientPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />

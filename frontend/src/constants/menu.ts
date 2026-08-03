@@ -1,8 +1,21 @@
+import {
+  LayoutDashboard,
+  Users,
+  ClipboardList,
+  FileText,
+  ClipboardEdit,
+  Shield,
+  BarChart3,
+  UserCog,
+  Settings,
+  type LucideIcon,
+} from "lucide-react";
+
 export interface NavItem {
   id: string;
   label: string;
   path: string;
-  icon?: string;
+  icon: LucideIcon;
   children?: NavItem[];
   visible?: boolean;
   permission?: string;
@@ -13,36 +26,60 @@ export const navigation: NavItem[] = [
     id: "dashboard",
     label: "Dashboard",
     path: "/",
-    icon: "LayoutDashboard",
+    icon: LayoutDashboard,
   },
   {
     id: "clients",
     label: "Clients",
     path: "/clients",
-    icon: "Users",
+    icon: Users,
+  },
+  {
+    id: "client-status",
+    label: "Client Status",
+    path: "/client-status",
+    icon: ClipboardList,
+  },
+  {
+    id: "nopr",
+    label: "NOPR Forms",
+    path: "/nopr",
+    icon: FileText,
   },
   {
     id: "referral",
-    label: "Referral",
+    label: "Referral Forms",
     path: "/referral",
-    icon: "UserPlus",
+    icon: ClipboardEdit,
+  },
+  {
+    id: "cos",
+    label: "COS Forms",
+    path: "/cos",
+    icon: ClipboardEdit,
   },
   {
     id: "insurance",
     label: "Insurance",
     path: "/insurance",
-    icon: "Shield",
+    icon: Shield,
   },
   {
     id: "reports",
     label: "Reports",
     path: "/reports",
-    icon: "FileBarChart",
+    icon: BarChart3,
+  },
+  {
+    id: "users",
+    label: "Users",
+    path: "/users",
+    icon: UserCog,
   },
   {
     id: "settings",
     label: "Settings",
     path: "/settings",
-    icon: "Settings",
+    icon: Settings,
   },
 ];

@@ -1,6 +1,9 @@
+
+import logo from "../assets/logos/svg.png";
+
 export const APP = {
   // Company
-  COMPANY_NAME: "Pushpa Software Solutions",
+  COMPANY_NAME: "Test",
   PROJECT_NAME: "PSS Rewrite",
 
   // Version
@@ -16,19 +19,19 @@ export const APP = {
   DEFAULT_THEME: "light",
 
   // Assets
-  COMPANY_LOGO: "/logos/logo.svg",
+  COMPANY_LOGO: logo,
   LOGIN_BACKGROUND: "/images/login-bg.jpg",
 
   // Header
-  HEADER_TITLE: "PSS Rewrite",
+  HEADER_TITLE: "Header Title",
   HEADER_SUBTITLE: "Enterprise Management System",
   WELCOME_MESSAGE: "Welcome",
 
   // Footer
-  COPYRIGHT: `© ${new Date().getFullYear()} Pushpa Software Solutions. All Rights Reserved.`,
-  FOOTER_TEXT: "Powered by Pushpa Software Solutions",
+  COPYRIGHT: `© ${new Date().getFullYear()} Test. All Rights Reserved.`,
+  FOOTER_TEXT: "Powered by Test",
 
   // Contact
-  WEBSITE: "https://www.pushpasoftwaresolutions.in",
-  SUPPORT_EMAIL: "support@pushpasoftwaresolutions.in",
+  WEBSITE: "https://www.test.in",
+  SUPPORT_EMAIL: "support@test.in",
 } as const;
