@@ -4,7 +4,7 @@ import logo from "../assets/logos/svg.png";
 export const APP = {
   // Company
   COMPANY_NAME: "Test",
-  PROJECT_NAME: "PSS Rewrite",
+  PROJECT_NAME: "Test Rewrite",
 
   // Version
   VERSION: "1.0.0",

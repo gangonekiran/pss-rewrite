@@ -1,3 +1,24 @@
+import SearchableSelect, {
+  type SelectOption,
+} from "../../../../components/select/SearchableSelect";
+
+const lastNames: SelectOption[] = [
+  { value: "Austin", label: "Austin" },
+  { value: "Johnson", label: "Johnson" },
+  { value: "Smith", label: "Smith" },
+];
+
+const firstNames: SelectOption[] = [
+  { value: "Jane", label: "Jane" },
+  { value: "John", label: "John" },
+  { value: "Michael", label: "Michael" },
+];
+
+const ssns: SelectOption[] = [
+  { value: "123-45-6789", label: "123-45-6789" },
+  { value: "987-65-4321", label: "987-65-4321" },
+];
+
 export default function ClientLookup() {
   return (
     <div className="bg-white">
@@ -15,9 +36,10 @@ export default function ClientLookup() {
                 Last
               </label>
 
-              <select className="h-9 rounded-md border border-gray-300 px-2 text-sm focus:border-blue-500 focus:outline-none">
-                <option>Select Last Name</option>
-              </select>
+              <SearchableSelect
+                options={lastNames}
+                placeholder="Select Last Name"
+              />
 
               <button className="h-9 w-9 rounded-md border border-gray-300 text-base hover:bg-gray-100">
                 →
@@ -30,9 +52,10 @@ export default function ClientLookup() {
                 First
               </label>
 
-              <select className="h-9 rounded-md border border-gray-300 px-2 text-sm focus:border-blue-500 focus:outline-none">
-                <option>Select First Name</option>
-              </select>
+              <SearchableSelect
+                options={firstNames}
+                placeholder="Select First Name"
+              />
 
               <button className="h-9 w-9 rounded-md border border-gray-300 text-base hover:bg-gray-100">
                 →
@@ -61,9 +84,10 @@ export default function ClientLookup() {
                 SSN
               </label>
 
-              <select className="h-9 rounded-md border border-gray-300 px-2 text-sm focus:border-blue-500 focus:outline-none">
-                <option>Select SSN</option>
-              </select>
+              <SearchableSelect
+                options={ssns}
+                placeholder="Select SSN"
+              />
 
               <button className="h-9 w-9 rounded-md border border-gray-300 text-base hover:bg-gray-100">
                 →
@@ -90,7 +114,6 @@ export default function ClientLookup() {
           </div>
 
           <div className="grid grid-cols-[85px_240px_90px_70px] items-center gap-3">
-            {/* Last Name */}
             <label className="text-xs font-medium text-gray-700">
               Last Name
             </label>
@@ -110,7 +133,6 @@ export default function ClientLookup() {
               <option>Male</option>
             </select>
 
-            {/* First Name */}
             <label className="text-xs font-medium text-gray-700">
               First Name
             </label>
@@ -124,7 +146,6 @@ export default function ClientLookup() {
             <div />
             <div />
 
-            {/* SSN */}
             <label className="text-xs font-medium text-gray-700">
               SS#
             </label>
@@ -138,7 +159,6 @@ export default function ClientLookup() {
             <div />
             <div />
 
-            {/* Region */}
             <label className="text-xs font-medium text-gray-700">
               Region
             </label>
@@ -150,7 +170,6 @@ export default function ClientLookup() {
             <div />
             <div />
 
-            {/* Birth Date */}
             <label className="text-xs font-medium text-gray-700">
               Birth Date
             </label>
