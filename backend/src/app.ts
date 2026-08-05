@@ -3,6 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes";
 import dashboardRoutes from "./routes/dashboard.routes";
+import clientRoutes from './modules/client/client.routes';
 
 import { errorHandler } from "./middleware/error.middleware";
 
@@ -29,5 +30,7 @@ app.get("/", (_, res) => {
         status: "Running"
     });
 });
+
+app.use('/api/clients',clientRoutes);
 
 export default app;

@@ -1,0 +1,9 @@
+import * as repo from "./client.repository";
+export const getAllClients=repo.getAllClients;
+export const getClient=repo.getClientById;
+export const createClient=repo.createClient;
+export const updateClient=repo.updateClient;
+export const deleteClient=repo.deleteClient;
+export const searchLastName=repo.searchLastName;
+export const searchFirstName=repo.searchFirstName;
+export const searchSSN=repo.searchSSN;

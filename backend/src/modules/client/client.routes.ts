@@ -1,0 +1,12 @@
+import {Router} from "express";
+import * as c from "./client.controller";
+const router=Router();
+router.get("/",c.getAllClients);
+router.get("/search/lastname",c.searchLastName);
+router.get("/search/firstname",c.searchFirstName);
+router.get("/search/ssn",c.searchSSN);
+router.get("/:id",c.getClient);
+router.post("/",c.createClient);
+router.put("/:id",c.updateClient);
+router.delete("/:id",c.deleteClient);
+export default router;
