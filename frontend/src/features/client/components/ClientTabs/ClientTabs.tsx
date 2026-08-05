@@ -38,7 +38,7 @@ export default function ClientTabs() {
       </div>
 
       {/* Tab Content */}
-      <div className="p-4">
+      <div>
         {activeTab === 'status' && <ClientStatus />}
 
         {activeTab === 'forms' && (
