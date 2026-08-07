@@ -1,13 +1,16 @@
 export interface Client {
-  id?: number;
-  clientNumber: string;
-  firstName: string;
-  middleName?: string;
+  childId?: number;
+  region?: string;
   lastName: string;
-  gender: string;
-  birthDate: string;
-  ssn: string;
-  region: string;
-  nonEI: boolean;
-  status: string;
+  firstName: string;
+  ss?: string;
+  ssTemp?: boolean;
+  dob?: string;
+  gender?: string;
+  notes?: string;
+  insertDate?: Date;
+  insertUser?: string;
+  lastUpdateDate?: Date;
+  lastUpdateUser?: string;
+  nonEarlyIntervention?: boolean;
 }

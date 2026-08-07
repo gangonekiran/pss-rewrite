@@ -1,7 +1,7 @@
 import Select, { type SingleValue } from "react-select";
 
 export interface SelectOption {
-  value: string;
+  value: string | number;
   label: string;
 }
 

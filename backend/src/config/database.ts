@@ -28,7 +28,7 @@ export async function connectDB() {
 
   pool = await sql.connect(config);
 
-  console.log("✅ SQL Server Connected");
+  console.log("SQL Server Connected");
 
   return pool;
 }
