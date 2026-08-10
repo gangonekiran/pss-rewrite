@@ -45,7 +45,7 @@ export default function ClientPage() {
         setIsNewClient={setIsNewClient}
         clearClient={clearClient}
       />
-      <ClientTabs  client={client} />
+      <ClientTabs client={client} />
     </PageContainer>
   );
 }

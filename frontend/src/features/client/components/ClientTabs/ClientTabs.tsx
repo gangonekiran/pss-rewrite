@@ -2,10 +2,17 @@ import { useState } from 'react';
 import { ClipboardList, FileText } from 'lucide-react';
 
 import ClientStatus from '../ClientStatus/ClientStatus';
+import InputForms from '../InputForm/InputForms';
+
+import type { Client } from "../../../../types/client";
+
+interface ClientTabsProps {
+  client: Client;
+}
 
 type Tab = 'status' | 'forms';
 
-export default function ClientTabs() {
+export default function ClientTabs({ client }: ClientTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>('status');
 
   return (
@@ -43,7 +50,7 @@ export default function ClientTabs() {
 
         {activeTab === 'forms' && (
           <div className="rounded-md border border-dashed border-gray-300 bg-gray-50 py-10 text-center text-sm text-gray-500">
-            Input Forms Coming Soon...
+            <InputForms childId={client.childId} />
           </div>
         )}
       </div>
