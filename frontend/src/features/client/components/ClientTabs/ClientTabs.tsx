@@ -46,7 +46,7 @@ export default function ClientTabs({ client }: ClientTabsProps) {
 
       {/* Tab Content */}
       <div>
-        {activeTab === 'status' && <ClientStatus />}
+        {activeTab === 'status' && <ClientStatus client={client} />}
 
         {activeTab === 'forms' && (
           <div className="rounded-md border border-dashed border-gray-300 bg-gray-50 py-10 text-center text-sm text-gray-500">

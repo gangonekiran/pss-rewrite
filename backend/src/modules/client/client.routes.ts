@@ -9,4 +9,8 @@ router.get("/:id",c.getClient);
 router.post("/",c.createClient);
 router.put("/:id",c.updateClient);
 router.delete("/:id",c.deleteClient);
+
+// Client Status
+router.get("/:id/status", c.getClientStatus);
+
 export default router;

@@ -1,7 +1,7 @@
-import { api } from "./api";
-import type { Client } from "../types/client";
+import { api } from './api';
+import type { Client } from '../types/client';
 
-const BASE_URL = "/clients"; 
+const BASE_URL = '/clients';
 
 class ClientService {
   /**
@@ -15,9 +15,9 @@ class ClientService {
       firstName: data.FirstName,
       ss: data.SS,
       ssTemp: data.SSTemp,
-      dob: data.DOB ? data.DOB.substring(0, 10) : "",
-      gender: data.Gender?.trim() ?? "",
-      notes: data.Notes ?? "",
+      dob: data.DOB ? data.DOB.substring(0, 10) : '',
+      gender: data.Gender?.trim() ?? '',
+      notes: data.Notes ?? '',
       nonEarlyIntervention: data.NonEarlyIntervention,
     };
   }
@@ -98,7 +98,7 @@ class ClientService {
     const response = await api.post(
       BASE_URL,
       //this.mapRequest(client)
-      client
+      client,
     );
 
     return this.mapClient(response.data);
@@ -107,14 +107,8 @@ class ClientService {
   /**
    * Update Client
    */
-  async update(
-    childId: number,
-    client: Client
-  ): Promise<Client> {
-    const response = await api.put(
-      `${BASE_URL}/${childId}`,
-      this.mapRequest(client)
-    );
+  async update(childId: number, client: Client): Promise<Client> {
+    const response = await api.put(`${BASE_URL}/${childId}`, this.mapRequest(client));
 
     return this.mapClient(response.data);
   }
@@ -124,6 +118,19 @@ class ClientService {
    */
   async delete(childId: number): Promise<void> {
     await api.delete(`${BASE_URL}/${childId}`);
+  }
+
+  /**
+   * Get Client Status
+   */
+  async getStatus(childId: number, statusDate: string) {
+    const response = await api.get(`${BASE_URL}/${childId}/status`, {
+      params: {
+        date: statusDate,
+      },
+    });
+
+    return response.data;
   }
 }
 

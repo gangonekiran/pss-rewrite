@@ -7,3 +7,4 @@ export const deleteClient=repo.deleteClient;
 export const searchLastName=repo.searchLastName;
 export const searchFirstName=repo.searchFirstName;
 export const searchSSN=repo.searchSSN;
+export const getClientStatus = repo.getClientStatus;
