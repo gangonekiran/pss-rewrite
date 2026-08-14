@@ -12,7 +12,7 @@ interface ClientStatusProps {
 }
 
 interface ClientStatusData {
-   notes: string;
+  notes: string;
   status: string | null;
   referralDate: string | null;
   noOnePlanDate: string | null;
@@ -22,7 +22,8 @@ interface ClientStatusData {
 }
 
 export default function ClientStatus({ client }: ClientStatusProps) {
-  const services: ServiceHistoryItem[] = [];
+  const [services, setServices] = useState<ServiceHistoryItem[]>([]);
+  const [loadingServices, setLoadingServices] = useState(false);
 
   const getToday = () => {
     const today = new Date();
@@ -79,6 +80,30 @@ export default function ClientStatus({ client }: ClientStatusProps) {
       setError('');
     }
   }, [client.childId]);
+
+  useEffect(() => {
+    if (!client?.childId) {
+      setServices([]);
+      return;
+    }
+
+    loadServiceHistory(client.childId);
+  }, [client?.childId]);
+
+  async function loadServiceHistory(childId: number) {
+    try {
+      setLoadingServices(true);
+
+      const data = await clientService.getServiceHistory(childId);
+
+      setServices(data);
+    } catch (error) {
+      console.error('Unable to load service history:', error);
+      setServices([]);
+    } finally {
+      setLoadingServices(false);
+    }
+  }
 
   /**
    * Go button
@@ -265,7 +290,7 @@ export default function ClientStatus({ client }: ClientStatusProps) {
                 NOTES
             =================================================== */}
             <div className="col-span-6 border-gray-200">
-              <Notes value={statusData?.notes ?? ""} readOnly={false} />
+              <Notes value={statusData?.notes ?? ''} readOnly={false} />
             </div>
           </div>
         </div>

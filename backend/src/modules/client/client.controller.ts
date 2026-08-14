@@ -43,3 +43,13 @@ export const getClientStatus = async (req: Request, res: Response) => {
 
   return res.json(result);
 };
+
+export const getServiceHistory = async (req: Request, res: Response) => {
+  const childId = Number(req.params.id);
+
+  const statusDate = req.query.date ? String(req.query.date) : undefined;
+
+  const result = await s.getServiceHistory(childId, statusDate);
+
+  res.json(result);
+};

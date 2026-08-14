@@ -1,5 +1,6 @@
 import { api } from './api';
 import type { Client } from '../types/client';
+import type { ServiceHistoryItem } from '../features/client/components/ServiceHistory/ServiceHistoryItem';
 
 const BASE_URL = '/clients';
 
@@ -128,6 +129,17 @@ class ClientService {
       params: {
         date: statusDate,
       },
+    });
+
+    return response.data;
+  }
+
+  /**
+   * Get service history for a client
+   */
+  async getServiceHistory(childId: number, date?: string): Promise<ServiceHistoryItem[]> {
+    const response = await api.get<ServiceHistoryItem[]>(`${BASE_URL}/${childId}/service-history`, {
+      params: date ? { date } : undefined,
     });
 
     return response.data;

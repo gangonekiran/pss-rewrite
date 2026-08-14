@@ -362,3 +362,71 @@ export async function getClientStatus(childId: number, statusDate: string) {
     exitDate: row?.ExitDate ?? null,
   };
 }
+
+/**
+ * Get service history for a client.
+ *
+ * Source:
+ *   stblServiceGridForm
+ *   Services
+ *   slstServiceNames
+ */
+export async function getServiceHistory(childId: number, statusDate?: string) {
+  const pool = await getPool();
+
+  const request = pool.request().input("ChildID", sql.Int, childId);
+
+  let dateFilter = "";
+
+  if (statusDate) {
+    request.input("StatusDate", sql.Date, statusDate);
+
+    dateFilter = `
+      AND sgf.FormDate <= @StatusDate
+    `;
+  }
+
+  const result = await request.query(`
+    SELECT
+      s.ID AS ServiceID,
+
+      sgf.FormDate AS ServiceDate,
+
+      sn.SvcName AS ServiceName,
+
+      s.Frequency AS Frequency,
+
+      CASE
+        WHEN s.ConsentDate IS NOT NULL
+          THEN 'Yes'
+        ELSE 'Pending'
+      END AS Consent,
+
+      CAST(NULL AS varchar(50)) AS CasePlan
+
+    FROM stblServiceGridForm sgf
+
+    INNER JOIN Services s
+      ON s.ServiceGridID = sgf.ServiceGridID
+
+    LEFT JOIN slstServiceNames sn
+      ON sn.SvcCode = s.SvcCode
+
+    WHERE sgf.ChildID = @ChildID
+
+      ${dateFilter}
+
+    ORDER BY
+      sgf.FormDate DESC,
+      s.ID DESC
+  `);
+
+  return result.recordset.map((row) => ({
+    id: row.ServiceID,
+    date: row.ServiceDate,
+    serviceName: row.ServiceName ?? "",
+    frequency: row.Frequency ?? "",
+    consent: row.Consent ?? "Pending",
+    casePlan: row.CasePlan ?? "",
+  }));
+}
