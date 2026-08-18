@@ -1,6 +1,57 @@
 import { Bell, ChevronDown, Menu } from 'lucide-react';
 
-export default function Header() {
+interface HeaderProps {
+  pathname: string;
+}
+
+const pageConfig: Record<string, { title: string; subtitle?: string }> = {
+  '/': {
+    title: 'Dashboard',
+  },
+
+  '/clients': {
+    title: 'View/Edit Clients',
+    subtitle: 'Lookup and manage client information and status',
+  },
+
+  '/nopr-forms': {
+    title: 'NOPR Forms',
+  },
+
+  '/referral-forms': {
+    title: 'Referral Forms',
+  },
+
+  '/cos-forms': {
+    title: 'COS Forms',
+  },
+
+  '/exit-forms': {
+    title: 'Exit Forms',
+  },
+
+  '/insurance-forms': {
+    title: 'Insurance Forms',
+  },
+
+  '/active-forms': {
+    title: 'Active Forms',
+  },
+
+  '/reports': {
+    title: 'Reports',
+  },
+
+  '/settings': {
+    title: 'Settings',
+  },
+};
+
+export default function Header({ pathname }: HeaderProps) {
+  const config = pageConfig[pathname] ?? {
+    title: 'CIS Rewrite',
+  };
+
   return (
     <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-5">
       {/* Left */}
@@ -11,18 +62,19 @@ export default function Header() {
 
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">
-            View/Edit Clients
+            {config.title}
           </h1>
 
-          <p className="text-xs text-gray-500">
-            Lookup and manage client information and status
-          </p>
+          {config.subtitle && (
+            <p className="text-xs text-gray-500">
+              {config.subtitle}
+            </p>
+          )}
         </div>
       </div>
 
       {/* Right */}
       <div className="flex items-center gap-5">
-        {/* Notification */}
         <div className="relative cursor-pointer">
           <Bell size={20} />
 
@@ -33,7 +85,6 @@ export default function Header() {
 
         <div className="h-8 border-l border-gray-300" />
 
-        {/* User */}
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-sm font-bold text-green-700">
             JD

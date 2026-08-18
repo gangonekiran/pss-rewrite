@@ -120,7 +120,7 @@ export default function InputForms({ childId }: InputFormsProps) {
   }
 
   return (
-    <div className="rounded-md border border-gray-200 bg-white">
+    <div className="rounded-md bg-white">
       {selectedForm && (
         <InputFormEditor
           childId={childId}
@@ -138,9 +138,9 @@ export default function InputForms({ childId }: InputFormsProps) {
         />
       )}
 
-      <div className="grid grid-cols-[minmax(0,1fr)_230px]">
+      <div className="grid grid-cols-[minmax(0,1fr)_170px]">
         {/* History */}
-        <div className="min-w-0">
+        <div className="min-w-0 border-t border-b border-gray-200">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-xs">
               <thead>
@@ -242,7 +242,7 @@ export default function InputForms({ childId }: InputFormsProps) {
 
         {/* Add New Form */}
         <aside className="border-l border-gray-200 bg-white">
-          <div className="flex h-11 items-center justify-between border-b border-gray-200 bg-gray-50 px-4">
+          <div className="flex h-10 items-center justify-between border-gray-200 bg-gray-50 px-4">
             <h3 className="text-sm font-semibold text-gray-700">Add New Form</h3>
 
             <input

@@ -30,32 +30,26 @@ export const navigation: NavItem[] = [
   },
   {
     id: "clients",
-    label: "Clients",
+    label: "Client Status",
     path: "/clients",
     icon: Users,
   },
   {
-    id: "client-status",
-    label: "Client Status",
-    path: "/client-status",
-    icon: ClipboardList,
-  },
-  {
     id: "nopr",
     label: "NOPR Forms",
-    path: "/nopr",
+    path: "/nopr-forms",
     icon: FileText,
   },
   {
     id: "referral",
     label: "Referral Forms",
-    path: "/referral",
+    path: "/referral-forms",
     icon: ClipboardEdit,
   },
   {
     id: "cos",
     label: "COS Forms",
-    path: "/cos",
+    path: "/cos-forms",
     icon: ClipboardEdit,
   },
   {
