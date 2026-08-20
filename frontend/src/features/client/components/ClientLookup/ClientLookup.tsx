@@ -24,13 +24,10 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
   { client, setClient, isLocked },
   ref,
 ) {
-  const [lastNames, setLastNames] = useState<SelectOption[]>([]);
-  const [firstNames, setFirstNames] = useState<SelectOption[]>([]);
+  const [names, setNames] = useState<SelectOption[]>([]);
   const [ssns, setSsns] = useState<SelectOption[]>([]);
 
-  const [selectedLastName, setSelectedLastName] = useState<SelectOption | null>(null);
-
-  const [selectedFirstName, setSelectedFirstName] = useState<SelectOption | null>(null);
+  const [selectedName, setSelectedName] = useState<SelectOption | null>(null);
 
   const [selectedSSN, setSelectedSSN] = useState<SelectOption | null>(null);
 
@@ -38,8 +35,7 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
 
   useImperativeHandle(ref, () => ({
     clearLookup() {
-      setSelectedLastName(null);
-      setSelectedFirstName(null);
+      setSelectedName(null);
       setSelectedSSN(null);
     },
   }));
@@ -48,17 +44,10 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
     try {
       const clients = await clientService.getAll();
 
-      setLastNames(
+      setNames(
         clients.map((c) => ({
-          value: c.childId!,
-          label: `${c.lastName} (${c.firstName})`,
-        })),
-      );
-
-      setFirstNames(
-        clients.map((c) => ({
-          value: c.childId!,
-          label: c.firstName,
+          value: String(c.childId!),
+          label: `${c.firstName ?? ''} ${c.lastName ?? ''}`.trim(),
         })),
       );
 
@@ -106,14 +95,9 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
 
       setClient(selectedClient);
 
-      setSelectedLastName({
-        value: selectedClient.childId!,
-        label: selectedClient.lastName,
-      });
-
-      setSelectedFirstName({
-        value: selectedClient.childId!,
-        label: selectedClient.firstName,
+      setSelectedName({
+        value: String(selectedClient.childId!),
+        label: `${selectedClient.firstName ?? ''} ${selectedClient.lastName ?? ''}`.trim(),
       });
 
       setSelectedSSN({
@@ -138,60 +122,27 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
 
           <div className="space-y-3">
             {/* -----------------------------------------------------
-                Last Name
+                Name
             ----------------------------------------------------- */}
             <div className="grid grid-cols-[60px_1fr_36px] items-center gap-2">
-              <label className="text-xs font-medium text-gray-700">Last</label>
+              <label className="text-xs font-medium text-gray-700">Name</label>
 
               <SearchableSelect
-                options={lastNames}
-                placeholder="Search Last Name"
-                value={selectedLastName}
+                options={names}
+                placeholder="Search Name"
+                value={selectedName}
                 onChange={(option) => {
-                  setSelectedLastName(option);
+                  setSelectedName(option);
                 }}
               />
 
               <button
                 type="button"
-                disabled={!selectedLastName || loading}
+                disabled={!selectedName || loading}
                 onClick={() => {
-                  if (!selectedLastName) return;
+                  if (!selectedName) return;
 
-                  const childId = Number(selectedLastName.value);
-
-                  if (!Number.isNaN(childId)) {
-                    loadClient(childId);
-                  }
-                }}
-                className="h-9 w-9 rounded-md border border-gray-300 text-base hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                →
-              </button>
-            </div>
-
-            {/* -----------------------------------------------------
-                First Name
-            ----------------------------------------------------- */}
-            <div className="grid grid-cols-[60px_1fr_36px] items-center gap-2">
-              <label className="text-xs font-medium text-gray-700">First</label>
-
-              <SearchableSelect
-                options={firstNames}
-                placeholder="Search First Name"
-                value={selectedFirstName}
-                onChange={(option) => {
-                  setSelectedFirstName(option);
-                }}
-              />
-
-              <button
-                type="button"
-                disabled={!selectedFirstName || loading}
-                onClick={() => {
-                  if (!selectedFirstName) return;
-
-                  const childId = Number(selectedFirstName.value);
+                  const childId = Number(selectedName.value);
 
                   if (!Number.isNaN(childId)) {
                     loadClient(childId);
