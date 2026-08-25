@@ -1,5 +1,5 @@
 export * from './dashboard';
-export * from './clients';
+export * from './client';
 export * from './referral';
 export * from './insurance';
 export * from './nopr';

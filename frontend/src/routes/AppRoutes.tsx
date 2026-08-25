@@ -1,7 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import { MainLayout, AuthLayout } from '../layouts';
 
-import DashboardPage from '../features/dashboard/pages/DashboardPage';
 import ClientPage from '../features/client/pages/ClientPage';
 
 import ComingSoon from '../features/coming_soon/pages/ComingSoonPage';

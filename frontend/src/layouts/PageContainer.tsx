@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 type Props = { title?: string; children: ReactNode };
 export default function PageContainer({ title, children }: Props) {
   return (

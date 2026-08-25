@@ -41,9 +41,7 @@ const emptyClient: Client = {
 export default function ClientActions({
   client,
   setClient,
-  isNewClient,
   setIsNewClient,
-  clearClient,
   isLocked,
   setIsLocked,
   clearClientLookup

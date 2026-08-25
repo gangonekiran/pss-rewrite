@@ -2,10 +2,7 @@ import { useState } from 'react';
 import { ClipboardList, FileText } from 'lucide-react';
 
 import ClientStatus from '../ClientStatus/ClientStatus';
-import InputForms from '../InputForm/InputForms';
-
 import type { Client } from '../../../../types/client';
-import ComingSoon from '../../../coming_soon/pages/ComingSoonPage';
 
 interface ClientTabsProps {
   client: Client;

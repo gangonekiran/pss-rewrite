@@ -4,7 +4,6 @@ import PageContainer from '../../../layouts/PageContainer';
 
 import ClientLookup, { type ClientLookupRef } from '../components/ClientLookup/ClientLookup';
 
-import ClientForm from '../components/ClientForm/ClientForm';
 import ClientActions from '../components/ClientActions/ClientActions';
 import ClientTabs from '../components/ClientTabs/ClientTabs';
 

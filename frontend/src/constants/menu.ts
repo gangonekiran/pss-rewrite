@@ -1,7 +1,6 @@
 import {
   LayoutDashboard,
   Users,
-  ClipboardList,
   FileText,
   ClipboardEdit,
   Shield,

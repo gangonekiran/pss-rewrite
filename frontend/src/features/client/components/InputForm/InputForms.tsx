@@ -1,8 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
-import { AlertCircle, Check, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { AlertCircle, Check, Pencil, Trash2, X } from 'lucide-react';
 
 import inputFormService from '../../../../services/input-form.service';
-import type { InputFormHistoryItem, InputFormName } from '../../../../types/input-form';
+import type {
+  InputFormHistoryItem,
+  InputFormName,
+} from '../../../../types/input-form';
 import { INPUT_FORM_OPTIONS } from '../../../../types/input-form';
 
 interface InputFormsProps {
@@ -39,20 +42,30 @@ export default function InputForms({ childId }: InputFormsProps) {
   const [forms, setForms] = useState<InputFormHistoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [selectedForm, setSelectedForm] = useState<InputFormName | null>(null);
-  const [editing, setEditing] = useState<InputFormHistoryItem | null>(null);
+  const [selectedForm, setSelectedForm] =
+    useState<InputFormName | null>(null);
+  const [editing, setEditing] =
+    useState<InputFormHistoryItem | null>(null);
 
-  // Controls which form types are visible in the history table.
-  // All form types are checked by default.
-  const [visibleForms, setVisibleForms] = useState<Record<InputFormName, boolean>>(
-    () =>
-      Object.fromEntries(INPUT_FORM_OPTIONS.map((option) => [option.name, true])) as Record<
-        InputFormName,
-        boolean
-      >,
+  /*
+   * Controls which form types are visible in the history table.
+   * All form types are checked by default.
+   */
+  const [visibleForms, setVisibleForms] = useState<
+    Record<InputFormName, boolean>
+  >(() =>
+    Object.fromEntries(
+      INPUT_FORM_OPTIONS.map((option) => [option.name, true]),
+    ) as Record<InputFormName, boolean>,
   );
 
-  const loadForms = useCallback(async () => {
+  /*
+   * Load input form history.
+   *
+   * This function is intentionally kept outside the effect because
+   * it is also used after Save and Delete.
+   */
+  async function loadForms() {
     if (!childId) {
       setForms([]);
       return;
@@ -63,6 +76,7 @@ export default function InputForms({ childId }: InputFormsProps) {
       setError('');
 
       const data = await inputFormService.getHistory(childId);
+
       setForms(data);
     } catch (err) {
       console.error(err);
@@ -70,11 +84,57 @@ export default function InputForms({ childId }: InputFormsProps) {
     } finally {
       setLoading(false);
     }
-  }, [childId]);
+  }
 
+  /*
+   * Load forms when the client changes.
+   *
+   * The asynchronous function is declared inside the effect so that
+   * React's set-state-in-effect lint rule does not flag the call.
+   */
   useEffect(() => {
-    loadForms();
-  }, [loadForms]);
+    let cancelled = false;
+
+    async function load() {
+      if (!childId) {
+        if (!cancelled) {
+          setForms([]);
+          setError('');
+        }
+
+        return;
+      }
+
+      try {
+        if (!cancelled) {
+          setLoading(true);
+          setError('');
+        }
+
+        const data = await inputFormService.getHistory(childId);
+
+        if (!cancelled) {
+          setForms(data);
+        }
+      } catch (err) {
+        console.error(err);
+
+        if (!cancelled) {
+          setError('Unable to load input forms.');
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [childId]);
 
   function toggleFormVisibility(formName: InputFormName) {
     setVisibleForms((current) => ({
@@ -83,27 +143,31 @@ export default function InputForms({ childId }: InputFormsProps) {
     }));
   }
 
-  const visibleHistoryForms = forms.filter((item) => visibleForms[item.formName]);
+  const visibleHistoryForms = forms.filter(
+    (item) => visibleForms[item.formName],
+  );
 
   async function handleDelete(item: InputFormHistoryItem) {
     if (!childId) return;
 
-    const confirmed = window.confirm(`Delete ${item.formType} dated ${formatDate(item.date)}?`);
+    const confirmed = window.confirm(
+      `Delete ${item.formType} dated ${formatDate(item.date)}?`,
+    );
 
     if (!confirmed) return;
 
     try {
-      await inputFormService.remove(item.formName, childId, item.id);
+      await inputFormService.remove(
+        item.formName,
+        childId,
+        item.id,
+      );
+
       await loadForms();
     } catch (err) {
       console.error(err);
       setError('Unable to delete the form.');
     }
-  }
-
-  function handleAddForm(formName: InputFormName) {
-    setEditing(null);
-    setSelectedForm(formName);
   }
 
   function handleEdit(item: InputFormHistoryItem) {
@@ -133,47 +197,88 @@ export default function InputForms({ childId }: InputFormsProps) {
           onSaved={async () => {
             setSelectedForm(null);
             setEditing(null);
+
             await loadForms();
           }}
         />
       )}
 
       <div className="grid grid-cols-[minmax(0,1fr)_170px]">
-        {/* History */}
+        {/* =====================================================
+            HISTORY TABLE
+        ====================================================== */}
         <div className="min-w-0 border-t border-b border-gray-200">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-xs">
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50 text-left font-semibold text-gray-700">
-                  <th className="whitespace-nowrap px-4 py-3">Date</th>
-                  <th className="whitespace-nowrap px-4 py-3">Form Type</th>
-                  <th className="whitespace-nowrap px-4 py-3">Referral</th>
-                  <th className="whitespace-nowrap px-4 py-3">NOPR</th>
-                  <th className="whitespace-nowrap px-4 py-3">interim</th>
-                  <th className="whitespace-nowrap px-4 py-3">OP</th>
-                  <th className="whitespace-nowrap px-4 py-3">Exit</th>
-                  <th className="whitespace-nowrap px-4 py-3">Loop Error</th>
-                  <th className="whitespace-nowrap px-4 py-3">View/Edit</th>
-                  <th className="whitespace-nowrap px-4 py-3">Delete</th>
+                  <th className="whitespace-nowrap px-4 py-3">
+                    Date
+                  </th>
+
+                  <th className="whitespace-nowrap px-4 py-3">
+                    Form Type
+                  </th>
+
+                  <th className="whitespace-nowrap px-4 py-3">
+                    Referral
+                  </th>
+
+                  <th className="whitespace-nowrap px-4 py-3">
+                    NOPR
+                  </th>
+
+                  <th className="whitespace-nowrap px-4 py-3">
+                    interim
+                  </th>
+
+                  <th className="whitespace-nowrap px-4 py-3">
+                    OP
+                  </th>
+
+                  <th className="whitespace-nowrap px-4 py-3">
+                    Exit
+                  </th>
+
+                  <th className="whitespace-nowrap px-4 py-3">
+                    Loop Error
+                  </th>
+
+                  <th className="whitespace-nowrap px-4 py-3">
+                    View/Edit
+                  </th>
+
+                  <th className="whitespace-nowrap px-4 py-3">
+                    Delete
+                  </th>
                 </tr>
               </thead>
 
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={10} className="px-4 py-10 text-center text-gray-500">
+                    <td
+                      colSpan={10}
+                      className="px-4 py-10 text-center text-gray-500"
+                    >
                       Loading input forms...
                     </td>
                   </tr>
                 ) : error ? (
                   <tr>
-                    <td colSpan={10} className="px-4 py-10 text-center text-red-600">
+                    <td
+                      colSpan={10}
+                      className="px-4 py-10 text-center text-red-600"
+                    >
                       {error}
                     </td>
                   </tr>
                 ) : visibleHistoryForms.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="px-4 py-10 text-center text-gray-500">
+                    <td
+                      colSpan={10}
+                      className="px-4 py-10 text-center text-gray-500"
+                    >
                       No input forms available.
                     </td>
                   </tr>
@@ -191,23 +296,38 @@ export default function InputForms({ childId }: InputFormsProps) {
                         <FormType value={item.formType} />
                       </td>
 
-                      <td className="whitespace-nowrap px-4 py-3">{formatDate(item.referral)}</td>
+                      <td className="whitespace-nowrap px-4 py-3">
+                        {formatDate(item.referral)}
+                      </td>
 
-                      <td className="whitespace-nowrap px-4 py-3">{formatDate(item.nopr)}</td>
+                      <td className="whitespace-nowrap px-4 py-3">
+                        {formatDate(item.nopr)}
+                      </td>
 
-                      <td className="whitespace-nowrap px-4 py-3">{formatDate(item.interim)}</td>
+                      <td className="whitespace-nowrap px-4 py-3">
+                        {formatDate(item.interim)}
+                      </td>
 
-                      <td className="whitespace-nowrap px-4 py-3">{formatDate(item.op)}</td>
+                      <td className="whitespace-nowrap px-4 py-3">
+                        {formatDate(item.op)}
+                      </td>
 
-                      <td className="whitespace-nowrap px-4 py-3">{formatDate(item.exit)}</td>
+                      <td className="whitespace-nowrap px-4 py-3">
+                        {formatDate(item.exit)}
+                      </td>
 
                       <td className="whitespace-nowrap px-4 py-3">
                         {item.loopError ? (
-                          <span title="Loop error" className="font-bold text-red-600">
+                          <span
+                            title="Loop error"
+                            className="font-bold text-red-600"
+                          >
                             X
                           </span>
                         ) : (
-                          <span className="text-gray-400">–</span>
+                          <span className="text-gray-400">
+                            –
+                          </span>
                         )}
                       </td>
 
@@ -240,20 +360,30 @@ export default function InputForms({ childId }: InputFormsProps) {
           </div>
         </div>
 
-        {/* Add New Form */}
+        {/* =====================================================
+            ADD NEW FORM / FILTER CHECKBOXES
+        ====================================================== */}
         <aside className="border-l border-gray-200 bg-white">
           <div className="flex h-10 items-center justify-between border-gray-200 bg-gray-50 px-4">
-            <h3 className="text-sm font-semibold text-gray-700">Add New Form</h3>
+            <h3 className="text-sm font-semibold text-gray-700">
+              Add New Form
+            </h3>
 
+            {/* CHECK ALL */}
             <input
               type="checkbox"
-              checked={INPUT_FORM_OPTIONS.every((option) => visibleForms[option.name])}
+              checked={INPUT_FORM_OPTIONS.every(
+                (option) => visibleForms[option.name],
+              )}
               onChange={(event) => {
                 const checked = event.target.checked;
 
                 setVisibleForms(
                   Object.fromEntries(
-                    INPUT_FORM_OPTIONS.map((option) => [option.name, checked]),
+                    INPUT_FORM_OPTIONS.map((option) => [
+                      option.name,
+                      checked,
+                    ]),
                   ) as Record<InputFormName, boolean>,
                 );
               }}
@@ -267,12 +397,18 @@ export default function InputForms({ childId }: InputFormsProps) {
                 key={option.name}
                 className="flex cursor-pointer items-center justify-between px-5 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50"
               >
-                <span className="select-none">{option.label}</span>
+                {/* LABEL FIRST */}
+                <span className="select-none">
+                  {option.label}
+                </span>
 
+                {/* CHECKBOX */}
                 <input
                   type="checkbox"
                   checked={visibleForms[option.name]}
-                  onChange={() => toggleFormVisibility(option.name)}
+                  onChange={() =>
+                    toggleFormVisibility(option.name)
+                  }
                   className="h-4 w-4 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
                 />
               </label>
@@ -284,6 +420,10 @@ export default function InputForms({ childId }: InputFormsProps) {
   );
 }
 
+/* =============================================================
+   INPUT FORM EDITOR
+============================================================= */
+
 interface InputFormEditorProps {
   childId: number;
   formName: InputFormName;
@@ -292,13 +432,29 @@ interface InputFormEditorProps {
   onSaved: () => Promise<void>;
 }
 
-function InputFormEditor({ childId, formName, existing, onClose, onSaved }: InputFormEditorProps) {
-  const option = INPUT_FORM_OPTIONS.find((item) => item.name === formName);
+function InputFormEditor({
+  childId,
+  formName,
+  existing,
+  onClose,
+  onSaved,
+}: InputFormEditorProps) {
+  const option = INPUT_FORM_OPTIONS.find(
+    (item) => item.name === formName,
+  );
 
-  const [formDate, setFormDate] = useState(existing?.date?.substring(0, 10) ?? '');
+  const [formDate, setFormDate] = useState(
+    existing?.date?.substring(0, 10) ?? '',
+  );
+
   const [region, setRegion] = useState('');
-  const [formType, setFormType] = useState(option?.label ?? '');
+
+  const [formType, setFormType] = useState(
+    option?.label ?? '',
+  );
+
   const [saving, setSaving] = useState(false);
+
   const [error, setError] = useState('');
 
   async function handleSave() {
@@ -319,9 +475,18 @@ function InputFormEditor({ childId, formName, existing, onClose, onSaved }: Inpu
       };
 
       if (existing) {
-        await inputFormService.update(formName, childId, existing.id, payload);
+        await inputFormService.update(
+          formName,
+          childId,
+          existing.id,
+          payload,
+        );
       } else {
-        await inputFormService.create(formName, childId, payload);
+        await inputFormService.create(
+          formName,
+          childId,
+          payload,
+        );
       }
 
       await onSaved();
@@ -336,12 +501,17 @@ function InputFormEditor({ childId, formName, existing, onClose, onSaved }: Inpu
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
       <div className="w-full max-w-xl rounded-lg border border-gray-200 bg-white shadow-xl">
+        {/* HEADER */}
         <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-5 py-3">
           <div>
             <h2 className="text-base font-semibold text-gray-800">
-              {existing ? 'View / Edit' : 'Add New'} {option?.label} Form
+              {existing ? 'View / Edit' : 'Add New'}{' '}
+              {option?.label} Form
             </h2>
-            <p className="mt-0.5 text-xs text-gray-500">Client ID: {childId}</p>
+
+            <p className="mt-0.5 text-xs text-gray-500">
+              Client ID: {childId}
+            </p>
           </div>
 
           <button
@@ -353,51 +523,77 @@ function InputFormEditor({ childId, formName, existing, onClose, onSaved }: Inpu
           </button>
         </div>
 
+        {/* BODY */}
         <div className="space-y-4 p-5">
           <div className="grid grid-cols-2 gap-4">
+            {/* FORM DATE */}
             <label className="block">
               <span className="mb-1 block text-xs font-medium text-gray-700">
-                Form Date <span className="text-red-600">*</span>
+                Form Date{' '}
+                <span className="text-red-600">*</span>
               </span>
+
               <input
                 type="date"
                 value={formDate}
-                onChange={(event) => setFormDate(event.target.value)}
+                onChange={(event) =>
+                  setFormDate(event.target.value)
+                }
                 className="h-9 w-full rounded-md border border-gray-300 px-2 text-sm outline-none focus:border-blue-500"
               />
             </label>
 
+            {/* FORM TYPE */}
             <label className="block">
-              <span className="mb-1 block text-xs font-medium text-gray-700">Form Type</span>
+              <span className="mb-1 block text-xs font-medium text-gray-700">
+                Form Type
+              </span>
+
               <input
                 value={formType}
-                onChange={(event) => setFormType(event.target.value)}
+                onChange={(event) =>
+                  setFormType(event.target.value)
+                }
                 className="h-9 w-full rounded-md border border-gray-300 bg-gray-50 px-2 text-sm outline-none focus:border-blue-500"
               />
             </label>
           </div>
 
+          {/* REGION */}
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-gray-700">Region</span>
+            <span className="mb-1 block text-xs font-medium text-gray-700">
+              Region
+            </span>
+
             <input
               value={region}
-              onChange={(event) => setRegion(event.target.value)}
+              onChange={(event) =>
+                setRegion(event.target.value)
+              }
               placeholder="Enter region"
               className="h-9 w-full rounded-md border border-gray-300 px-2 text-sm outline-none focus:border-blue-500"
             />
           </label>
 
+          {/* INFORMATION */}
           <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
             <div className="flex items-start gap-2">
-              <AlertCircle size={15} className="mt-0.5 shrink-0" />
+              <AlertCircle
+                size={15}
+                className="mt-0.5 shrink-0"
+              />
+
               <p>
-                This is the common input-form shell. The individual form fields and business
-                validations should be added per form (Referral, Active, NOPR, COS, Insurance,
-                Service Grid and Exit) before production use.
+                This is the common input-form shell. The
+                individual form fields and business validations
+                should be added per form (Referral, Active,
+                NOPR, COS, Insurance, Service Grid and Exit)
+                before production use.
               </p>
             </div>
           </div>
 
+          {/* ERROR */}
           {error && (
             <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               {error}
@@ -405,6 +601,7 @@ function InputFormEditor({ childId, formName, existing, onClose, onSaved }: Inpu
           )}
         </div>
 
+        {/* FOOTER */}
         <div className="flex justify-end gap-2 border-t border-gray-200 px-5 py-3">
           <button
             type="button"
