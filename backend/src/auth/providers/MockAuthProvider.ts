@@ -12,10 +12,10 @@ export class MockAuthProvider implements IAuthProvider {
     ) {}
 
     async login(
-        request: LoginRequest
+        _request: LoginRequest
     ): Promise<LoginResponse> {
 
-        if (!request.username?.trim()) {
+        if (!_request.username?.trim()) {
 
             return {
 
@@ -28,7 +28,7 @@ export class MockAuthProvider implements IAuthProvider {
         }
 
         const user =
-            this.authenticate(request.username);
+            this.authenticate(_request.username);
 
         if (!user) {
 

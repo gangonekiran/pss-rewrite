@@ -5,8 +5,8 @@ import { Session } from "../models/Session";
 
 export class OktaAuthProvider implements IAuthProvider {
 
-    async login(request: LoginRequest): Promise<LoginResponse> {
-
+    async login(_request: LoginRequest): Promise<LoginResponse> {
+        console.log("Okta Provider login called with request:", _request);
         throw new Error("Okta Provider is not implemented yet.");
 
     }

@@ -7,7 +7,7 @@ export function errorHandler(
     next: NextFunction
 ) {
 
-    console.error(err);
+    console.error(err, req.method, req.url, next);
 
     return res.status(500).json({
 
