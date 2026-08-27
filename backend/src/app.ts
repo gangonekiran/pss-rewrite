@@ -10,6 +10,9 @@ import inputFormRoutes from "./modules/input-form/input-form.routes";
 
 import { errorHandler } from "./middleware/error.middleware";
 
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./config/swagger";
+
 const app = express();
 
 /**
@@ -49,6 +52,16 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/clients", clientRoutes);
 
 app.use("/api/input-forms", inputFormRoutes);
+
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec),
+);
+
+app.get("/api-docs/swagger.json", (_req, res) => {
+  res.json(swaggerSpec);
+});
 
 /**
  * Error Handler
