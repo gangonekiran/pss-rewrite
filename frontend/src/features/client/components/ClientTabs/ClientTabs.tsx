@@ -3,6 +3,7 @@ import { ClipboardList, FileText } from 'lucide-react';
 
 import ClientStatus from '../ClientStatus/ClientStatus';
 import type { Client } from '../../../../types/client';
+import InputForms from '../InputForm/InputForms';
 
 interface ClientTabsProps {
   client: Client;
@@ -48,12 +49,7 @@ export default function ClientTabs({ client }: ClientTabsProps) {
 
         {activeTab === 'forms' && (
           <div className="rounded-md border border-dashed border-gray-300 bg-gray-50 py-10 text-center text-sm text-gray-500">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Input Forms</p>
-              <p className="mt-1 text-xs text-gray-500">
-                This section is currently under development.
-              </p>
-            </div>
+            <InputForms childId={client.childId} />
           </div>
         )}
       </div>

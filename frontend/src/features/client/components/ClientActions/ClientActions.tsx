@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 
 import type { Dispatch, SetStateAction } from "react";
+import toast from "react-hot-toast";
 
 import clientService from "../../../../services/client.service";
 import type { Client } from "../../../../types/client";
@@ -58,12 +59,12 @@ export default function ClientActions({
     try {
       // Validation
       if (!client.lastName.trim()) {
-        alert("Last Name is required.");
+        toast.error("Last Name is required.");
         return;
       }
 
       if (!client.firstName.trim()) {
-        alert("First Name is required.");
+        toast.error("First Name is required.");
         return;
       }
 
@@ -75,13 +76,13 @@ export default function ClientActions({
           client.childId,
           client,
         );
-
-        alert("Client updated successfully.");
+        clearClientLookup();
+        toast.success("Client updated successfully");
       } else {
         // CREATE new client
         savedClient = await clientService.create(client);
-
-        alert("Client created successfully.");
+        clearClientLookup();
+        toast.success("Client created successfully");
       }
 
       // Update state with database response
@@ -94,7 +95,7 @@ export default function ClientActions({
       setIsLocked(true);
     } catch (error) {
       console.error("Unable to save client:", error);
-      alert("Unable to save client.");
+      toast.error("Failed to save client.");
     }
   }
 
@@ -122,7 +123,7 @@ export default function ClientActions({
     try {
       await clientService.delete(client.childId);
 
-      alert("Client deleted successfully.");
+      toast.success("Client deleted successfully.");
 
       // Clear client after deletion
       setClient(emptyClient);
@@ -132,7 +133,7 @@ export default function ClientActions({
       setIsLocked(true);
     } catch (error) {
       console.error("Unable to delete client:", error);
-      alert("Unable to delete client.");
+      toast.error("Failed to delete client.");
     }
   }
 

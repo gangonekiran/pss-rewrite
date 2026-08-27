@@ -36,7 +36,7 @@ export default function SearchableSelect({
           minHeight: 36,
           height: 36,
           borderRadius: 6,
-          borderColor: state.isFocused ? "#2563eb" : "#d1d5db",
+          borderColor: state.isFocused ? "#2563eb" : "oklch(0.278 0.033 256.848)",
           boxShadow: "none",
           "&:hover": {
             borderColor: "#2563eb",

@@ -20,6 +20,12 @@ interface ClientLookupProps {
   isLocked: boolean;
 }
 
+const REGION_OPTIONS: SelectOption[] = [
+  { value: 'St. Albans', label: 'St. Albans' },
+  { value: 'Region 2', label: 'Region 2' },
+  { value: 'Region 3', label: 'Region 3' },
+];
+
 const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function ClientLookup(
   { client, setClient, isLocked },
   ref,
@@ -164,6 +170,7 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
                 type="date"
                 value={client.dob ?? ''}
                 readOnly
+                style={{ borderColor: "oklch(0.278 0.033 256.848)"}}
                 className="h-9 rounded-md border border-gray-300 bg-gray-50 px-2 text-sm"
               />
 
@@ -322,18 +329,21 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
             ===================================================== */}
             <label className="text-xs font-medium text-gray-700">Region</label>
 
-            <input
-              value={client.region ?? ''}
-              disabled={isLocked}
-              onChange={(e) =>
+            <SearchableSelect
+              options={REGION_OPTIONS}
+              value={
+                REGION_OPTIONS.find(
+                  (option) => String(option.value) === String(client.region ?? ''),
+                ) ?? null
+              }
+              isDisabled={isLocked}
+              onChange={(option) =>
                 setClient({
                   ...client,
-                  region: e.target.value,
+                  region: option ? String(option.value) : '',
                 })
               }
-              className={`h-9 rounded-md border px-2 text-sm ${
-                isLocked ? 'cursor-not-allowed bg-gray-100 text-gray-500' : 'bg-white'
-              }`}
+              placeholder="Select Region"
             />
 
             <div />

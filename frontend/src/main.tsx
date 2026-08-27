@@ -16,9 +16,14 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <AuthProvider>
         <QueryProvider>
           <AppRouter />
-          <Toaster position="top-right" />
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 3000,
+            }}
+          />
         </QueryProvider>
       </AuthProvider>
     </ThemeProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

@@ -37,60 +37,110 @@ export async function getClientById(id: number) {
 export async function createClient(client: Client) {
   const pool = await getPool();
 
-  const result = await pool
-    .request()
-    .input("Region", sql.VarChar(50), client.region ?? null)
-    .input("LastName", sql.VarChar(100), client.lastName)
-    .input("FirstName", sql.VarChar(100), client.firstName)
-    .input("SS", sql.VarChar(11), client.ss ?? null)
-    .input("SSTemp", sql.Bit, client.ssTemp ?? false)
-    .input("DOB", sql.Date, client.dob ?? null)
-    .input("Gender", sql.Char(1), client.gender ?? null)
-    .input("Notes", sql.NVarChar(sql.MAX), client.notes ?? null)
-    .input("InsertUser", sql.VarChar(100), client.insertUser ?? "SYSTEM")
-    .input(
-      "NonEarlyIntervention",
-      sql.Bit,
-      client.nonEarlyIntervention ?? false,
-    ).query(`
-      DECLARE @NextChildID INT;
+  console.log("Creating client:", client);
 
-      SELECT @NextChildID = ISNULL(MAX(ChildID),0) + 1
-      FROM stblPeople;
+  const request = pool.request();
 
-      INSERT INTO stblPeople
-      (
-          ChildID,
-          Region,
-          LastName,
-          FirstName,
-          SS,
-          SSTemp,
-          DOB,
-          Gender,
-          Notes,
-          InsertUser,
-          NonEarlyIntervention
-      )
-      VALUES
-      (
-          @NextChildID,
-          @Region,
-          @LastName,
-          @FirstName,
-          @SS,
-          @SSTemp,
-          @DOB,
-          @Gender,
-          @Notes,
-          @InsertUser,
-          @NonEarlyIntervention
-      );
+  request.input(
+    "Region",
+    sql.VarChar(50),
+    client.region ? String(client.region) : null,
+  );
 
-      SELECT *
-      FROM stblPeople
-      WHERE ChildID = @NextChildID;
-    `);
+  request.input(
+    "LastName",
+    sql.VarChar(100),
+    client.lastName ? String(client.lastName) : null,
+  );
+
+  request.input(
+    "FirstName",
+    sql.VarChar(100),
+    client.firstName ? String(client.firstName) : null,
+  );
+
+  request.input("SS", sql.VarChar(20), client.ss ? String(client.ss) : null);
+
+  request.input("SSTemp", sql.Bit, client.ssTemp === true);
+
+  request.input(
+    "DOB",
+    sql.VarChar(10),
+    client.dob && String(client.dob).trim() !== ""
+      ? String(client.dob).trim()
+      : null,
+  );
+
+  request.input(
+    "Gender",
+    sql.VarChar(1),
+    client.gender && String(client.gender).trim() !== ""
+      ? String(client.gender).trim().substring(0, 1)
+      : null,
+  );
+
+  request.input(
+    "Notes",
+    sql.VarChar(4000),
+    client.notes && String(client.notes).trim() !== ""
+      ? String(client.notes)
+      : null,
+  );
+
+  request.input(
+    "InsertUser",
+    sql.VarChar(100),
+    client.insertUser && String(client.insertUser).trim() !== ""
+      ? String(client.insertUser)
+      : "SYSTEM",
+  );
+
+  request.input(
+    "NonEarlyIntervention",
+    sql.Bit,
+    client.nonEarlyIntervention === true,
+  );
+
+  const result = await request.query(`
+    DECLARE @NextChildID INT;
+
+    SELECT @NextChildID =
+      ISNULL(MAX(ChildID), 0) + 1
+    FROM dbo.stblPeople;
+
+    INSERT INTO dbo.stblPeople
+    (
+      ChildID,
+      Region,
+      LastName,
+      FirstName,
+      SS,
+      SSTemp,
+      DOB,
+      Gender,
+      Notes,
+      InsertUser,
+      NonEarlyIntervention
+    )
+    VALUES
+    (
+      @NextChildID,
+      @Region,
+      @LastName,
+      @FirstName,
+      @SS,
+      @SSTemp,
+      CONVERT(date, @DOB, 23),
+      @Gender,
+      @Notes,
+      @InsertUser,
+      @NonEarlyIntervention
+    );
+
+    SELECT *
+    FROM dbo.stblPeople
+    WHERE ChildID = @NextChildID;
+  `);
 
   return result.recordset[0];
 }
@@ -101,38 +151,84 @@ export async function createClient(client: Client) {
 export async function updateClient(id: number, client: Client) {
   const pool = await getPool();
 
-  await pool
+  console.log("Updating client:", id, client);
+
+  // Support both camelCase and database-style PascalCase fields.
+  const region = client.region ?? (client as any).Region;
+  const lastName = client.lastName ?? (client as any).LastName;
+  const firstName = client.firstName ?? (client as any).FirstName;
+  const ss = client.ss ?? (client as any).SS;
+  const ssTemp = client.ssTemp ?? (client as any).SSTemp;
+  const dob = client.dob ?? (client as any).DOB;
+  const gender = client.gender ?? (client as any).Gender;
+  const notes = client.notes ?? (client as any).Notes;
+  const lastUpdateUser =
+    client.lastUpdateUser ?? (client as any).LastUpdateUser;
+  const nonEarlyIntervention =
+    client.nonEarlyIntervention ?? (client as any).NonEarlyIntervention;
+
+  if (!lastName || String(lastName).trim() === "") {
+    throw Object.assign(new Error("LastName is required"), {
+      status: 400,
+    });
+  }
+
+  if (!firstName || String(firstName).trim() === "") {
+    throw Object.assign(new Error("FirstName is required"), {
+      status: 400,
+    });
+  }
+
+  const request = pool
     .request()
     .input("ChildID", sql.Int, id)
-    .input("Region", sql.VarChar(50), client.region ?? null)
-    .input("LastName", sql.VarChar(100), client.lastName)
-    .input("FirstName", sql.VarChar(100), client.firstName)
-    .input("SS", sql.VarChar(11), client.ss ?? null)
-    .input("SSTemp", sql.Bit, client.ssTemp ?? false)
-    .input("DOB", sql.Date, client.dob ?? null)
-    .input("Gender", sql.Char(1), client.gender ?? null)
-    .input("Notes", sql.NVarChar(sql.MAX), client.notes ?? null)
-    .input("LastUpdateUser", sql.VarChar(100), client.lastUpdateUser ?? null)
+    .input("Region", sql.VarChar(50), region ? String(region) : null)
+    .input("LastName", sql.VarChar(100), String(lastName).trim())
+    .input("FirstName", sql.VarChar(100), String(firstName).trim())
+    .input("SS", sql.VarChar(20), ss ? String(ss) : null)
+    .input("SSTemp", sql.Bit, ssTemp === true)
     .input(
-      "NonEarlyIntervention",
-      sql.Bit,
-      client.nonEarlyIntervention ?? false,
-    ).query(`
-      UPDATE stblPeople
-      SET
-          Region = @Region,
-          LastName = @LastName,
-          FirstName = @FirstName,
-          SS = @SS,
-          SSTemp = @SSTemp,
-          DOB = @DOB,
-          Gender = @Gender,
-          Notes = @Notes,
-          LastUpdateDate = GETDATE(),
-          LastUpdateUser = @LastUpdateUser,
-          NonEarlyIntervention = @NonEarlyIntervention
-      WHERE ChildID = @ChildID
-    `);
+      "DOB",
+      sql.VarChar(10),
+      dob && String(dob).trim() !== "" ? String(dob).trim() : null,
+    )
+    .input(
+      "Gender",
+      sql.VarChar(1),
+      gender && String(gender).trim() !== ""
+        ? String(gender).trim().substring(0, 1)
+        : null,
+    )
+    .input(
+      "Notes",
+      sql.VarChar(4000),
+      notes !== undefined && notes !== null ? String(notes) : null,
+    )
+    .input(
+      "LastUpdateUser",
+      sql.VarChar(100),
+      lastUpdateUser ? String(lastUpdateUser) : "SYSTEM",
+    )
+    .input("NonEarlyIntervention", sql.Bit, nonEarlyIntervention === true);
+
+  await request.query(`
+    UPDATE dbo.stblPeople
+    SET
+      Region = @Region,
+      LastName = @LastName,
+      FirstName = @FirstName,
+      SS = @SS,
+      SSTemp = @SSTemp,
+      DOB = CONVERT(date, @DOB, 23),
+      Gender = @Gender,
+      Notes = @Notes,
+      LastUpdateDate = GETDATE(),
+      LastUpdateUser = @LastUpdateUser,
+      NonEarlyIntervention = @NonEarlyIntervention
+    WHERE ChildID = @ChildID;
+  `);
+
+  return await getClientById(id);
 }
 
 /**
