@@ -1,6 +1,19 @@
 import { getPool, sql } from "../../config/database";
 import { Client } from "./client.types";
 
+type ClientUpdatePayload = Client & {
+  Region?: string;
+  LastName?: string;
+  FirstName?: string;
+  SS?: string;
+  SSTemp?: boolean;
+  DOB?: string;
+  Gender?: string;
+  Notes?: string;
+  LastUpdateUser?: string;
+  NonEarlyIntervention?: boolean;
+};
+
 /**
  * Get All Clients
  */
@@ -148,24 +161,23 @@ export async function createClient(client: Client) {
 /**
  * Update Client
  */
-export async function updateClient(id: number, client: Client) {
+export async function updateClient(id: number, client: ClientUpdatePayload) {
   const pool = await getPool();
 
   console.log("Updating client:", id, client);
 
   // Support both camelCase and database-style PascalCase fields.
-  const region = client.region ?? (client as any).Region;
-  const lastName = client.lastName ?? (client as any).LastName;
-  const firstName = client.firstName ?? (client as any).FirstName;
-  const ss = client.ss ?? (client as any).SS;
-  const ssTemp = client.ssTemp ?? (client as any).SSTemp;
-  const dob = client.dob ?? (client as any).DOB;
-  const gender = client.gender ?? (client as any).Gender;
-  const notes = client.notes ?? (client as any).Notes;
-  const lastUpdateUser =
-    client.lastUpdateUser ?? (client as any).LastUpdateUser;
+  const region = client.region ?? client.Region;
+  const lastName = client.lastName ?? client.LastName;
+  const firstName = client.firstName ?? client.FirstName;
+  const ss = client.ss ?? client.SS;
+  const ssTemp = client.ssTemp ?? client.SSTemp;
+  const dob = client.dob ?? client.DOB;
+  const gender = client.gender ?? client.Gender;
+  const notes = client.notes ?? client.Notes;
+  const lastUpdateUser = client.lastUpdateUser ?? client.LastUpdateUser;
   const nonEarlyIntervention =
-    client.nonEarlyIntervention ?? (client as any).NonEarlyIntervention;
+    client.nonEarlyIntervention ?? client.NonEarlyIntervention;
 
   if (!lastName || String(lastName).trim() === "") {
     throw Object.assign(new Error("LastName is required"), {
