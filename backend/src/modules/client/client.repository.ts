@@ -1,19 +1,6 @@
 import { getPool, sql } from "../../config/database";
 import { Client } from "./client.types";
 
-type ClientUpdatePayload = Client & {
-  Region?: string;
-  LastName?: string;
-  FirstName?: string;
-  SS?: string;
-  SSTemp?: boolean;
-  DOB?: string;
-  Gender?: string;
-  Notes?: string;
-  LastUpdateUser?: string;
-  NonEarlyIntervention?: boolean;
-};
-
 /**
  * Get All Clients
  */
@@ -161,23 +148,22 @@ export async function createClient(client: Client) {
 /**
  * Update Client
  */
-export async function updateClient(id: number, client: ClientUpdatePayload) {
+export async function updateClient(id: number, client: Client) {
   const pool = await getPool();
 
   console.log("Updating client:", id, client);
 
-  // Support both camelCase and database-style PascalCase fields.
-  const region = client.region ?? client.Region;
-  const lastName = client.lastName ?? client.LastName;
-  const firstName = client.firstName ?? client.FirstName;
-  const ss = client.ss ?? client.SS;
-  const ssTemp = client.ssTemp ?? client.SSTemp;
-  const dob = client.dob ?? client.DOB;
-  const gender = client.gender ?? client.Gender;
-  const notes = client.notes ?? client.Notes;
-  const lastUpdateUser = client.lastUpdateUser ?? client.LastUpdateUser;
+  const region = client.region;
+  const lastName = client.lastName;
+  const firstName = client.firstName;
+  const ss = client.ss;
+  const ssTemp = client.ssTemp;
+  const dob = client.dob;
+  const gender = client.gender;
+  const notes = client.notes;
+  const lastUpdateUser = client.lastUpdateUser;
   const nonEarlyIntervention =
-    client.nonEarlyIntervention ?? client.NonEarlyIntervention;
+    client.nonEarlyIntervention;
 
   if (!lastName || String(lastName).trim() === "") {
     throw Object.assign(new Error("LastName is required"), {

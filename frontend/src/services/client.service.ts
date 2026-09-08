@@ -37,24 +37,6 @@ class ClientService {
   }
 
   /**
-   * Map Frontend (camelCase) -> Backend (PascalCase)
-   */
-  private mapRequest(client: Client) {
-    return {
-      ChildID: client.childId,
-      Region: client.region,
-      LastName: client.lastName,
-      FirstName: client.firstName,
-      SS: client.ss,
-      SSTemp: client.ssTemp,
-      DOB: client.dob,
-      Gender: client.gender,
-      Notes: client.notes,
-      NonEarlyIntervention: client.nonEarlyIntervention,
-    };
-  }
-
-  /**
    * Get All Clients
    */
   async getAll(): Promise<Client[]> {
@@ -137,7 +119,7 @@ class ClientService {
   ): Promise<Client> {
     const response = await api.put<ClientApiResponse>(
       `${BASE_URL}/${childId}`,
-      this.mapRequest(client),
+      client
     );
 
     return this.mapClient(response.data);
