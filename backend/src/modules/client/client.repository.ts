@@ -102,45 +102,34 @@ export async function createClient(client: Client) {
   );
 
   const result = await request.query(`
-    DECLARE @NextChildID INT;
-
-    SELECT @NextChildID =
-      ISNULL(MAX(ChildID), 0) + 1
-    FROM dbo.stblPeople;
-
-    INSERT INTO dbo.stblPeople
-    (
-      ChildID,
-      Region,
-      LastName,
-      FirstName,
-      SS,
-      SSTemp,
-      DOB,
-      Gender,
-      Notes,
-      InsertUser,
-      NonEarlyIntervention
-    )
-    VALUES
-    (
-      @NextChildID,
-      @Region,
-      @LastName,
-      @FirstName,
-      @SS,
-      @SSTemp,
-      CONVERT(date, @DOB, 23),
-      @Gender,
-      @Notes,
-      @InsertUser,
-      @NonEarlyIntervention
-    );
-
-    SELECT *
-    FROM dbo.stblPeople
-    WHERE ChildID = @NextChildID;
-  `);
+  INSERT INTO dbo.stblPeople
+  (
+    Region,
+    LastName,
+    FirstName,
+    SS,
+    SSTemp,
+    DOB,
+    Gender,
+    Notes,
+    InsertUser,
+    NonEarlyIntervention
+  )
+  OUTPUT INSERTED.*
+  VALUES
+  (
+    @Region,
+    @LastName,
+    @FirstName,
+    @SS,
+    @SSTemp,
+    CONVERT(date, @DOB, 23),
+    @Gender,
+    @Notes,
+    @InsertUser,
+    @NonEarlyIntervention
+  );
+`);
 
   return result.recordset[0];
 }
@@ -162,8 +151,7 @@ export async function updateClient(id: number, client: Client) {
   const gender = client.gender;
   const notes = client.notes;
   const lastUpdateUser = client.lastUpdateUser;
-  const nonEarlyIntervention =
-    client.nonEarlyIntervention;
+  const nonEarlyIntervention = client.nonEarlyIntervention;
 
   if (!lastName || String(lastName).trim() === "") {
     throw Object.assign(new Error("LastName is required"), {
