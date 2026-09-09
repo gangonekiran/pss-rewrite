@@ -110,6 +110,43 @@ router.get("/search/firstname", c.searchFirstName);
  */
 router.get("/search/ssn", c.searchSSN);
 
+
+/**
+ * @swagger
+ * /api/clients/regions:
+ *   get:
+ *     tags:
+ *       - Clients
+ *     summary: Get all reporting regions
+ *     description: Returns all active reporting regions.
+ *     responses:
+ *       200:
+ *         description: List of reporting regions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   ID:
+ *                     type: integer
+ *                     example: 1
+ *                   RName:
+ *                     type: string
+ *                     example: Burlington
+ *                   Description:
+ *                     type: string
+ *                     example: Chittenden
+ *                   Inactive:
+ *                     type: boolean
+ *                     example: false
+ *       500:
+ *         $ref: "#/components/responses/InternalServerError"
+ */
+router.get("/regions", c.getAllRegions);
+
+
 /**
  * @swagger
  * /api/clients/{id}:
@@ -293,5 +330,6 @@ router.get("/:id/status", c.getClientStatus);
  *         $ref: "#/components/responses/InternalServerError"
  */
 router.get("/:id/service-history", c.getServiceHistory);
+
 
 export default router;

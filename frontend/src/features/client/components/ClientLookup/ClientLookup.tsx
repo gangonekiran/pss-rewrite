@@ -20,12 +20,6 @@ interface ClientLookupProps {
   isLocked: boolean;
 }
 
-const REGION_OPTIONS: SelectOption[] = [
-  { value: 'St. Albans', label: 'St. Albans' },
-  { value: 'Region 2', label: 'Region 2' },
-  { value: 'Region 3', label: 'Region 3' },
-];
-
 const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function ClientLookup(
   { client, setClient, isLocked },
   ref,
@@ -36,6 +30,8 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
   const [selectedName, setSelectedName] = useState<SelectOption | null>(null);
 
   const [selectedSSN, setSelectedSSN] = useState<SelectOption | null>(null);
+
+  const [regions, setRegions] = useState<SelectOption[]>([]);
 
   const [loading, setLoading] = useState(false);
 
@@ -48,7 +44,10 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
 
   async function loadLookups() {
     try {
-      const clients = await clientService.getAll();
+      const [clients, regionData] = await Promise.all([
+        clientService.getAll(),
+        clientService.getAllRegions(),
+      ]);
 
       setNames(
         clients.map((c) => ({
@@ -61,6 +60,13 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
         clients.map((c) => ({
           value: c.childId!,
           label: c.ss ?? '',
+        })),
+      );
+
+      setRegions(
+        regionData.map((region) => ({
+          value: region.ID,
+          label: region.RName,
         })),
       );
     } catch (error) {
@@ -170,7 +176,7 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
                 type="date"
                 value={client.dob ?? ''}
                 readOnly
-                style={{ borderColor: "oklch(0.278 0.033 256.848)"}}
+                style={{ borderColor: 'oklch(0.278 0.033 256.848)' }}
                 className="h-9 rounded-md border border-gray-300 bg-gray-50 px-2 text-sm"
               />
 
@@ -330,17 +336,16 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
             <label className="text-xs font-medium text-gray-700">Region</label>
 
             <SearchableSelect
-              options={REGION_OPTIONS}
+              options={regions}
               value={
-                REGION_OPTIONS.find(
-                  (option) => String(option.value) === String(client.region ?? ''),
-                ) ?? null
+                regions.find((option) => String(option.value) === String(client.region ?? '')) ??
+                null
               }
               isDisabled={isLocked}
               onChange={(option) =>
                 setClient({
                   ...client,
-                  region: option ? String(option.value) : '',
+                  region: option ? Number(option.value) : undefined,
                 })
               }
               placeholder="Select Region"

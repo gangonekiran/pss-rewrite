@@ -43,55 +43,71 @@ export async function createClient(client: Client) {
 
   request.input(
     "Region",
-    sql.VarChar(50),
-    client.region ? String(client.region) : null,
+    sql.Int,
+    client.region !== undefined &&
+      client.region !== null &&
+      client.region !== ""
+      ? Number(client.region)
+      : null,
   );
 
   request.input(
     "LastName",
-    sql.VarChar(100),
-    client.lastName ? String(client.lastName) : null,
+    sql.NVarChar(50),
+    client.lastName?.trim() || null,
   );
 
   request.input(
     "FirstName",
-    sql.VarChar(100),
-    client.firstName ? String(client.firstName) : null,
+    sql.NVarChar(50),
+    client.firstName?.trim() || null,
   );
 
-  request.input("SS", sql.VarChar(20), client.ss ? String(client.ss) : null);
+  request.input(
+    "SS",
+    sql.NVarChar(15),
+    client.ss?.trim() || null,
+  );
 
-  request.input("SSTemp", sql.Bit, client.ssTemp === true);
+  request.input(
+    "SSTemp",
+    sql.Bit,
+    client.ssTemp === true,
+  );
 
   request.input(
     "DOB",
     sql.VarChar(10),
-    client.dob && String(client.dob).trim() !== ""
+    client.dob &&
+      String(client.dob).trim() !== ""
       ? String(client.dob).trim()
       : null,
   );
 
   request.input(
     "Gender",
-    sql.VarChar(1),
-    client.gender && String(client.gender).trim() !== ""
+    sql.NVarChar(1),
+    client.gender &&
+      String(client.gender).trim() !== ""
       ? String(client.gender).trim().substring(0, 1)
       : null,
   );
 
   request.input(
     "Notes",
-    sql.VarChar(4000),
-    client.notes && String(client.notes).trim() !== ""
-      ? String(client.notes)
+    sql.NVarChar(4000),
+    client.notes &&
+      String(client.notes).trim() !== ""
+      ? String(client.notes).trim()
       : null,
   );
 
   request.input(
     "InsertUser",
-    sql.VarChar(100),
-    client.insertUser && String(client.insertUser).trim() !== ""
-      ? String(client.insertUser)
+    sql.VarChar(50),
+    client.insertUser &&
+      String(client.insertUser).trim() !== ""
+      ? String(client.insertUser).trim()
       : "SYSTEM",
   );
 
@@ -102,34 +118,34 @@ export async function createClient(client: Client) {
   );
 
   const result = await request.query(`
-  INSERT INTO dbo.stblPeople
-  (
-    Region,
-    LastName,
-    FirstName,
-    SS,
-    SSTemp,
-    DOB,
-    Gender,
-    Notes,
-    InsertUser,
-    NonEarlyIntervention
-  )
-  OUTPUT INSERTED.*
-  VALUES
-  (
-    @Region,
-    @LastName,
-    @FirstName,
-    @SS,
-    @SSTemp,
-    CONVERT(date, @DOB, 23),
-    @Gender,
-    @Notes,
-    @InsertUser,
-    @NonEarlyIntervention
-  );
-`);
+    INSERT INTO dbo.stblPeople
+    (
+      Region,
+      LastName,
+      FirstName,
+      SS,
+      SSTemp,
+      DOB,
+      Gender,
+      Notes,
+      InsertUser,
+      NonEarlyIntervention
+    )
+    OUTPUT INSERTED.*
+    VALUES
+    (
+      @Region,
+      @LastName,
+      @FirstName,
+      @SS,
+      @SSTemp,
+      TRY_CONVERT(datetime2(0), @DOB, 23),
+      @Gender,
+      @Notes,
+      @InsertUser,
+      @NonEarlyIntervention
+    );
+  `);
 
   return result.recordset[0];
 }
@@ -151,7 +167,8 @@ export async function updateClient(id: number, client: Client) {
   const gender = client.gender;
   const notes = client.notes;
   const lastUpdateUser = client.lastUpdateUser;
-  const nonEarlyIntervention = client.nonEarlyIntervention;
+  const nonEarlyIntervention =
+    client.nonEarlyIntervention;
 
   if (!lastName || String(lastName).trim() === "") {
     throw Object.assign(new Error("LastName is required"), {
@@ -511,4 +528,24 @@ export async function getServiceHistory(childId: number, statusDate?: string) {
     consent: row.Consent ?? "Pending",
     casePlan: row.CasePlan ?? "",
   }));
+}
+
+/**
+ * Get All Regions
+ */
+export async function getAllRegions() {
+  const pool = await getPool();
+
+  const result = await pool.request().query(`
+    SELECT
+      ID,
+      RName,
+      Description,
+      Inactive
+    FROM stblReportingRegion
+    WHERE Inactive = 0
+    ORDER BY RName
+  `);
+
+  return result.recordset;
 }

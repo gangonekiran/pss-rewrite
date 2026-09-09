@@ -1,6 +1,6 @@
 export interface Client {
     childId?: number;
-    region?: string;
+    region?: number;
     lastName: string;
     firstName: string;
     ss?: string;

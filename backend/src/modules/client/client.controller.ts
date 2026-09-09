@@ -53,3 +53,6 @@ export const getServiceHistory = async (req: Request, res: Response) => {
 
   res.json(result);
 };
+
+export const getAllRegions = async (_: Request, res: Response) =>
+  res.json(await s.getAllRegions());

@@ -6,7 +6,7 @@ const BASE_URL = '/clients';
 
 interface ClientApiResponse {
   ChildID?: number;
-  Region?: string;
+  Region?: number;
   LastName?: string;
   FirstName?: string;
   SS?: string;
@@ -15,6 +15,13 @@ interface ClientApiResponse {
   Gender?: string | null;
   Notes?: string | null;
   NonEarlyIntervention?: boolean;
+}
+
+interface RegionApiResponse {
+  ID: number;
+  RName: string;
+  Description?: string | null;
+  Inactive: boolean;
 }
 
 class ClientService {
@@ -49,9 +56,7 @@ class ClientService {
    * Get Client By Id
    */
   async getById(childId: number): Promise<Client> {
-    const response = await api.get<ClientApiResponse>(
-      `${BASE_URL}/${childId}`,
-    );
+    const response = await api.get<ClientApiResponse>(`${BASE_URL}/${childId}`);
 
     return this.mapClient(response.data);
   }
@@ -60,12 +65,9 @@ class ClientService {
    * Search Last Name
    */
   async searchLastName(search: string): Promise<Client[]> {
-    const response = await api.get<ClientApiResponse[]>(
-      `${BASE_URL}/search/lastname`,
-      {
-        params: { search },
-      },
-    );
+    const response = await api.get<ClientApiResponse[]>(`${BASE_URL}/search/lastname`, {
+      params: { search },
+    });
 
     return response.data.map((client) => this.mapClient(client));
   }
@@ -74,12 +76,9 @@ class ClientService {
    * Search First Name
    */
   async searchFirstName(search: string): Promise<Client[]> {
-    const response = await api.get<ClientApiResponse[]>(
-      `${BASE_URL}/search/firstname`,
-      {
-        params: { search },
-      },
-    );
+    const response = await api.get<ClientApiResponse[]>(`${BASE_URL}/search/firstname`, {
+      params: { search },
+    });
 
     return response.data.map((client) => this.mapClient(client));
   }
@@ -88,12 +87,9 @@ class ClientService {
    * Search SSN
    */
   async searchSSN(search: string): Promise<Client[]> {
-    const response = await api.get<ClientApiResponse[]>(
-      `${BASE_URL}/search/ssn`,
-      {
-        params: { search },
-      },
-    );
+    const response = await api.get<ClientApiResponse[]>(`${BASE_URL}/search/ssn`, {
+      params: { search },
+    });
 
     return response.data.map((client) => this.mapClient(client));
   }
@@ -102,10 +98,7 @@ class ClientService {
    * Create Client
    */
   async create(client: Client): Promise<Client> {
-    const response = await api.post<ClientApiResponse>(
-      BASE_URL,
-      client,
-    );
+    const response = await api.post<ClientApiResponse>(BASE_URL, client);
 
     return this.mapClient(response.data);
   }
@@ -113,14 +106,8 @@ class ClientService {
   /**
    * Update Client
    */
-  async update(
-    childId: number,
-    client: Client,
-  ): Promise<Client> {
-    const response = await api.put<ClientApiResponse>(
-      `${BASE_URL}/${childId}`,
-      client
-    );
+  async update(childId: number, client: Client): Promise<Client> {
+    const response = await api.put<ClientApiResponse>(`${BASE_URL}/${childId}`, client);
 
     return this.mapClient(response.data);
   }
@@ -147,14 +134,11 @@ class ClientService {
     onePlanDate: string | null;
     exitDate: string | null;
   }> {
-    const response = await api.get(
-      `${BASE_URL}/${childId}/status`,
-      {
-        params: {
-          date: statusDate,
-        },
+    const response = await api.get(`${BASE_URL}/${childId}/status`, {
+      params: {
+        date: statusDate,
       },
-    );
+    });
 
     return response.data;
   }
@@ -162,16 +146,19 @@ class ClientService {
   /**
    * Get service history for a client
    */
-  async getServiceHistory(
-    childId: number,
-    date?: string,
-  ): Promise<ServiceHistoryItem[]> {
-    const response = await api.get<ServiceHistoryItem[]>(
-      `${BASE_URL}/${childId}/service-history`,
-      {
-        params: date ? { date } : undefined,
-      },
-    );
+  async getServiceHistory(childId: number, date?: string): Promise<ServiceHistoryItem[]> {
+    const response = await api.get<ServiceHistoryItem[]>(`${BASE_URL}/${childId}/service-history`, {
+      params: date ? { date } : undefined,
+    });
+
+    return response.data;
+  }
+
+  /**
+   * Get All Regions
+   */
+  async getAllRegions(): Promise<RegionApiResponse[]> {
+    const response = await api.get<RegionApiResponse[]>(`${BASE_URL}/regions`);
 
     return response.data;
   }

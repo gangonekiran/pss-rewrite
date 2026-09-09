@@ -9,3 +9,4 @@ export const searchFirstName=repo.searchFirstName;
 export const searchSSN=repo.searchSSN;
 export const getClientStatus = repo.getClientStatus;
 export const getServiceHistory = repo.getServiceHistory;
+export const getAllRegions = repo.getAllRegions;
