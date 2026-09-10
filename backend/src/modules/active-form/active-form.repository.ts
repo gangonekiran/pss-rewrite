@@ -1,0 +1,212 @@
+import { ConnectionPool, Request } from "mssql";
+import { getPool, sql } from "../../config/database";
+import {
+  ACTIVE_FORM_TABLE,
+  COUNTY_LOOKUP,
+  DELAY_FAMILY_LOOKUP,
+  DELAY_PROVIDER_LOOKUP,
+  SERVICE_COORDINATOR_LOOKUP,
+  SU_LOOKUP,
+  TOWN_LOOKUP,
+  WRITABLE_COLUMNS,
+} from "./active-form.config";
+import type {
+  ActiveFormClient,
+  ActiveFormRecord,
+  TownLookup,
+} from "./active-form.types";
+
+const allowed = new Set<string>(WRITABLE_COLUMNS);
+
+function clean(payload: ActiveFormRecord) {
+  const result: ActiveFormRecord = {};
+  for (const [key, value] of Object.entries(payload ?? {})) {
+    if (key === "ID" || key === "ChildID" || key === "childId") continue;
+    if (allowed.has(key)) result[key] = value;
+  }
+  return result;
+}
+
+function bind(req: Request, key: string, value: unknown) {
+  if (value === undefined) return;
+  if (value === null) return req.input(key, sql.NVarChar, null);
+  if (typeof value === "boolean") return req.input(key, sql.Bit, value);
+  if (typeof value === "number" && Number.isInteger(value))
+    return req.input(key, sql.Int, value);
+  return req.input(key, sql.NVarChar, String(value));
+}
+
+function col(name: string) {
+  return `[${name.replace(/]/g, "]]")}]`;
+}
+
+async function nextId(pool: ConnectionPool) {
+  const r = await pool
+    .request()
+    .query(
+      `SELECT ISNULL(MAX(ID),0)+1 AS NextID FROM ${ACTIVE_FORM_TABLE} WITH (UPDLOCK,HOLDLOCK);`,
+    );
+  return Number(r.recordset[0].NextID);
+}
+
+export async function getClient(
+  childId: number,
+): Promise<ActiveFormClient | null> {
+  const pool = await getPool();
+  const r = await pool.request().input("ChildID", sql.Int, childId).query(`
+    SELECT ChildID,Region,LastName,FirstName,SS,SSTemp,DOB,Gender,Notes,NonEarlyIntervention
+    FROM dbo.stblPeople WHERE ChildID=@ChildID;
+  `);
+  return r.recordset[0] ?? null;
+}
+
+export async function findByChildId(childId: number) {
+  const pool = await getPool();
+  const r = await pool.request().input("ChildID", sql.Int, childId).query(`
+    SELECT * FROM ${ACTIVE_FORM_TABLE}
+    WHERE ChildID=@ChildID
+    ORDER BY CASE WHEN ReferralDate IS NULL THEN 1 ELSE 0 END, ReferralDate DESC, ID DESC;
+  `);
+  return r.recordset;
+}
+
+export async function findOne(childId: number, id: number) {
+  const pool = await getPool();
+  const r = await pool
+    .request()
+    .input("ChildID", sql.Int, childId)
+    .input("ID", sql.Int, id).query(`
+    SELECT * FROM ${ACTIVE_FORM_TABLE} WHERE ChildID=@ChildID AND ID=@ID;
+  `);
+  return r.recordset[0] ?? null;
+}
+
+export async function insert(childId: number, payload: ActiveFormRecord) {
+  const pool = await getPool();
+  const data = clean(payload);
+  const id = await nextId(pool);
+  const keys = Object.keys(data);
+  const req = pool
+    .request()
+    .input("ID", sql.Int, id)
+    .input("ChildID", sql.Int, childId);
+  for (const k of keys) bind(req, k, data[k]);
+  const columns = ["[ID]", "[ChildID]", ...keys.map(col)].join(",");
+  const values = ["@ID", "@ChildID", ...keys.map((k) => `@${k}`)].join(",");
+  await req.query(
+    `INSERT INTO ${ACTIVE_FORM_TABLE} (${columns}) VALUES (${values});`,
+  );
+  return findOne(childId, id);
+}
+
+export async function update(
+  childId: number,
+  id: number,
+  payload: ActiveFormRecord,
+) {
+  const pool = await getPool();
+  const data = clean(payload);
+  delete data.LastUpdateDate;
+  const keys = Object.keys(data);
+  if (!keys.length) return findOne(childId, id);
+  const req = pool
+    .request()
+    .input("ChildID", sql.Int, childId)
+    .input("ID", sql.Int, id);
+  for (const k of keys) bind(req, k, data[k]);
+  const sets = keys.map((k) => `${col(k)}=@${k}`).join(",");
+  await req.query(`
+    UPDATE ${ACTIVE_FORM_TABLE}
+    SET ${sets}, [LastUpdateDate]=GETDATE()
+    WHERE ChildID=@ChildID AND ID=@ID;
+  `);
+  return findOne(childId, id);
+}
+
+export async function remove(childId: number, id: number) {
+  const pool = await getPool();
+  const r = await pool
+    .request()
+    .input("ChildID", sql.Int, childId)
+    .input("ID", sql.Int, id).query(`
+    DELETE FROM ${ACTIVE_FORM_TABLE} WHERE ChildID=@ChildID AND ID=@ID;
+    SELECT @@ROWCOUNT AS Affected;
+  `);
+  return Number(r.recordset[0]?.Affected ?? 0) > 0;
+}
+
+export async function getAllRegions() {
+  const pool = await getPool();
+  const result = await pool.request().query(`
+    SELECT
+      ID,
+      RName,
+      Description,
+      Inactive
+    FROM stblReportingRegion
+    WHERE Inactive = 0
+    ORDER BY RName
+  `);
+
+  return result.recordset;
+}
+
+export async function getSupervisoryUnions() {
+  const pool = await getPool();
+  const r = await pool.request().query(`
+    SELECT SU_id,SUName,SortOrder FROM ${SU_LOOKUP}
+    WHERE Inactive=0
+    ORDER BY CASE WHEN SortOrder IS NULL THEN 1 ELSE 0 END,SortOrder,SUName;
+  `);
+  return r.recordset;
+}
+
+export async function getTowns(search?: string) {
+  const pool = await getPool();
+  const req = pool.request();
+  let where = "";
+  if (search?.trim()) {
+    req.input("Search", sql.VarChar(100), `%${search.trim()}%`);
+    where = "WHERE t.TownName LIKE @Search OR t.Town LIKE @Search";
+  }
+  const r = await req.query(`
+    SELECT t.Town,t.TownName,t.SU_id,t.CountyCode,c.CountyName
+    FROM ${TOWN_LOOKUP} t
+    LEFT JOIN ${COUNTY_LOOKUP} c ON c.CountyCode=t.CountyCode
+    ${where} ORDER BY t.TownName;
+  `);
+  return r.recordset as TownLookup[];
+}
+
+export async function getTown(town: string) {
+  const pool = await getPool();
+  const r = await pool.request().input("Town", sql.VarChar(100), town).query(`
+    SELECT TOP 1 t.Town,t.TownName,t.SU_id,t.CountyCode,c.CountyName
+    FROM ${TOWN_LOOKUP} t
+    LEFT JOIN ${COUNTY_LOOKUP} c ON c.CountyCode=t.CountyCode
+    WHERE t.Town=@Town OR t.TownName=@Town;
+  `);
+  return r.recordset[0] as TownLookup | undefined;
+}
+
+export async function getServiceCoordinatorTypes() {
+  const pool = await getPool();
+  const r = await pool.request().query(`
+    SELECT SvcCordType,SvcCordTypeDesc FROM ${SERVICE_COORDINATOR_LOOKUP}
+    ORDER BY SvcCordTypeDesc,SvcCordType;
+  `);
+  return r.recordset;
+}
+
+export async function getDelayReasons() {
+  const pool = await getPool();
+  const [family, provider] = await Promise.all([
+    pool
+      .request()
+      .query(`SELECT Reason FROM ${DELAY_FAMILY_LOOKUP} ORDER BY Reason;`),
+    pool
+      .request()
+      .query(`SELECT Reason FROM ${DELAY_PROVIDER_LOOKUP} ORDER BY Reason;`),
+  ]);
+  return { family: family.recordset, provider: provider.recordset };
+}

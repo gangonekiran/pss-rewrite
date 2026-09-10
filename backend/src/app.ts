@@ -12,6 +12,7 @@ import { errorHandler } from "./middleware/error.middleware";
 
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./config/swagger";
+import { activeFormRoutes } from "./modules/active-form";
 
 const app = express();
 
@@ -52,6 +53,8 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/clients", clientRoutes);
 
 app.use("/api/input-forms", inputFormRoutes);
+
+app.use('/api/active-forms', activeFormRoutes);
 
 app.use(
   "/api-docs",

@@ -33,6 +33,14 @@ export const navigation: NavItem[] = [
     path: "/clients",
     icon: Users,
   },
+
+   {
+    id: "active_form",
+    label: "Active Form",
+    path: "/active-form",
+    icon: FileText,
+  },
+
   {
     id: "nopr",
     label: "NOPR Forms",

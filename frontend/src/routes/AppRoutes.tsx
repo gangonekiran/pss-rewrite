@@ -7,6 +7,7 @@ import ComingSoon from '../features/coming_soon/pages/ComingSoonPage';
 
 import LoginPage from './LoginPage';
 import NotFoundPage from './NotFoundPage';
+import { ActiveFormAddPage } from '../features/active-form';
 
 export default function AppRoutes() {
   return (
@@ -20,8 +21,10 @@ export default function AppRoutes() {
       <Route element={<MainLayout />}>
         {/* Implemented */}
         <Route path="/" element={<ComingSoon title="Dashboard" />}/>
-        <Route path="/clients" element={<ClientPage />} />
+        <Route path="/clients" element={<ClientPage />} />    
 
+        <Route path="/active-form" element={<ActiveFormAddPage />} />
+        
         {/* Under Development */}
         <Route
           path="/nopr-forms"

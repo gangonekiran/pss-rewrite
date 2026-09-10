@@ -1,0 +1,42 @@
+import { useFormContext, useWatch } from 'react-hook-form';
+import dayjs from 'dayjs';
+import { Field } from './FormField';
+import DelayReasons from './DelayReasons';
+import type { ActiveFormValues, DelayReasonsResponse } from '../../../types/active-form';
+import { inputClass } from './formStyles';
+
+export default function OnePlan({
+  reasons,
+  dob,
+}: {
+  reasons: DelayReasonsResponse;
+  dob: string | null;
+}) {
+  const {
+    register,
+    formState: { errors },
+  } = useFormContext<ActiveFormValues>();
+  const referral = useWatch({ name: 'ReferralDate' });
+  const onePlan = useWatch({ name: 'onePlanDate' });
+  const days = referral && onePlan ? dayjs(onePlan).diff(dayjs(referral), 'day') : '';
+  const minDate = referral || dob || undefined;
+  return (
+    <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="mb-5">
+        <h2 className="text-base font-semibold text-gray-900">One Plan</h2>
+      </div>
+      <div className="grid max-w-2xl grid-cols-1 gap-5 md:grid-cols-2">
+        <Field label="Date of One Plan">
+          <input type="date" {...register('onePlanDate')} min={minDate} className={inputClass} />
+        </Field>
+        <Field label="Days from Referral">
+          <input value={days} readOnly className={`${inputClass} bg-gray-100`} />
+        </Field>
+      </div>
+      <DelayReasons reasons={reasons} prefix="onePlan" />
+      {errors.onePlanDate?.message && (
+        <p className="mt-2 text-sm text-red-600">{String(errors.onePlanDate.message)}</p>
+      )}
+    </section>
+  );
+}
