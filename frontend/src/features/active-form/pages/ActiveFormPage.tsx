@@ -1,51 +1,130 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Check, ChevronLeft, ChevronRight, Save } from 'lucide-react';
+import { ChevronLeft, Save } from 'lucide-react';
 
 import PageContainer from '../../../layouts/PageContainer';
 import clientService from '../../../services/client.service';
 import type { Client } from '../../../types/client';
+import SearchableSelect from '../../../components/select/SearchableSelect';
+import activeFormService from '../../../services/active-form.service';
 
 import ClientInformation from '../components/ClientInformation';
 import GeneralInformation from '../components/GeneralInformation';
 import InitialEvaluation from '../components/InitialEvaluation';
 import OnePlan from '../components/OnePlan';
 import Eligibility from '../components/Eligibility';
-
-import SearchableSelect from '../../../components/select/SearchableSelect';
-
-import activeFormService from '../../../services/active-form.service';
 import { activeFormSchema } from '../schemas/active-form.schema';
 
 import {
   DEFAULT_ACTIVE_FORM_VALUES,
   type ActiveFormRecord,
   type ActiveFormValues,
-  type DelayReasonsResponse,
   type ActiveFormClient,
-  type SupervisoryUnionLookup,
-  type TownLookup,
-  type ServiceCoordinatorTypeLookup,
+  type DelayReasonsResponse,
   type RegionLookup,
 } from '../../../types/active-form';
 
-type Tab = 'general' | 'evaluation' | 'onePlan' | 'eligibility';
+function formatDate(value: string | null | undefined) {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString('en-US');
+}
 
-type FormMode = 'choose' | 'new' | 'edit';
+function toDateInput(value: string | null | undefined) {
+  if (!value) return '';
+  return String(value).slice(0, 10);
+}
 
-const tabs: Array<{ id: Tab; label: string }> = [
-  { id: 'general', label: 'General' },
-  { id: 'evaluation', label: 'Initial Evaluation' },
-  { id: 'onePlan', label: 'One Plan' },
-  { id: 'eligibility', label: 'Eligibility' },
-];
+function toValues(form: ActiveFormRecord): ActiveFormValues {
+  return {
+    ...DEFAULT_ACTIVE_FORM_VALUES,
+    ...form,
+    status: String(form.status ?? form.FormType ?? ''),
+    ReferralDate: toDateInput(form.ReferralDate),
+    InitialEvalDate: toDateInput(form.InitialEvalDate),
+    onePlanDate: toDateInput(form.onePlanDate ?? form.InitialMeetingDate),
+    DelayReason: form.DelayFC
+      ? `family::${form.DelayFC}`
+      : form.DelayNotFC
+        ? `provider::${form.DelayNotFC}`
+        : String(form.DelayReason ?? ''),
+    DelayDetails: String(form.DelayFCOther ?? form.DelayNotFCOther ?? form.DelayDetails ?? ''),
+    MeetingDelayReason: form.MeetingDelayFC
+      ? `family::${form.MeetingDelayFC}`
+      : form.MeetingDelayNC
+        ? `provider::${form.MeetingDelayNC}`
+        : String(form.MeetingDelayReason ?? ''),
+    MeetingDelayDetails: String(
+      form.MeetingDelayFCOther ?? form.MeetingDelayNCOther ?? form.MeetingDelayDetails ?? '',
+    ),
+    Region: Number(form.Region ?? 0),
+    SvcCordFirstName: String(form.SvcCordFirstName ?? ''),
+    SvcCordLastName: String(form.SvcCordLastName ?? ''),
+    AutismDate: toDateInput(form.AutismDate),
+    SuspectedDate: toDateInput(form.SuspectedDate),
+    BlindDate: toDateInput(form.BlindDate),
+    DeafDate: toDateInput(form.DeafDate),
+    NMNEI: Boolean(form.NMNEI),
+  };
+}
 
-/* -------------------------------------------------------------------------- */
-/* Client Selector                                                            */
-/* -------------------------------------------------------------------------- */
+function toPayload(values: ActiveFormValues): ActiveFormRecord {
+  const familyInitial =
+    values.DelayReason && !values.DelayReason.startsWith('provider::')
+      ? values.DelayReason.replace(/^family::/, '')
+      : '';
+  const providerInitial = values.DelayReason?.startsWith('provider::')
+    ? values.DelayReason.replace(/^provider::/, '')
+    : '';
+  const familyOnePlan =
+    values.MeetingDelayReason && !values.MeetingDelayReason.startsWith('provider::')
+      ? values.MeetingDelayReason.replace(/^family::/, '')
+      : '';
+  const providerOnePlan = values.MeetingDelayReason?.startsWith('provider::')
+    ? values.MeetingDelayReason.replace(/^provider::/, '')
+    : '';
+
+  return {
+    ...values,
+    DelayFC: familyInitial,
+    DelayNotFC: providerInitial,
+    DelayFCOther: familyInitial === 'Other reasons' ? values.DelayDetails : '',
+    DelayNotFCOther: providerInitial === 'Other reasons' ? values.DelayDetails : '',
+    MeetingDelayFC: familyOnePlan,
+    MeetingDelayNC: providerOnePlan,
+    MeetingDelayFCOther: familyOnePlan === 'Other reasons' ? values.MeetingDelayDetails : '',
+    MeetingDelayNCOther: providerOnePlan === 'Other reasons' ? values.MeetingDelayDetails : '',
+  };
+}
+
+function validateAgainstDob(values: ActiveFormValues, dob: string | null) {
+  if (!dob) return null;
+  const childDob = toDateInput(dob);
+  const checks: Array<[string, string, string]> = [
+    ['ReferralDate', values.ReferralDate, "Referral date cannot be before the child's DOB."],
+    [
+      'InitialEvalDate',
+      values.InitialEvalDate,
+      "Initial evaluation cannot be before the child's DOB.",
+    ],
+    ['onePlanDate', values.onePlanDate, "One Plan date cannot be before the child's DOB."],
+    ['AutismDate', values.AutismDate, "ASD diagnosis date cannot be before the child's DOB."],
+    [
+      'SuspectedDate',
+      values.SuspectedDate,
+      "Suspected ASD diagnosis date cannot be before the child's DOB.",
+    ],
+    ['BlindDate', values.BlindDate, "Vision diagnosis date cannot be before the child's DOB."],
+    ['DeafDate', values.DeafDate, "Hearing diagnosis date cannot be before the child's DOB."],
+  ];
+
+  const invalid = checks.find(([, value]) => value && value < childDob);
+  return invalid ? invalid[2] : null;
+}
 
 function ClientSelector({
   clients,
@@ -79,26 +158,17 @@ function ClientSelector({
     <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
       <div className="mb-4">
         <h2 className="text-base font-semibold text-gray-900">Select Client</h2>
-
         <p className="text-xs text-gray-500">
           Select an existing client before starting the Active Form.
         </p>
       </div>
-
       <div className="max-w-xl">
         <SearchableSelect
           options={options}
           value={selectedOption}
           onChange={(option) => {
-            if (!option) {
-              return;
-            }
-
-            const childId = Number(option.value);
-
-            if (Number.isInteger(childId) && childId > 0) {
-              onChange(childId);
-            }
+            const childId = Number(option?.value);
+            if (Number.isInteger(childId) && childId > 0) onChange(childId);
           }}
           placeholder={loading ? 'Loading clients…' : 'Search and select a client'}
           isDisabled={loading}
@@ -108,303 +178,177 @@ function ClientSelector({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Form Mapping                                                               */
-/* -------------------------------------------------------------------------- */
-
-function toValues(form: ActiveFormRecord): ActiveFormValues {
-  return {
-    ...DEFAULT_ACTIVE_FORM_VALUES,
-    ...form,
-
-    status: String(form.status ?? form.FormType ?? ''),
-
-    onePlanDate: String(form.onePlanDate ?? form.InitialMeetingDate ?? ''),
-
-    SU_id: form.SU_id == null ? null : Number(form.SU_id),
-
-    ReferralDate: String(form.ReferralDate ?? ''),
-
-    InitialEvalDate: String(form.InitialEvalDate ?? ''),
-
-    Region: String(form.Region ?? ''),
-
-    SUName: String(form.SUName ?? ''),
-
-    Town: String(form.Town ?? ''),
-
-    CountyCode: String(form.CountyCode ?? ''),
-
-    SvcCordFirstName: String(form.SvcCordFirstName ?? ''),
-
-    SvcCordLastName: String(form.SvcCordLastName ?? ''),
-
-    SvcCordType: String(form.SvcCordType ?? ''),
-  } as ActiveFormValues;
-}
-
-function toPayload(values: ActiveFormValues): ActiveFormRecord {
-  const { status, onePlanDate, ...rest } = values;
-
-  return {
-    ...rest,
-    status,
-    onePlanDate,
-  };
-}
-
-/* -------------------------------------------------------------------------- */
-/* Page                                                                       */
-/* -------------------------------------------------------------------------- */
-
 export default function ActiveFormPage() {
   const navigate = useNavigate();
-
-  const [tab, setTab] = useState<Tab>('general');
-
-  const [loading, setLoading] = useState(false);
-
-  const [clientLoading, setClientLoading] = useState(true);
-
-  const [saving, setSaving] = useState(false);
+  const params = useParams<{ childId?: string; id?: string }>();
+  const routeChildId = Number(params.childId);
+  const routeFormId = Number(params.id);
+  const routeEdit =
+    Number.isInteger(routeChildId) &&
+    routeChildId > 0 &&
+    Number.isInteger(routeFormId) &&
+    routeFormId > 0;
+  const routeNew = Number.isInteger(routeChildId) && routeChildId > 0 && !params.id;
+  const isEdit = Boolean(params.id);
 
   const [clients, setClients] = useState<Client[]>([]);
-
-  const [selectedChildId, setSelectedChildId] = useState<number | undefined>();
-
+  const [clientLoading, setClientLoading] = useState(true);
+  const [selectedChildId, setSelectedChildId] = useState<number | undefined>(
+    routeChildId > 0 ? routeChildId : undefined,
+  );
   const [client, setClient] = useState<ActiveFormClient | null>(null);
-
-  const [currentForm, setCurrentForm] = useState<ActiveFormRecord | undefined>();
-
   const [existingForms, setExistingForms] = useState<ActiveFormRecord[]>([]);
-
-  const [formMode, setFormMode] = useState<FormMode>('choose');
-
+  const [currentForm, setCurrentForm] = useState<ActiveFormRecord | undefined>();
   const [regions, setRegions] = useState<RegionLookup[]>([]);
-
-  const [unions, setUnions] = useState<SupervisoryUnionLookup[]>([]);
-
-  const [towns, setTowns] = useState<TownLookup[]>([]);
-
-  const [coordinatorTypes, setCoordinatorTypes] = useState<ServiceCoordinatorTypeLookup[]>([]);
-
-  const [reasons, setReasons] = useState<DelayReasonsResponse>({
-    family: [],
-    provider: [],
-  });
+  const [reasons, setReasons] = useState<DelayReasonsResponse>({ family: [], provider: [] });
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const methods = useForm<ActiveFormValues>({
     resolver: zodResolver(activeFormSchema),
     defaultValues: DEFAULT_ACTIVE_FORM_VALUES,
     mode: 'onBlur',
   });
-
-  const { reset, handleSubmit } = methods;
-
-  /* ------------------------------------------------------------------------ */
-  /* Load all clients                                                         */
-  /* ------------------------------------------------------------------------ */
+  const { reset, getValues, handleSubmit } = methods;
 
   useEffect(() => {
     let cancelled = false;
-
     (async () => {
       try {
-        setClientLoading(true);
-
         const data = await clientService.getAll();
-
-        if (!cancelled) {
-          setClients(data);
-        }
+        if (!cancelled) setClients(data);
       } catch (error) {
         console.error(error);
         toast.error('Unable to load clients.');
       } finally {
-        if (!cancelled) {
-          setClientLoading(false);
-        }
+        if (!cancelled) setClientLoading(false);
       }
     })();
-
     return () => {
       cancelled = true;
     };
   }, []);
 
-  /* ------------------------------------------------------------------------ */
-  /* Client selection                                                         */
-  /* ------------------------------------------------------------------------ */
-
   useEffect(() => {
-  if (!selectedChildId) {
-    return;
-  }
-
-  let cancelled = false;
+    if (!selectedChildId) return;
+    let cancelled = false;
 
     (async () => {
       try {
         setLoading(true);
-
-        const [data, regionRows, suRows, townRows, typeRows, delayRows] = await Promise.all([
+        const [data, regionRows, delayRows] = await Promise.all([
           activeFormService.get(selectedChildId),
           activeFormService.regions(),
-          activeFormService.supervisoryUnions(),
-          activeFormService.towns(),
-          activeFormService.serviceCoordinatorTypes(),
           activeFormService.delayReasons(),
         ]);
-
         if (cancelled) return;
 
-        /* Client */
-
         setClient(data.client);
-
-        /* Region lookup */
-
         setRegions(regionRows);
-
-        /* Other lookups */
-
-        setUnions(suRows);
-
-        setTowns(townRows);
-
-        setCoordinatorTypes(typeRows);
-
         setReasons(delayRows);
+        setExistingForms(Array.isArray(data.forms) ? data.forms : []);
 
-        /* Existing Active Forms */
+        if (routeEdit) {
+          const selected = data.forms.find((form) => Number(form.ID) === routeFormId);
+          if (!selected) {
+            toast.error('Active Form record not found.');
+            navigate('/active-form');
+            return;
+          }
+          setCurrentForm(selected);
+          reset(toValues(selected));
+          return;
+        }
 
-        const forms = Array.isArray(data.forms) ? data.forms : [];
-
-        setExistingForms(forms);
+        if (routeNew) {
+          setCurrentForm(undefined);
+          reset({ ...DEFAULT_ACTIVE_FORM_VALUES, Region: Number(data.client.Region ?? 0) });
+          return;
+        }
 
         setCurrentForm(undefined);
-
-        /*
-         * If forms exist, let the user choose.
-         *
-         * If no forms exist, start a new blank Active Form.
-         */
-
-        if (forms.length > 0) {
-          setFormMode('choose');
-        } else {
-          setFormMode('new');
-
-          reset({
-            ...DEFAULT_ACTIVE_FORM_VALUES,
-            Region: data.client.Region ?? '',
-          });
-        }
+        reset(DEFAULT_ACTIVE_FORM_VALUES);
       } catch (error) {
         console.error(error);
-
         setClient(null);
-
-        setCurrentForm(undefined);
-
-        setExistingForms([]);
-
-        setFormMode('choose');
-
         toast.error('Unable to load Active Form.');
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [selectedChildId, reset]);
-
-  /* ------------------------------------------------------------------------ */
-  /* Start new Active Form                                                    */
-  /* ------------------------------------------------------------------------ */
+  }, [selectedChildId, reset, routeEdit, routeNew, routeFormId, navigate]);
 
   const startNewForm = () => {
+    if (!client) return;
     setCurrentForm(undefined);
-
-    setFormMode('new');
-
-    reset({
-      ...DEFAULT_ACTIVE_FORM_VALUES,
-      Region: client?.Region ?? '',
-    });
-
-    setTab('general');
+    reset({ ...DEFAULT_ACTIVE_FORM_VALUES, Region: Number(client.Region ?? 0) });
+    navigate(`/active-form/new/${client.ChildID}`);
   };
-
-  /* ------------------------------------------------------------------------ */
-  /* Open existing Active Form                                                */
-  /* ------------------------------------------------------------------------ */
 
   const openExistingForm = (form: ActiveFormRecord) => {
-    setCurrentForm(form);
-
-    setFormMode('edit');
-
-    reset(toValues(form));
-
-    setTab('general');
+    if (!selectedChildId || !form.ID) return;
+    navigate(`/active-form/edit/${selectedChildId}/${form.ID}`);
   };
 
-  /* ------------------------------------------------------------------------ */
-  /* Create / Update Active Form                                              */
-  /* ------------------------------------------------------------------------ */
-
-  const onSubmit = async (values: ActiveFormValues) => {
+  const saveForm = async (values: ActiveFormValues, draft: boolean) => {
     if (!selectedChildId) {
       toast.error('Select a client first.');
       return;
     }
 
+    const dobError = validateAgainstDob(values, client?.DOB ?? null);
+    if (dobError) {
+      toast.error(dobError);
+      return;
+    }
+
     try {
       setSaving(true);
-
       const saved = currentForm?.ID
         ? await activeFormService.update(selectedChildId, currentForm.ID, toPayload(values))
         : await activeFormService.create(selectedChildId, toPayload(values));
 
       setCurrentForm(saved);
-
-      setExistingForms((forms) => forms.map((form) => (form.ID === saved.ID ? saved : form)));
-
+      setExistingForms((forms) => {
+        const exists = forms.some((form) => form.ID === saved.ID);
+        return exists
+          ? forms.map((form) => (form.ID === saved.ID ? saved : form))
+          : [saved, ...forms];
+      });
       reset(toValues(saved));
 
+      if (saved.ID) navigate(`/active-form/edit/${selectedChildId}/${saved.ID}`, { replace: true });
       toast.success(
-        currentForm?.ID ? 'Active Form updated successfully.' : 'Active Form created successfully.',
+        draft
+          ? 'Active Form draft saved.'
+          : isEdit
+            ? 'Active Form updated successfully.'
+            : 'Active Form saved successfully.',
       );
     } catch (error) {
       console.error(error);
-
-      toast.error('Unable to save Active Form.');
+      toast.error(draft ? 'Unable to save Active Form draft.' : 'Unable to save Active Form.');
     } finally {
       setSaving(false);
     }
   };
 
-  /* ------------------------------------------------------------------------ */
-  /* Tabs                                                                     */
-  /* ------------------------------------------------------------------------ */
+  const saveDraft = () => saveForm(getValues(), true);
+  const save = handleSubmit((values) => saveForm(values, false));
 
-  const index = tabs.findIndex((item) => item.id === tab);
+  const title = currentForm?.ID ? 'Edit Active Form' : 'Add New Active Form';
 
-  const next = () => setTab(tabs[Math.min(index + 1, tabs.length - 1)].id);
-
-  const previous = () => setTab(tabs[Math.max(index - 1, 0)].id);
-
-  const title = formMode === 'edit' ? 'Active Form' : 'Add Active Form';
-
-  /* ------------------------------------------------------------------------ */
-  /* Client selection screen                                                  */
-  /* ------------------------------------------------------------------------ */
+  const clientInfo = useMemo(() => {
+    if (!client) return null;
+    return {
+      childName: `${client.FirstName ?? ''} ${client.LastName ?? ''}`.trim(),
+      dob: formatDate(client.DOB),
+    };
+  }, [client]);
 
   if (!selectedChildId) {
     return (
@@ -419,65 +363,27 @@ export default function ActiveFormPage() {
     );
   }
 
-  /* ------------------------------------------------------------------------ */
-  /* Loading screen                                                           */
-  /* ------------------------------------------------------------------------ */
-
-  if (loading) {
+  if (loading || !client) {
     return (
       <PageContainer>
         <div className="rounded-lg border border-gray-200 bg-white p-10 text-center text-sm text-gray-500">
-          Loading Active Form…
+          {loading ? 'Loading Active Form…' : 'Client could not be loaded.'}
         </div>
       </PageContainer>
     );
   }
 
-  /* ------------------------------------------------------------------------ */
-  /* Client failed to load                                                    */
-  /* ------------------------------------------------------------------------ */
-
-  if (!client) {
-    return (
-      <PageContainer>
-        <div className="space-y-4">
-          <ClientSelector
-            clients={clients}
-            value={selectedChildId}
-            onChange={setSelectedChildId}
-            loading={clientLoading}
-          />
-
-          <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
-            Client could not be loaded.
-          </div>
-        </div>
-      </PageContainer>
-    );
-  }
-
-  /* ------------------------------------------------------------------------ */
-  /* Existing forms selection                                                 */
-  /* ------------------------------------------------------------------------ */
-
-  if (formMode === 'choose') {
+  if (!routeEdit && !routeNew && existingForms.length > 0) {
     return (
       <PageContainer>
         <div className="space-y-5">
           <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-            <div className="mb-4">
-              <h1 className="text-xl font-semibold text-gray-900">Active Form</h1>
-
-              <p className="mt-1 text-sm text-gray-500">
-                {client.FirstName} {client.LastName}
-                {' — '}
-                Child ID: {client.ChildID}
-              </p>
-            </div>
-
-            <div className="space-y-3">
+            <h1 className="text-xl font-semibold text-gray-900">Active Form</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              {clientInfo?.childName} — Child ID: {client.ChildID}
+            </p>
+            <div className="mt-5 space-y-3">
               <h2 className="text-base font-semibold text-gray-900">Existing Active Forms</h2>
-
               {existingForms.map((form) => (
                 <button
                   key={form.ID}
@@ -487,171 +393,104 @@ export default function ActiveFormPage() {
                 >
                   <div>
                     <div className="font-medium text-gray-900">Active Form #{form.ID}</div>
-
                     <div className="mt-1 text-xs text-gray-500">
-                      Form Date: {form.FormDate || 'Not entered'}
-                      {' · '}
-                      Referral Date: {form.ReferralDate || 'Not entered'}
+                      Referral Date:{' '}
+                      {form.ReferralDate ? formatDate(form.ReferralDate) : 'Not entered'}
                     </div>
                   </div>
-
                   <span className="text-sm font-medium text-green-700">Open</span>
                 </button>
               ))}
             </div>
-
-            <div className="mt-5 border-t border-gray-200 pt-5">
-              <button
-                type="button"
-                onClick={startNewForm}
-                className="inline-flex h-10 items-center rounded-md bg-green-700 px-4 text-sm font-medium text-white hover:bg-green-800"
-              >
-                + New Active Form
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={startNewForm}
+              className="mt-5 inline-flex h-10 items-center rounded-md bg-green-700 px-4 text-sm font-medium text-white hover:bg-green-800"
+            >
+              + New Active Form
+            </button>
           </section>
-
           <button
             type="button"
             onClick={() => {
               setSelectedChildId(undefined);
-
+              setClient(null);
               setExistingForms([]);
-
-              setCurrentForm(undefined);
-
-              setFormMode('choose');
-
               navigate('/active-form');
             }}
             className="inline-flex h-10 items-center gap-2 rounded-md border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
-            <ChevronLeft size={16} />
-            Back to Client Selection
+            <ChevronLeft size={16} /> Back to Client Selection
           </button>
         </div>
       </PageContainer>
     );
   }
 
-  /* ------------------------------------------------------------------------ */
-  /* Active Form                                                              */
-  /* ------------------------------------------------------------------------ */
-
   return (
     <PageContainer>
       <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <form onSubmit={save} className="space-y-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-2xl font-semibold text-gray-900">{title}</h1>
-
               <p className="text-sm text-gray-500">Child ID: {client.ChildID}</p>
             </div>
-
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  setCurrentForm(undefined);
-
-                  setFormMode(existingForms.length > 0 ? 'choose' : 'new');
-
-                  if (existingForms.length === 0) {
-                    reset({
-                      ...DEFAULT_ACTIVE_FORM_VALUES,
-                      Region: client.Region ?? '',
-                    });
-                  }
-
-                  setTab('general');
-                }}
+                onClick={() => navigate('/active-form')}
                 className="inline-flex h-10 items-center gap-2 rounded-md border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
-                <ChevronLeft size={16} />
-                Back
+                <ChevronLeft size={16} /> Back
               </button>
-
-              <button
-                type="submit"
-                disabled={saving}
-                className="inline-flex h-10 items-center gap-2 rounded-md bg-green-700 px-4 text-sm font-medium text-white hover:bg-green-800 disabled:opacity-60"
-              >
-                <Save size={16} />
-
-                {saving ? 'Saving…' : 'Save'}
-              </button>
-            </div>
-          </div>
-
-          <ClientInformation client={client} form={currentForm} />
-
-          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="flex overflow-x-auto border-b border-gray-200 bg-gray-50">
-              {tabs.map((item) => (
-                <button
-                  type="button"
-                  key={item.id}
-                  onClick={() => setTab(item.id)}
-                  className={`whitespace-nowrap border-b-2 px-5 py-3 text-sm font-medium ${
-                    tab === item.id
-                      ? 'border-green-700 bg-white text-green-700'
-                      : 'border-transparent text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="p-4 md:p-5">
-              {tab === 'general' && (
-                <GeneralInformation
-                  regions={regions}
-                  unions={unions}
-                  towns={towns}
-                  coordinatorTypes={coordinatorTypes}
-                />
-              )}
-
-              {tab === 'evaluation' && <InitialEvaluation reasons={reasons} dob={client.DOB} />}
-
-              {tab === 'onePlan' && <OnePlan reasons={reasons} dob={client.DOB} />}
-
-              {tab === 'eligibility' && <Eligibility />}
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={previous}
-              disabled={index === 0}
-              className="inline-flex h-10 items-center gap-2 rounded-md border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 disabled:opacity-40"
-            >
-              <ChevronLeft size={16} />
-              Previous
-            </button>
-
-            {index < tabs.length - 1 ? (
               <button
                 type="button"
-                onClick={next}
-                className="inline-flex h-10 items-center gap-2 rounded-md bg-green-700 px-4 text-sm font-medium text-white hover:bg-green-800"
+                onClick={saveDraft}
+                disabled={saving}
+                className="inline-flex h-10 items-center gap-2 rounded-md border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60"
               >
-                Next
-                <ChevronRight size={16} />
+                <Save size={16} /> Save Draft
               </button>
-            ) : (
               <button
                 type="submit"
                 disabled={saving}
                 className="inline-flex h-10 items-center gap-2 rounded-md bg-green-700 px-5 text-sm font-medium text-white hover:bg-green-800 disabled:opacity-60"
               >
-                <Check size={16} />
-                Save Active Form
+                <Save size={16} /> {saving ? 'Saving…' : 'Save'}
               </button>
-            )}
+            </div>
+          </div>
+
+          <ClientInformation client={client} />
+          <GeneralInformation regions={regions} />
+          <InitialEvaluation reasons={reasons} dob={client.DOB} />
+          <OnePlan reasons={reasons} dob={client.DOB} />
+          <Eligibility dob={client.DOB} />
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+            <button
+              type="button"
+              onClick={() => navigate('/active-form')}
+              className="inline-flex h-10 items-center justify-center rounded-md border border-gray-300 bg-white px-5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={saveDraft}
+              disabled={saving}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+            >
+              <Save size={16} /> Save Draft
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-green-700 px-6 text-sm font-medium text-white hover:bg-green-800 disabled:opacity-60"
+            >
+              <Save size={16} /> Save
+            </button>
           </div>
         </form>
       </FormProvider>

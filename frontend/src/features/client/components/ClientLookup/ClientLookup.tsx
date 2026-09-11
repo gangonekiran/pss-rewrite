@@ -243,7 +243,7 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
             {loading && <span className="text-xs text-gray-500">Loading...</span>}
           </div>
 
-          <div className="grid grid-cols-[85px_240px_90px_70px] items-center gap-3">
+          <div className="grid grid-cols-[85px_240px_70px_90px] items-center gap-3">
             {/* =====================================================
                 LAST NAME
             ===================================================== */}
@@ -315,6 +315,7 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
 
             <input
               value={client.ss ?? ''}
+              maxLength={10}
               disabled={isLocked}
               onChange={(e) =>
                 setClient({

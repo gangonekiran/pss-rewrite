@@ -7,7 +7,7 @@ import ComingSoon from '../features/coming_soon/pages/ComingSoonPage';
 
 import LoginPage from './LoginPage';
 import NotFoundPage from './NotFoundPage';
-import { ActiveFormAddPage } from '../features/active-form';
+import { ActiveFormAddPage, ActiveFormEditPage } from '../features/active-form';
 
 export default function AppRoutes() {
   return (
@@ -24,6 +24,7 @@ export default function AppRoutes() {
         <Route path="/clients" element={<ClientPage />} />    
 
         <Route path="/active-form" element={<ActiveFormAddPage />} />
+        <Route path="/active-form/edit/:childId/:id" element={<ActiveFormEditPage />} />
         
         {/* Under Development */}
         <Route
