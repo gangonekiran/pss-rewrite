@@ -25,7 +25,8 @@ export default function AppRoutes() {
 
         <Route path="/active-form" element={<ActiveFormAddPage />} />
         <Route path="/active-form/edit/:childId/:id" element={<ActiveFormEditPage />} />
-        
+        <Route path="/active-form/new/:childId" element={<ActiveFormAddPage />} />
+
         {/* Under Development */}
         <Route
           path="/nopr-forms"

@@ -28,7 +28,7 @@ interface ClientActionsProps {
 
 const emptyClient: Client = {
   childId: undefined,
-  region: "",
+  region: 0,
   lastName: "",
   firstName: "",
   ss: "",

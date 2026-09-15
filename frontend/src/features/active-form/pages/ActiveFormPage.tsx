@@ -34,41 +34,110 @@ function formatDate(value: string | null | undefined) {
   return date.toLocaleDateString('en-US');
 }
 
-function toDateInput(value: string | null | undefined) {
+/*function toDateInput(value: string | null | undefined) {
   if (!value) return '';
   return String(value).slice(0, 10);
+}*/
+
+function toDateInput(value: unknown): string {
+  if (value === null || value === undefined || value === '') {
+    return '';
+  }
+
+  const valueString = String(value).trim();
+
+  // Never allow boolean values into <input type="date">
+  if (valueString === 'true' || valueString === 'false') {
+    return '';
+  }
+
+  // Only return a valid HTML date value
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(valueString.slice(0, 10))) {
+    return '';
+  }
+
+  return valueString.slice(0, 10);
 }
 
 function toValues(form: ActiveFormRecord): ActiveFormValues {
   return {
     ...DEFAULT_ACTIVE_FORM_VALUES,
-    ...form,
+    // ...form,
+
     status: String(form.status ?? form.FormType ?? ''),
+
     ReferralDate: toDateInput(form.ReferralDate),
     InitialEvalDate: toDateInput(form.InitialEvalDate),
+
     onePlanDate: toDateInput(form.onePlanDate ?? form.InitialMeetingDate),
+
     DelayReason: form.DelayFC
       ? `family::${form.DelayFC}`
       : form.DelayNotFC
         ? `provider::${form.DelayNotFC}`
         : String(form.DelayReason ?? ''),
-    DelayDetails: String(form.DelayFCOther ?? form.DelayNotFCOther ?? form.DelayDetails ?? ''),
+
+    DelayDetails: String(
+      form.DelayFCOther ??
+        form.DelayNotFCOther ??
+        form.DelayDetails ??
+        '',
+    ),
+
     MeetingDelayReason: form.MeetingDelayFC
       ? `family::${form.MeetingDelayFC}`
       : form.MeetingDelayNC
         ? `provider::${form.MeetingDelayNC}`
         : String(form.MeetingDelayReason ?? ''),
+
     MeetingDelayDetails: String(
-      form.MeetingDelayFCOther ?? form.MeetingDelayNCOther ?? form.MeetingDelayDetails ?? '',
+      form.MeetingDelayFCOther ??
+        form.MeetingDelayNCOther ??
+        form.MeetingDelayDetails ??
+        '',
     ),
+
     Region: Number(form.Region ?? 0),
+
     SvcCordFirstName: String(form.SvcCordFirstName ?? ''),
     SvcCordLastName: String(form.SvcCordLastName ?? ''),
+
     AutismDate: toDateInput(form.AutismDate),
     SuspectedDate: toDateInput(form.SuspectedDate),
     BlindDate: toDateInput(form.BlindDate),
     DeafDate: toDateInput(form.DeafDate),
+
     NMNEI: Boolean(form.NMNEI),
+
+    DDAll: Boolean(form.DDAll),
+    DDAdaptive: Boolean(form.DDAdaptive),
+    DDCognitive: Boolean(form.DDCognitive),
+    DDCommunication: Boolean(form.DDCommunication),
+    DDMotor: Boolean(form.DDMotor),
+    DDSocial: Boolean(form.DDSocial),
+
+    DCAttachment: Boolean(form.DCAttachment),
+    DCAutism: Boolean(form.DCAutism),
+    DCSuspected: Boolean(form.DCSuspected),
+    DCBlind: Boolean(form.DCBlind),
+    DCDeaf: Boolean(form.DCDeaf),
+    DCDown: Boolean(form.DCDown),
+    DCCerebral: Boolean(form.DCCerebral),
+    DCCraniofacial: Boolean(form.DCCraniofacial),
+    DCFragile: Boolean(form.DCFragile),
+    DCOral: Boolean(form.DCOral),
+    DCBirth: Boolean(form.DCBirth),
+    DCTorticollis: Boolean(form.DCTorticollis),
+    DCPlagiocephaly: Boolean(form.DCPlagiocephaly),
+    DCPrematurity: Boolean(form.DCPrematurity),
+    DCBehavior: Boolean(form.DCBehavior),
+    DCNutrition: Boolean(form.DCNutrition),
+    DCNAS: Boolean(form.DCNAS),
+    DCCysticFibrosis: Boolean(form.DCCysticFibrosis),
+
+    DCHIE: Boolean(form.DCHIE),
+    DCFeeding: Boolean(form.DCFeeding),
+    DCOtherDesc: String(form.DCOtherDesc ?? ''),
   };
 }
 

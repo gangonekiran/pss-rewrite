@@ -12,7 +12,7 @@ import type { Client } from '../../../types/client';
 export default function ClientPage() {
   const emptyClient: Client = {
     childId: undefined,
-    region: '',
+    region: 0,
     lastName: '',
     firstName: '',
     ss: '',

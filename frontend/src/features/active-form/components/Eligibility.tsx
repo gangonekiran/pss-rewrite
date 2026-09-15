@@ -139,7 +139,7 @@ export default function Eligibility({
 
       {/* Diagnosis dates - always available */}
       <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
-        {dates.map(([check, date, label]) => (
+        {dates.map(([, date, label]) => (
           <Field
             key={String(date)}
             label={label}
