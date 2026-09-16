@@ -34,11 +34,6 @@ function formatDate(value: string | null | undefined) {
   return date.toLocaleDateString('en-US');
 }
 
-/*function toDateInput(value: string | null | undefined) {
-  if (!value) return '';
-  return String(value).slice(0, 10);
-}*/
-
 function toDateInput(value: unknown): string {
   if (value === null || value === undefined || value === '') {
     return '';
