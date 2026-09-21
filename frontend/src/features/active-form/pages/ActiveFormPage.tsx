@@ -28,6 +28,7 @@ import {
 interface ActiveFormPageProps {
   childId: number;
   onClose: () => void;
+  onSaved?: () => Promise<void>;
   formId?: number;
 }
 
@@ -124,7 +125,7 @@ function toValues(form: ActiveFormRecord): ActiveFormValues {
   };
 }
 
-function toPayload(values: ActiveFormValues) {
+function toPayload(values: ActiveFormValues, isNew: boolean) {
   const familyDelay = values.DelayReason?.startsWith('family::')
     ? values.DelayReason.replace('family::', '')
     : '';
@@ -142,6 +143,11 @@ function toPayload(values: ActiveFormValues) {
     : '';
 
   return {
+    ...(isNew
+    ? {
+        FormDate: new Date().toISOString().slice(0, 10),
+      }
+    : {}),
     Region: values.Region,
 
     SvcCordFirstName: values.SvcCordFirstName,
@@ -213,7 +219,10 @@ function toPayload(values: ActiveFormValues) {
   };
 }
 
-function validateDates(values: ActiveFormValues, dob: string | null | undefined): string | null {
+function validateDates(
+  values: ActiveFormValues,
+  dob: string | null | undefined,
+): string | null {
   if (!dob) {
     return null;
   }
@@ -267,7 +276,12 @@ function validateDates(values: ActiveFormValues, dob: string | null | undefined)
   return null;
 }
 
-export default function ActiveFormPage({ childId, onClose, formId }: ActiveFormPageProps) {
+export default function ActiveFormPage({
+  childId,
+  onClose,
+  onSaved,
+  formId,
+}: ActiveFormPageProps) {
   const [client, setClient] = useState<ActiveFormClient | null>(null);
 
   const [regions, setRegions] = useState<RegionLookup[]>([]);
@@ -319,7 +333,9 @@ export default function ActiveFormPage({ childId, onClose, formId }: ActiveFormP
          * EDIT MODE
          */
         if (formId !== undefined) {
-          const existing = activeResponse.forms.find((form) => Number(form.ID) === Number(formId));
+          const existing = activeResponse.forms.find(
+            (form) => Number(form.ID) === Number(formId),
+          );
 
           if (!existing) {
             toast.error('Active Form record not found.');
@@ -374,7 +390,7 @@ export default function ActiveFormPage({ childId, onClose, formId }: ActiveFormP
     try {
       setSaving(true);
 
-      const payload = toPayload(values);
+      const payload = toPayload(values, formId === undefined);
 
       /*
        * EDIT
@@ -392,14 +408,24 @@ export default function ActiveFormPage({ childId, onClose, formId }: ActiveFormP
         toast.success('Active Form saved successfully.');
       }
 
-      onClose();
+      /*
+       * Refresh parent history after a successful save/update.
+       */
+      if (onSaved) {
+        await onSaved();
+      } else {
+        onClose();
+      }
     } catch (error) {
       console.error('Failed to save Active Form:', error);
 
       let message = 'Failed to save Active Form.';
 
       if (axios.isAxiosError(error)) {
-        message = error.response?.data?.message ?? error.response?.data?.error ?? message;
+        message =
+          error.response?.data?.message ??
+          error.response?.data?.error ??
+          message;
       }
 
       toast.error(message);
@@ -412,7 +438,9 @@ export default function ActiveFormPage({ childId, onClose, formId }: ActiveFormP
     return (
       <PageContainer>
         <div className="flex min-h-[300px] items-center justify-center">
-          <div className="text-sm text-gray-500">Loading Active Form...</div>
+          <div className="text-sm text-gray-500">
+            Loading Active Form...
+          </div>
         </div>
       </PageContainer>
     );
@@ -422,7 +450,9 @@ export default function ActiveFormPage({ childId, onClose, formId }: ActiveFormP
     return (
       <PageContainer>
         <div className="flex min-h-[300px] items-center justify-center">
-          <div className="text-sm text-red-600">Client information could not be loaded.</div>
+          <div className="text-sm text-red-600">
+            Client information could not be loaded.
+          </div>
         </div>
       </PageContainer>
     );
@@ -430,7 +460,10 @@ export default function ActiveFormPage({ childId, onClose, formId }: ActiveFormP
 
   return (
     <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(saveForm)} className="flex min-h-full flex-col bg-white">
+      <form
+        onSubmit={handleSubmit(saveForm)}
+        className="flex min-h-full flex-col bg-white"
+      >
         {/* Header */}
         <div className="sticky top-0 z-20 flex shrink-0 items-center justify-between border-b border-gray-200 bg-white px-5 py-3">
           <div>

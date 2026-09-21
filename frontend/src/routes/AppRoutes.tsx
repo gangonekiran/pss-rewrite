@@ -16,6 +16,7 @@ export default function AppRoutes() {
       {/* Main Application */}
       <Route element={<MainLayout />}>
         {/* Implemented */}
+         <Route path="/" element={<ClientPage />} />     
         <Route path="/clients" element={<ClientPage />} />        
       </Route>
 
