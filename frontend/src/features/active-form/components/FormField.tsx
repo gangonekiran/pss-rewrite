@@ -13,7 +13,7 @@ export function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="block text-sm font-medium text-gray-700">
+      <label className="block text-sm font-medium text-gray-700 text-left">
         {label}
         {required && <span className="ml-1 text-red-600">*</span>}
       </label>

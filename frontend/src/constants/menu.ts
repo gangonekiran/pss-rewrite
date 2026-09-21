@@ -1,12 +1,5 @@
 import {
-  LayoutDashboard,
   Users,
-  FileText,
-  ClipboardEdit,
-  Shield,
-  BarChart3,
-  UserCog,
-  Settings,
   type LucideIcon,
 } from "lucide-react";
 
@@ -20,67 +13,11 @@ export interface NavItem {
   permission?: string;
 }
 
-export const navigation: NavItem[] = [
-  {
-    id: "dashboard",
-    label: "Dashboard",
-    path: "/",
-    icon: LayoutDashboard,
-  },
+export const navigation: NavItem[] = [  
   {
     id: "clients",
     label: "Client Status",
     path: "/clients",
     icon: Users,
-  },
-
-   {
-    id: "active_form",
-    label: "Active Form",
-    path: "/active-form",
-    icon: FileText,
-  },
-
-  {
-    id: "nopr",
-    label: "NOPR Forms",
-    path: "/nopr-forms",
-    icon: FileText,
-  },
-  {
-    id: "referral",
-    label: "Referral Forms",
-    path: "/referral-forms",
-    icon: ClipboardEdit,
-  },
-  {
-    id: "cos",
-    label: "COS Forms",
-    path: "/cos-forms",
-    icon: ClipboardEdit,
-  },
-  {
-    id: "insurance",
-    label: "Insurance",
-    path: "/insurance",
-    icon: Shield,
-  },
-  {
-    id: "reports",
-    label: "Reports",
-    path: "/reports",
-    icon: BarChart3,
-  },
-  {
-    id: "users",
-    label: "Users",
-    path: "/users",
-    icon: UserCog,
-  },
-  {
-    id: "settings",
-    label: "Settings",
-    path: "/settings",
-    icon: Settings,
-  },
+  }
 ];

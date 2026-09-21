@@ -4,6 +4,7 @@ import { AlertCircle, Check, Pencil, Trash2, X } from 'lucide-react';
 import inputFormService from '../../../../services/input-form.service';
 import type { InputFormHistoryItem, InputFormName } from '../../../../types/input-form';
 import { INPUT_FORM_OPTIONS } from '../../../../types/input-form';
+import ActiveFormPage from '../../../active-form/pages/ActiveFormPage';
 
 interface InputFormsProps {
   childId?: number;
@@ -22,17 +23,24 @@ function formatDate(value: string | null | undefined): string {
 }
 
 function FormType({ value }: { value: string }) {
-  const normalized = value.toLowerCase();
+  const normalized = value.toLowerCase().trim();
 
   let className = 'text-blue-700';
+  let actualValue = value;
 
-  if (normalized.includes('active')) {
+  if (
+    normalized === 'active one plan' ||
+    normalized === 'active one plan - capta' ||
+    normalized === 'aop' ||
+    normalized === 'aop-capta'
+  ) {
     className = 'text-green-700';
+    actualValue = 'Active';
   } else if (normalized.includes('service')) {
     className = 'text-purple-700';
   }
 
-  return <span className={`font-medium ${className}`}>{value}</span>;
+  return <span className={`font-medium ${className}`}>{actualValue}</span>;
 }
 
 export default function InputForms({ childId }: InputFormsProps) {
@@ -172,22 +180,33 @@ export default function InputForms({ childId }: InputFormsProps) {
 
   return (
     <div className="rounded-md bg-white">
-      {selectedForm && (
-        <InputFormEditor
+      {selectedForm === 'active' ? (
+        <ActiveFormModal
           childId={childId}
-          formName={selectedForm}
           existing={editing}
           onClose={() => {
             setSelectedForm(null);
             setEditing(null);
           }}
-          onSaved={async () => {
-            setSelectedForm(null);
-            setEditing(null);
-
-            await loadForms();
-          }}
         />
+      ) : (
+        selectedForm && (
+          <InputFormEditor
+            childId={childId}
+            formName={selectedForm}
+            existing={editing}
+            onClose={() => {
+              setSelectedForm(null);
+              setEditing(null);
+            }}
+            onSaved={async () => {
+              setSelectedForm(null);
+              setEditing(null);
+
+              await loadForms();
+            }}
+          />
+        )
       )}
 
       <div className="grid grid-cols-[minmax(0,1fr)_170px]">
@@ -395,6 +414,46 @@ export default function InputForms({ childId }: InputFormsProps) {
             </div>
           </div>
         </aside>
+      </div>
+    </div>
+  );
+}
+
+/* =============================================================
+   ACTIVE FORM MODAL
+============================================================= */
+
+interface ActiveFormModalProps {
+  childId: number;
+  existing?: any;
+  onClose: () => void;
+}
+
+function ActiveFormModal({ childId, existing, onClose }: ActiveFormModalProps) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+      <div className="flex h-[95vh] w-full max-w-7xl flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl">
+        {/* HEADER */}
+        <div className="flex shrink-0 items-center justify-between border-b border-gray-200 bg-gray-50 px-5 py-3">
+          <div>
+            <h2 className="text-base font-semibold text-gray-800">Active Form</h2>
+
+            <p className="mt-0.5 text-xs text-gray-500">Client ID: {childId}</p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-md p-1 text-gray-500 hover:bg-gray-200"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* ACTIVE FORM */}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <ActiveFormPage childId={childId} formId={existing?.id} onClose={onClose} />
+        </div>
       </div>
     </div>
   );
