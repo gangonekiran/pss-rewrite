@@ -62,12 +62,10 @@ export const WRITABLE_COLUMNS = [
   "DCOther",
   "DCOtherDesc",
   "ConsentDate",
-  "InsertUser",
-  "LastUpdateUser",
   "AutismDate",
   "SuspectedDate",
   "BlindDate",
-  "DeafDate",
+  "DeafDate",  
 ] as const;
 
 export type WritableColumn = (typeof WRITABLE_COLUMNS)[number];

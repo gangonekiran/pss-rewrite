@@ -35,17 +35,10 @@ interface ActiveFormPageProps {
 function toDateInput(value?: string | null): string {
   if (!value) return '';
 
-  const date = new Date(value);
+  const stringValue = String(value);
+  const match = stringValue.match(/^(\d{4}-\d{2}-\d{2})/);
 
-  if (Number.isNaN(date.getTime())) {
-    return '';
-  }
-
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
+  return match?.[1] ?? '';
 }
 
 function toValues(form: ActiveFormRecord): ActiveFormValues {
@@ -102,21 +95,24 @@ function toValues(form: ActiveFormRecord): ActiveFormValues {
     DCOral: Boolean(form.DCOral),
 
     DCBirth: Boolean(form.DCBirth),
+
+    // UI-only eligibility fields.
+    // These are intentionally kept in the form model for now.
     DCTorticollis: Boolean(form.DCTorticollis),
     DCPlagiocephaly: Boolean(form.DCPlagiocephaly),
     DCPrematurity: Boolean(form.DCPrematurity),
-
     DCBehavior: Boolean(form.DCBehavior),
     DCNutrition: Boolean(form.DCNutrition),
     DCNAS: Boolean(form.DCNAS),
     DCCysticFibrosis: Boolean(form.DCCysticFibrosis),
-
     DCHIE: Boolean(form.DCHIE),
     DCFeeding: Boolean(form.DCFeeding),
 
     DCOtherDesc: String(form.DCOtherDesc ?? ''),
 
-    NMNEI: Boolean(form.NMNEI),
+    NMNEI: String(form.DCOtherDesc ?? '')
+      .split(/\r?\n/)
+      .some((line) => line.trim().toUpperCase() === 'NMNEI'),
 
     AutismDate: toDateInput(form.AutismDate),
     SuspectedDate: toDateInput(form.SuspectedDate),
@@ -142,37 +138,67 @@ function toPayload(values: ActiveFormValues, isNew: boolean) {
     ? values.MeetingDelayReason.replace('provider::', '')
     : '';
 
+  /*
+   * FormDate = date the Active Form is created.
+   *
+   * Use local browser date instead of:
+   * new Date().toISOString().slice(0, 10)
+   *
+   * so the date is not shifted because of UTC conversion.
+   */
+  const today = new Date();
+
+  const formDate = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, '0'),
+    String(today.getDate()).padStart(2, '0'),
+  ].join('-');
+
   return {
     ...(isNew
-    ? {
-        FormDate: new Date().toISOString().slice(0, 10),
-      }
-    : {}),
+      ? {
+          FormDate: formDate,
+        }
+      : {}),
+
     Region: values.Region,
 
     SvcCordFirstName: values.SvcCordFirstName,
     SvcCordLastName: values.SvcCordLastName,
 
     ReferralDate: values.ReferralDate || null,
+
+    /*
+     * Backend maps:
+     * status -> FormType
+     */
     status: values.status,
 
     InitialEvalDate: values.InitialEvalDate || null,
 
-    DelayReason: values.DelayReason || null,
-    DelayDetails: values.DelayDetails || null,
-
+    /*
+     * UI field:
+     * DelayReason
+     *
+     * Database fields:
+     * DelayFC / DelayNotFC
+     */
     DelayFC: familyDelay || null,
     DelayNotFC: providerDelay || null,
 
-    MeetingDelayReason: values.MeetingDelayReason || null,
-    MeetingDelayDetails: values.MeetingDelayDetails || null,
-
+    /*
+     * UI field:
+     * MeetingDelayReason
+     *
+     * Database fields:
+     * MeetingDelayFC / MeetingDelayNC
+     */
     MeetingDelayFC: familyMeetingDelay || null,
     MeetingDelayNC: providerMeetingDelay || null,
 
     /*
-     * Active Form One Plan date
-     * -> legacy InitialMeetingDate column
+     * UI One Plan date
+     * -> legacy SQL column InitialMeetingDate
      */
     InitialMeetingDate: values.onePlanDate || null,
 
@@ -196,21 +222,15 @@ function toPayload(values: ActiveFormValues, isNew: boolean) {
     DCOral: values.DCOral,
 
     DCBirth: values.DCBirth,
-    DCTorticollis: values.DCTorticollis,
-    DCPlagiocephaly: values.DCPlagiocephaly,
-    DCPrematurity: values.DCPrematurity,
 
-    DCBehavior: values.DCBehavior,
-    DCNutrition: values.DCNutrition,
-    DCNAS: values.DCNAS,
-    DCCysticFibrosis: values.DCCysticFibrosis,
-
-    DCHIE: values.DCHIE,
-    DCFeeding: values.DCFeeding,
-
+    /*
+     * DCOtherDesc is an actual database column.
+     *
+     * Keep the existing value for now.
+     * We will handle the mapping of the additional
+     * UI-only eligibility checkboxes separately.
+     */
     DCOtherDesc: values.DCOtherDesc,
-
-    NMNEI: values.NMNEI,
 
     AutismDate: values.AutismDate || null,
     SuspectedDate: values.SuspectedDate || null,
@@ -219,10 +239,7 @@ function toPayload(values: ActiveFormValues, isNew: boolean) {
   };
 }
 
-function validateDates(
-  values: ActiveFormValues,
-  dob: string | null | undefined,
-): string | null {
+function validateDates(values: ActiveFormValues, dob: string | null | undefined): string | null {
   if (!dob) {
     return null;
   }
@@ -276,12 +293,7 @@ function validateDates(
   return null;
 }
 
-export default function ActiveFormPage({
-  childId,
-  onClose,
-  onSaved,
-  formId,
-}: ActiveFormPageProps) {
+export default function ActiveFormPage({ childId, onClose, onSaved, formId }: ActiveFormPageProps) {
   const [client, setClient] = useState<ActiveFormClient | null>(null);
 
   const [regions, setRegions] = useState<RegionLookup[]>([]);
@@ -333,9 +345,7 @@ export default function ActiveFormPage({
          * EDIT MODE
          */
         if (formId !== undefined) {
-          const existing = activeResponse.forms.find(
-            (form) => Number(form.ID) === Number(formId),
-          );
+          const existing = activeResponse.forms.find((form) => Number(form.ID) === Number(formId));
 
           if (!existing) {
             toast.error('Active Form record not found.');
@@ -409,7 +419,8 @@ export default function ActiveFormPage({
       }
 
       /*
-       * Refresh parent history after a successful save/update.
+       * Refresh parent history after
+       * successful save/update.
        */
       if (onSaved) {
         await onSaved();
@@ -422,10 +433,7 @@ export default function ActiveFormPage({
       let message = 'Failed to save Active Form.';
 
       if (axios.isAxiosError(error)) {
-        message =
-          error.response?.data?.message ??
-          error.response?.data?.error ??
-          message;
+        message = error.response?.data?.message ?? error.response?.data?.error ?? message;
       }
 
       toast.error(message);
@@ -438,9 +446,7 @@ export default function ActiveFormPage({
     return (
       <PageContainer>
         <div className="flex min-h-[300px] items-center justify-center">
-          <div className="text-sm text-gray-500">
-            Loading Active Form...
-          </div>
+          <div className="text-sm text-gray-500">Loading Active Form...</div>
         </div>
       </PageContainer>
     );
@@ -450,9 +456,7 @@ export default function ActiveFormPage({
     return (
       <PageContainer>
         <div className="flex min-h-[300px] items-center justify-center">
-          <div className="text-sm text-red-600">
-            Client information could not be loaded.
-          </div>
+          <div className="text-sm text-red-600">Client information could not be loaded.</div>
         </div>
       </PageContainer>
     );
@@ -460,10 +464,7 @@ export default function ActiveFormPage({
 
   return (
     <FormProvider {...methods}>
-      <form
-        onSubmit={handleSubmit(saveForm)}
-        className="flex min-h-full flex-col bg-white"
-      >
+      <form onSubmit={handleSubmit(saveForm)} className="flex min-h-full flex-col bg-white">
         {/* Header */}
         <div className="sticky top-0 z-20 flex shrink-0 items-center justify-between border-b border-gray-200 bg-white px-5 py-3">
           <div>
