@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useEffect, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 
 import type { Dispatch, SetStateAction } from 'react';
 
@@ -24,10 +24,13 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
   { client, setClient, isLocked },
   ref,
 ) {
-  const [names, setNames] = useState<SelectOption[]>([]);
+  const [firstNames, setFirstNames] = useState<SelectOption[]>([]);
+  const [lastNames, setLastNames] = useState<SelectOption[]>([]);
   const [ssns, setSsns] = useState<SelectOption[]>([]);
 
-  const [selectedName, setSelectedName] = useState<SelectOption | null>(null);
+  const [selectedFirstName, setSelectedFirstName] = useState<SelectOption | null>(null);
+
+  const [selectedLastName, setSelectedLastName] = useState<SelectOption | null>(null);
 
   const [selectedSSN, setSelectedSSN] = useState<SelectOption | null>(null);
 
@@ -37,31 +40,25 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
 
   useImperativeHandle(ref, () => ({
     clearLookup() {
-      setSelectedName(null);
+      setSelectedFirstName(null);
+      setSelectedLastName(null);
       setSelectedSSN(null);
+
+      setFirstNames([]);
+      setLastNames([]);
+      setSsns([]);
     },
   }));
 
+  /**
+   * Load regions.
+   *
+   * Names are no longer loaded here because name lookup
+   * is performed through the dedicated search APIs.
+   */
   async function loadLookups() {
     try {
-      const [clients, regionData] = await Promise.all([
-        clientService.getAll(),
-        clientService.getAllRegions(),
-      ]);
-
-      setNames(
-        clients.map((c) => ({
-          value: String(c.childId!),
-          label: `${c.firstName ?? ''} ${c.lastName ?? ''}`.trim(),
-        })),
-      );
-
-      setSsns(
-        clients.map((c) => ({
-          value: c.childId!,
-          label: c.ss ?? '',
-        })),
-      );
+      const regionData = await clientService.getAllRegions();
 
       setRegions(
         regionData.map((region) => ({
@@ -75,8 +72,86 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
   }
 
   useEffect(() => {
-    loadLookups();
+    void loadLookups();
   }, []);
+
+  /**
+   * Convert client results to full-name options.
+   */
+  function mapClientToOption(client: Client): SelectOption {
+    return {
+      value: String(client.childId!),
+      label: `${client.firstName ?? ''} ${client.lastName ?? ''}`.trim(),
+    };
+  }
+
+  /**
+   * Search by First Name only.
+   */
+  async function handleFirstNameSearch(search: string) {
+    const value = search.trim();
+
+    if (!value) {
+      setFirstNames([]);
+      return;
+    }
+
+    try {
+      const clients = await clientService.searchFirstName(value);
+
+      setFirstNames(clients.map(mapClientToOption));
+    } catch (error) {
+      console.error('Failed to search first name:', error);
+      setFirstNames([]);
+    }
+  }
+
+  /**
+   * Search by Last Name only.
+   */
+  async function handleLastNameSearch(search: string) {
+    const value = search.trim();
+
+    if (!value) {
+      setLastNames([]);
+      return;
+    }
+
+    try {
+      const clients = await clientService.searchLastName(value);
+
+      setLastNames(clients.map(mapClientToOption));
+    } catch (error) {
+      console.error('Failed to search last name:', error);
+      setLastNames([]);
+    }
+  }
+
+  /**
+   * Search by SSN.
+   */
+  async function handleSSNSearch(search: string) {
+    const value = search.trim();
+
+    if (!value) {
+      setSsns([]);
+      return;
+    }
+
+    try {
+      const clients = await clientService.searchSSN(value);
+
+      setSsns(
+        clients.map((client) => ({
+          value: String(client.childId!),
+          label: client.ss ?? '',
+        })),
+      );
+    } catch (error) {
+      console.error('Failed to search SSN:', error);
+      setSsns([]);
+    }
+  }
 
   function calculateAge(dob?: string) {
     if (!dob) return '--';
@@ -107,9 +182,16 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
 
       setClient(selectedClient);
 
-      setSelectedName({
+      const fullName = `${selectedClient.firstName ?? ''} ${selectedClient.lastName ?? ''}`.trim();
+
+      setSelectedFirstName({
         value: String(selectedClient.childId!),
-        label: `${selectedClient.firstName ?? ''} ${selectedClient.lastName ?? ''}`.trim(),
+        label: fullName,
+      });
+
+      setSelectedLastName({
+        value: String(selectedClient.childId!),
+        label: fullName,
       });
 
       setSelectedSSN({
@@ -134,30 +216,35 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
 
           <div className="space-y-3">
             {/* -----------------------------------------------------
-                Name
+                FIRST NAME SEARCH
             ----------------------------------------------------- */}
             <div className="grid grid-cols-[60px_1fr_36px] items-center gap-2">
-              <label className="text-xs font-medium text-gray-700">Name</label>
+              <label className="text-xs font-medium text-gray-700">First Name</label>
 
               <SearchableSelect
-                options={names}
-                placeholder="Search Name"
-                value={selectedName}
+                options={firstNames}
+                placeholder="Search First Name"
+                value={selectedFirstName}
+                onInputChange={(value, actionMeta) => {
+                  if (actionMeta.action === 'input-change' || actionMeta.action === 'menu-close') {
+                    void handleFirstNameSearch(value);
+                  }
+                }}
                 onChange={(option) => {
-                  setSelectedName(option);
+                  setSelectedFirstName(option);
                 }}
               />
 
               <button
                 type="button"
-                disabled={!selectedName || loading}
+                disabled={!selectedFirstName || loading}
                 onClick={() => {
-                  if (!selectedName) return;
+                  if (!selectedFirstName) return;
 
-                  const childId = Number(selectedName.value);
+                  const childId = Number(selectedFirstName.value);
 
                   if (!Number.isNaN(childId)) {
-                    loadClient(childId);
+                    void loadClient(childId);
                   }
                 }}
                 className="h-9 w-9 rounded-md border border-gray-300 text-base hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
@@ -167,18 +254,79 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
             </div>
 
             {/* -----------------------------------------------------
-                DOB
+                LAST NAME SEARCH
             ----------------------------------------------------- */}
+            <div className="grid grid-cols-[60px_1fr_36px] items-center gap-2">
+              <label className="text-xs font-medium text-gray-700">Last Name</label>
+
+              <SearchableSelect
+                options={lastNames}
+                placeholder="Search Last Name"
+                value={selectedLastName}
+                onInputChange={(value, actionMeta) => {
+                  if (actionMeta.action === 'input-change' || actionMeta.action === 'menu-close') {
+                    void handleLastNameSearch(value);
+                  }
+                }}
+                onChange={(option) => {
+                  setSelectedLastName(option);
+                }}
+              />
+
+              <button
+                type="button"
+                disabled={!selectedLastName || loading}
+                onClick={() => {
+                  if (!selectedLastName) return;
+
+                  const childId = Number(selectedLastName.value);
+
+                  if (!Number.isNaN(childId)) {
+                    void loadClient(childId);
+                  }
+                }}
+                className="h-9 w-9 rounded-md border border-gray-300 text-base hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                →
+              </button>
+            </div>
+
+            {/* -----------------------------------------------------
+    DOB
+----------------------------------------------------- */}
             <div className="grid grid-cols-[60px_1fr_36px] items-center gap-2">
               <label className="text-xs font-medium text-gray-700">DOB</label>
 
-              <input
-                type="date"
-                value={client.dob ?? ''}
-                readOnly
-                style={{ borderColor: 'oklch(0.278 0.033 256.848)' }}
-                className="h-9 rounded-md border border-gray-300 bg-gray-50 px-2 text-sm"
-              />
+              <div className="relative">
+                <input
+                  type="date"
+                  value={client.dob ?? ''}
+                  onChange={(e) =>
+                    setClient({
+                      ...client,
+                      dob: e.target.value,
+                    })
+                  }
+                  style={{ borderColor: 'oklch(0.278 0.033 256.848)' }}
+                  className="h-9 w-full rounded-md border border-gray-300 bg-white px-2 pr-8 text-sm"
+                />
+
+                {client.dob && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setClient({
+                        ...client,
+                        dob: undefined,
+                      })
+                    }
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-900"
+                    aria-label="Clear DOB"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
 
               <button
                 type="button"
@@ -199,6 +347,11 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
                 options={ssns}
                 placeholder="Search SSN"
                 value={selectedSSN}
+                onInputChange={(value, actionMeta) => {
+                  if (actionMeta.action === 'input-change' || actionMeta.action === 'menu-close') {
+                    void handleSSNSearch(value);
+                  }
+                }}
                 onChange={(option) => {
                   setSelectedSSN(option);
                 }}
@@ -213,7 +366,7 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
                   const childId = Number(selectedSSN.value);
 
                   if (!Number.isNaN(childId)) {
-                    loadClient(childId);
+                    void loadClient(childId);
                   }
                 }}
                 className="h-9 w-9 rounded-md border border-gray-300 text-base hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"

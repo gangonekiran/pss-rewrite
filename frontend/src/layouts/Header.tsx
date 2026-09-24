@@ -1,4 +1,5 @@
 import { Bell, ChevronDown, Menu } from 'lucide-react';
+import { APP } from '../constants';
 
 interface HeaderProps {
   pathname: string;
@@ -6,7 +7,8 @@ interface HeaderProps {
 
 const pageConfig: Record<string, { title: string; subtitle?: string }> = {
   '/': {
-    title: 'Dashboard',
+    title: 'View/Edit Clients',
+    subtitle: 'Lookup and manage client information and status',
   },
 
   '/clients': {
@@ -56,8 +58,23 @@ export default function Header({ pathname }: HeaderProps) {
     <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-5">
       {/* Left */}
       <div className="flex items-center gap-4">
-        <button className="rounded-md p-2 transition hover:bg-gray-100">
-          <Menu size={22} />
+        <button
+          type="button"
+          className="group flex h-10 w-10 items-center justify-center rounded-md p-2 transition hover:bg-gray-100"
+          aria-label="Toggle navigation"
+        >
+          {/* CIS logo - normal state */}
+          <img
+            src={APP.COMPANY_LOGO}
+            alt="CIS"
+            className="block h-8 w-8 object-contain group-hover:hidden"
+          />
+
+          {/* Hamburger - hover state */}
+          <Menu
+            size={22}
+            className="hidden group-hover:block"
+          />
         </button>
 
         <div>

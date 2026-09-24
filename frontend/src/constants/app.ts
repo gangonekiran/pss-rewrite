@@ -1,5 +1,5 @@
 
-import logo from "../assets/logos/svg.png";
+import logo from "../assets/logos/CIS_logo.png";
 
 export const APP = {
   // Company
