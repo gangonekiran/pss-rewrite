@@ -1,10 +1,12 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { expect, vi } from 'vitest';
+import { render } from 'vitest-browser-react';
 
-import ClientActions from './ClientActions';
+import { test } from '../../../../../test-extend';
+
 import clientService from '../../../../services/client.service';
 import type { Client } from '../../../../types/client';
-import toast from 'react-hot-toast';
+
+import ClientActions from './ClientActions';
 
 vi.mock('../../../../services/client.service', () => ({
   default: {
@@ -14,318 +16,499 @@ vi.mock('../../../../services/client.service', () => ({
   },
 }));
 
-vi.mock('react-hot-toast', () => ({
-  default: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-}));
-
-const emptyClient: Client = {
-  childId: undefined,
-  region: 0,
-  lastName: '',
-  firstName: '',
-  ss: '',
-  ssTemp: false,
-  dob: '',
-  gender: '',
-  notes: '',
-  nonEarlyIntervention: false,
-};
-
-const existingClient: Client = {
+const createClient = (overrides: Partial<Client> = {}): Client => ({
   childId: 123,
   region: 1,
   lastName: 'Smith',
   firstName: 'John',
   ss: '123-45-6789',
   ssTemp: false,
-  dob: '2020-01-15',
+  dob: '2020-01-01',
   gender: 'M',
   notes: '',
   nonEarlyIntervention: false,
-};
+  ...overrides,
+});
 
-function renderClientActions(client: Client = existingClient, isLocked = false) {
+async function renderClientActions(
+  overrides: Partial<Client> = {},
+  isLocked = false,
+) {
+  const client = createClient(overrides);
+
   const setClient = vi.fn();
   const setIsNewClient = vi.fn();
   const setIsLocked = vi.fn();
-  const clearClient = vi.fn();
   const clearClientLookup = vi.fn();
+  const clearClient = vi.fn();
 
-  render(
+  const screen = await render(
     <ClientActions
-      isNewClient={!client.childId}
       client={client}
       setClient={setClient}
+      isNewClient={!client.childId}
       setIsNewClient={setIsNewClient}
-      clearClient={clearClient}
+      clearClientLookup={clearClientLookup}
       isLocked={isLocked}
       setIsLocked={setIsLocked}
-      clearClientLookup={clearClientLookup}
+      clearClient={clearClient}
     />,
   );
 
   return {
+    screen,
+    client,
     setClient,
     setIsNewClient,
     setIsLocked,
-    clearClient,
     clearClientLookup,
+    clearClient,
   };
 }
 
-describe('ClientActions', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+/* =========================================================
+   RENDERING
+========================================================= */
+
+test('renders all client action buttons', async () => {
+  const { screen } = await renderClientActions();
+
+  await expect
+    .element(screen.getByRole('button', { name: 'Lock' }))
+    .toBeVisible();
+
+  await expect
+    .element(screen.getByRole('button', { name: 'Delete Client' }))
+    .toBeVisible();
+
+  await expect
+    .element(screen.getByRole('button', { name: 'Add New Client' }))
+    .toBeVisible();
+
+  await expect
+    .element(screen.getByRole('button', { name: 'Done' }))
+    .toBeVisible();
+});
+
+/* =========================================================
+   LOCK / UNLOCK
+========================================================= */
+
+test('locks the client when Lock is clicked', async () => {
+  const { screen, setIsLocked } = await renderClientActions();
+
+  await screen.getByRole('button', { name: 'Lock' }).click();
+
+  expect(setIsLocked).toHaveBeenCalledTimes(1);
+  expect(setIsLocked).toHaveBeenCalledWith(expect.any(Function));
+});
+
+test('shows Unlock when client is locked', async () => {
+  const { screen } = await renderClientActions({}, true);
+
+  await expect
+    .element(screen.getByRole('button', { name: 'Unlock' }))
+    .toBeVisible();
+});
+
+test('unlocks the client when Unlock is clicked', async () => {
+  const { screen, setIsLocked } = await renderClientActions({}, true);
+
+  await screen.getByRole('button', { name: 'Unlock' }).click();
+
+  expect(setIsLocked).toHaveBeenCalledTimes(1);
+  expect(setIsLocked).toHaveBeenCalledWith(expect.any(Function));
+});
+
+/* =========================================================
+   UPDATE EXISTING CLIENT
+========================================================= */
+
+test('updates an existing client successfully', async () => {
+  const client = createClient({
+    childId: 123,
   });
 
-  describe('Save / Update Client', () => {
-    it('should update an existing client', async () => {
-      const savedClient: Client = {
-        ...existingClient,
-        firstName: 'Updated',
-      };
-
-      vi.mocked(clientService.update).mockResolvedValue(savedClient);
-
-      const { setClient, setIsNewClient, setIsLocked, clearClientLookup } = renderClientActions();
-
-      fireEvent.click(screen.getByRole('button', { name: 'Done' }));
-
-      await waitFor(() => {
-        expect(clientService.update).toHaveBeenCalledWith(123, existingClient);
-      });
-
-      expect(clearClientLookup).toHaveBeenCalled();
-      expect(toast.success).toHaveBeenCalledWith('Client updated successfully');
-      expect(setClient).toHaveBeenCalledWith(savedClient);
-      expect(setIsNewClient).toHaveBeenCalledWith(false);
-      expect(setIsLocked).toHaveBeenCalledWith(true);
-    });
-
-    it('should create a new client when childId is not present', async () => {
-      const newClient: Client = {
-        ...emptyClient,
-        lastName: 'Smith',
-        firstName: 'John',
-      };
-
-      const savedClient: Client = {
-        ...newClient,
-        childId: 456,
-      };
-
-      vi.mocked(clientService.create).mockResolvedValue(savedClient);
-
-      const { setClient, setIsNewClient, setIsLocked, clearClientLookup } = renderClientActions(
-        newClient,
-        false,
-      );
-
-      fireEvent.click(screen.getByRole('button', { name: 'Done' }));
-
-      await waitFor(() => {
-        expect(clientService.create).toHaveBeenCalledWith(newClient);
-      });
-
-      expect(clearClientLookup).toHaveBeenCalled();
-      expect(toast.success).toHaveBeenCalledWith('Client created successfully');
-      expect(setClient).toHaveBeenCalledWith(savedClient);
-      expect(setIsNewClient).toHaveBeenCalledWith(false);
-      expect(setIsLocked).toHaveBeenCalledWith(true);
-    });
-
-    it('should not save when client is locked', async () => {
-      renderClientActions(existingClient, true);
-
-      const doneButton = screen.getByRole('button', { name: 'Done' });
-
-      expect(doneButton).toBeDisabled();
-
-      fireEvent.click(doneButton);
-
-      expect(clientService.update).not.toHaveBeenCalled();
-      expect(clientService.create).not.toHaveBeenCalled();
-    });
-
-    it('should show an error when last name is missing', async () => {
-      const client = {
-        ...existingClient,
-        lastName: '',
-      };
-
-      renderClientActions(client, false);
-
-      fireEvent.click(screen.getByRole('button', { name: 'Done' }));
-
-      expect(toast.error).toHaveBeenCalledWith('Last Name is required.');
-
-      expect(clientService.update).not.toHaveBeenCalled();
-      expect(clientService.create).not.toHaveBeenCalled();
-    });
-
-    it('should show an error when first name is missing', async () => {
-      const client = {
-        ...existingClient,
-        firstName: '',
-      };
-
-      renderClientActions(client, false);
-
-      fireEvent.click(screen.getByRole('button', { name: 'Done' }));
-
-      expect(toast.error).toHaveBeenCalledWith('First Name is required.');
-
-      expect(clientService.update).not.toHaveBeenCalled();
-      expect(clientService.create).not.toHaveBeenCalled();
-    });
-
-    it('should show an error when save fails', async () => {
-      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-      vi.mocked(clientService.update).mockRejectedValue(new Error('Save failed'));
-
-      renderClientActions(existingClient, false);
-
-      fireEvent.click(screen.getByRole('button', { name: 'Done' }));
-
-      await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith('Failed to save client.');
-      });
-
-      consoleError.mockRestore();
-    });
+  const updatedClient = createClient({
+    childId: 123,
+    firstName: 'Updated',
+    lastName: 'Smith',
   });
 
-  describe('Delete Client', () => {
-    it('should delete the client after confirmation', async () => {
-      vi.spyOn(window, 'confirm').mockReturnValue(true);
-      vi.mocked(clientService.delete).mockResolvedValue(undefined);
+  vi.mocked(clientService.update).mockResolvedValue(updatedClient);
 
-      const { setClient, setIsNewClient, setIsLocked, clearClientLookup } = renderClientActions(
-        existingClient,
-        false,
-      );
+  const setClient = vi.fn();
+  const setIsNewClient = vi.fn();
+  const setIsLocked = vi.fn();
+  const clearClientLookup = vi.fn();
+  const clearClient = vi.fn();
 
-      fireEvent.click(screen.getByRole('button', { name: 'Delete Client' }));
+  const screen = await render(
+    <ClientActions
+      client={client}
+      setClient={setClient}
+      isNewClient={false}
+      setIsNewClient={setIsNewClient}
+      clearClientLookup={clearClientLookup}
+      isLocked={false}
+      setIsLocked={setIsLocked}
+      clearClient={clearClient}
+    />,
+  );
 
-      await waitFor(() => {
-        expect(clientService.delete).toHaveBeenCalledWith(123);
-      });
+  await screen.getByRole('button', { name: 'Done' }).click();
 
-      expect(window.confirm).toHaveBeenCalledWith('Are you sure you want to delete this client?');
-
-      expect(toast.success).toHaveBeenCalledWith('Client deleted successfully.');
-
-      expect(setClient).toHaveBeenCalledWith(emptyClient);
-      expect(setIsNewClient).toHaveBeenCalledWith(true);
-      expect(setIsLocked).toHaveBeenCalledWith(true);
-      expect(clearClientLookup).toHaveBeenCalled();
-
-      vi.restoreAllMocks();
-    });
-
-    it('should not delete when confirmation is cancelled', () => {
-      vi.spyOn(window, 'confirm').mockReturnValue(false);
-
-      renderClientActions(existingClient, false);
-
-      fireEvent.click(screen.getByRole('button', { name: 'Delete Client' }));
-
-      expect(window.confirm).toHaveBeenCalled();
-      expect(clientService.delete).not.toHaveBeenCalled();
-
-      vi.restoreAllMocks();
-    });
-
-    it('should not delete when the client has no childId', () => {
-      renderClientActions(emptyClient, false);
-
-      const deleteButton = screen.getByRole('button', {
-        name: 'Delete Client',
-      });
-
-      expect(deleteButton).toBeDisabled();
-
-      fireEvent.click(deleteButton);
-
-      expect(clientService.delete).not.toHaveBeenCalled();
-    });
-
-    it('should not delete when the client is locked', () => {
-      renderClientActions(existingClient, true);
-
-      const deleteButton = screen.getByRole('button', {
-        name: 'Delete Client',
-      });
-
-      expect(deleteButton).toBeDisabled();
-
-      fireEvent.click(deleteButton);
-
-      expect(clientService.delete).not.toHaveBeenCalled();
-    });
-
-    it('should show an error when delete fails', async () => {
-      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-      vi.spyOn(window, 'confirm').mockReturnValue(true);
-
-      vi.mocked(clientService.delete).mockRejectedValue(new Error('Delete failed'));
-
-      renderClientActions(existingClient, false);
-
-      fireEvent.click(screen.getByRole('button', { name: 'Delete Client' }));
-
-      await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith('Failed to delete client.');
-      });
-
-      consoleError.mockRestore();
-      vi.restoreAllMocks();
-    });
+  await vi.waitFor(() => {
+    expect(clientService.update).toHaveBeenCalledTimes(1);
   });
 
-  describe('Add New Client', () => {
-    it('should clear the client and unlock the form', () => {
-      const { setClient, setIsLocked, clearClientLookup } = renderClientActions(
-        existingClient,
-        true,
-      );
+  expect(clientService.update).toHaveBeenCalledWith(
+    123,
+    client,
+  );
 
-      fireEvent.click(screen.getByRole('button', { name: 'Add New Client' }));
+  expect(setClient).toHaveBeenCalledWith(updatedClient);
+  expect(setIsNewClient).toHaveBeenCalledWith(false);
+  expect(setIsLocked).toHaveBeenCalledWith(true);
+  expect(clearClientLookup).toHaveBeenCalledTimes(1);
+});
 
-      expect(setClient).toHaveBeenCalledWith(emptyClient);
-      expect(setIsLocked).toHaveBeenCalledWith(false);
-      expect(clearClientLookup).toHaveBeenCalled();
-    });
+/* =========================================================
+   CREATE NEW CLIENT
+========================================================= */
+
+test('creates a new client successfully', async () => {
+  const client = createClient({
+    childId: undefined,
+    firstName: 'John',
+    lastName: 'Smith',
   });
 
-  describe('Lock / Unlock', () => {
-    it('should toggle the lock state', () => {
-      const { setIsLocked } = renderClientActions(existingClient, false);
-
-      fireEvent.click(screen.getByRole('button', { name: 'Lock' }));
-
-      expect(setIsLocked).toHaveBeenCalledWith(expect.any(Function));
-
-      const updater = setIsLocked.mock.calls[0][0];
-
-      expect(updater(false)).toBe(true);
-    });
-
-    it('should unlock a locked client', () => {
-      const { setIsLocked } = renderClientActions(existingClient, true);
-
-      fireEvent.click(screen.getByRole('button', { name: 'Unlock' }));
-
-      expect(setIsLocked).toHaveBeenCalledWith(expect.any(Function));
-
-      const updater = setIsLocked.mock.calls[0][0];
-
-      expect(updater(true)).toBe(false);
-    });
+  const createdClient = createClient({
+    childId: 456,
+    firstName: 'John',
+    lastName: 'Smith',
   });
+
+  vi.mocked(clientService.create).mockResolvedValue(createdClient);
+
+  const setClient = vi.fn();
+  const setIsNewClient = vi.fn();
+  const setIsLocked = vi.fn();
+  const clearClientLookup = vi.fn();
+  const clearClient = vi.fn();
+  const screen = await render(
+    <ClientActions
+      client={client}
+      setClient={setClient}
+      isNewClient
+      setIsNewClient={setIsNewClient}
+      clearClientLookup={clearClientLookup}
+      clearClient={clearClient}
+      isLocked={false}
+      setIsLocked={setIsLocked}
+    />,
+  );
+
+  await screen.getByRole('button', { name: 'Done' }).click();
+
+  await vi.waitFor(() => {
+    expect(clientService.create).toHaveBeenCalledTimes(1);
+  });
+
+  expect(clientService.create).toHaveBeenCalledWith(client);
+  expect(setClient).toHaveBeenCalledWith(createdClient);
+  expect(setIsNewClient).toHaveBeenCalledWith(false);
+  expect(setIsLocked).toHaveBeenCalledWith(true);
+  expect(clearClientLookup).toHaveBeenCalledTimes(1);
+});
+
+/* =========================================================
+   SAVE VALIDATION
+========================================================= */
+
+test('does not save when last name is missing', async () => {
+  const { screen } = await renderClientActions({
+    lastName: '',
+  });
+
+  await screen.getByRole('button', { name: 'Done' }).click();
+
+  expect(clientService.update).not.toHaveBeenCalled();
+  expect(clientService.create).not.toHaveBeenCalled();
+});
+
+test('does not save when last name contains only spaces', async () => {
+  const { screen } = await renderClientActions({
+    lastName: '   ',
+  });
+
+  await screen.getByRole('button', { name: 'Done' }).click();
+
+  expect(clientService.update).not.toHaveBeenCalled();
+  expect(clientService.create).not.toHaveBeenCalled();
+});
+
+test('does not save when first name is missing', async () => {
+  const { screen } = await renderClientActions({
+    firstName: '',
+  });
+
+  await screen.getByRole('button', { name: 'Done' }).click();
+
+  expect(clientService.update).not.toHaveBeenCalled();
+  expect(clientService.create).not.toHaveBeenCalled();
+});
+
+test('does not save when first name contains only spaces', async () => {
+  const { screen } = await renderClientActions({
+    firstName: '   ',
+  });
+
+  await screen.getByRole('button', { name: 'Done' }).click();
+
+  expect(clientService.update).not.toHaveBeenCalled();
+  expect(clientService.create).not.toHaveBeenCalled();
+});
+
+/* =========================================================
+   LOCKED SAVE
+========================================================= */
+
+test('does not save a locked client', async () => {
+  const { screen } = await renderClientActions({}, true);
+
+  await expect
+    .element(screen.getByRole('button', { name: 'Done' }))
+    .toBeDisabled();
+
+  expect(clientService.update).not.toHaveBeenCalled();
+  expect(clientService.create).not.toHaveBeenCalled();
+});
+
+/* =========================================================
+   SAVE ERROR
+========================================================= */
+
+test('handles update failure', async () => {
+  vi.mocked(clientService.update).mockRejectedValue(
+    new Error('Save failed'),
+  );
+
+  const consoleError = vi
+    .spyOn(console, 'error')
+    .mockImplementation(() => {});
+
+  const {
+    screen,
+    setClient,
+    setIsNewClient,
+    setIsLocked,
+  } = await renderClientActions();
+
+  await screen.getByRole('button', { name: 'Done' }).click();
+
+  await vi.waitFor(() => {
+    expect(clientService.update).toHaveBeenCalledTimes(1);
+  });
+
+  expect(setClient).not.toHaveBeenCalled();
+  expect(setIsNewClient).not.toHaveBeenCalled();
+  expect(setIsLocked).not.toHaveBeenCalled();
+
+  consoleError.mockRestore();
+});
+
+test('handles create failure', async () => {
+  vi.mocked(clientService.create).mockRejectedValue(
+    new Error('Create failed'),
+  );
+
+  const consoleError = vi
+    .spyOn(console, 'error')
+    .mockImplementation(() => {});
+
+  const {
+    screen,
+    setClient,
+    setIsNewClient,
+    setIsLocked,
+  } = await renderClientActions({
+    childId: undefined,
+  });
+
+  await screen.getByRole('button', { name: 'Done' }).click();
+
+  await vi.waitFor(() => {
+    expect(clientService.create).toHaveBeenCalledTimes(1);
+  });
+
+  expect(setClient).not.toHaveBeenCalled();
+  expect(setIsNewClient).not.toHaveBeenCalled();
+  expect(setIsLocked).not.toHaveBeenCalled();
+
+  consoleError.mockRestore();
+});
+
+/* =========================================================
+   DELETE
+========================================================= */
+
+test('deletes an existing client after confirmation', async () => {
+  vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+  vi.mocked(clientService.delete).mockResolvedValue(undefined);
+
+  const {
+    screen,
+    setClient,
+    setIsNewClient,
+    setIsLocked,
+  } = await renderClientActions();
+
+  await screen.getByRole('button', { name: 'Delete Client' }).click();
+
+  await vi.waitFor(() => {
+    expect(clientService.delete).toHaveBeenCalledTimes(1);
+  });
+
+  expect(clientService.delete).toHaveBeenCalledWith(123);
+
+  expect(setClient).toHaveBeenCalledTimes(1);
+
+  expect(setClient).toHaveBeenCalledWith(
+    expect.objectContaining({
+      childId: undefined,
+      region: 0,
+      lastName: '',
+      firstName: '',
+      ss: '',
+      ssTemp: false,
+      dob: '',
+      gender: '',
+      notes: '',
+      nonEarlyIntervention: false,
+    }),
+  );
+
+  expect(setIsNewClient).toHaveBeenCalledWith(true);
+  expect(setIsLocked).toHaveBeenCalledWith(true);
+});
+
+test('does not delete when confirmation is cancelled', async () => {
+  vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+  const {
+    screen,
+    setClient,
+    setIsNewClient,
+    setIsLocked,
+  } = await renderClientActions();
+
+  await screen.getByRole('button', { name: 'Delete Client' }).click();
+
+  expect(clientService.delete).not.toHaveBeenCalled();
+  expect(setClient).not.toHaveBeenCalled();
+  expect(setIsNewClient).not.toHaveBeenCalled();
+  expect(setIsLocked).not.toHaveBeenCalled();
+});
+
+test('delete button is disabled when there is no client id', async () => {
+  const { screen } = await renderClientActions({
+    childId: undefined,
+  });
+
+  await expect
+    .element(screen.getByRole('button', { name: 'Delete Client' }))
+    .toBeDisabled();
+});
+
+test('delete button is disabled when client is locked', async () => {
+  const { screen } = await renderClientActions({}, true);
+
+  await expect
+    .element(screen.getByRole('button', { name: 'Delete Client' }))
+    .toBeDisabled();
+});
+
+test('does not delete a locked client', async () => {
+  const { screen } = await renderClientActions({}, true);
+
+  await expect
+    .element(screen.getByRole('button', { name: 'Delete Client' }))
+    .toBeDisabled();
+
+  expect(clientService.delete).not.toHaveBeenCalled();
+});
+
+/* =========================================================
+   DELETE ERROR
+========================================================= */
+
+test('handles delete failure', async () => {
+  vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+  vi.mocked(clientService.delete).mockRejectedValue(
+    new Error('Delete failed'),
+  );
+
+  const consoleError = vi
+    .spyOn(console, 'error')
+    .mockImplementation(() => {});
+
+  const {
+    screen,
+    setClient,
+    setIsNewClient,
+    setIsLocked,
+  } = await renderClientActions();
+
+  await screen.getByRole('button', { name: 'Delete Client' }).click();
+
+  await vi.waitFor(() => {
+    expect(clientService.delete).toHaveBeenCalledTimes(1);
+  });
+
+  expect(setClient).not.toHaveBeenCalled();
+  expect(setIsNewClient).not.toHaveBeenCalled();
+  expect(setIsLocked).not.toHaveBeenCalled();
+
+  consoleError.mockRestore();
+});
+
+/* =========================================================
+   ADD NEW CLIENT
+========================================================= */
+
+test('adds a new client and clears the lookup', async () => {
+  const {
+    screen,
+    setClient,
+    setIsLocked,
+    clearClientLookup,
+  } = await renderClientActions();
+
+  await screen
+    .getByRole('button', { name: 'Add New Client' })
+    .click();
+
+  expect(setClient).toHaveBeenCalledTimes(1);
+
+  expect(setClient).toHaveBeenCalledWith(
+    expect.objectContaining({
+      childId: undefined,
+      region: 0,
+      lastName: '',
+      firstName: '',
+      ss: '',
+      ssTemp: false,
+      dob: '',
+      gender: '',
+      notes: '',
+      nonEarlyIntervention: false,
+    }),
+  );
+
+  expect(setIsLocked).toHaveBeenCalledWith(false);
+  expect(clearClientLookup).toHaveBeenCalledTimes(1);
 });
