@@ -254,7 +254,7 @@ export async function searchLastName(search: string) {
 
   const result = await pool
     .request()
-    .input("search", sql.VarChar(100), `%${search}%`).query(`
+    .input("search", sql.VarChar(100), `${search}%`).query(`
       SELECT TOP 20
           ChildID,
           LastName,
@@ -275,7 +275,7 @@ export async function searchFirstName(search: string) {
 
   const result = await pool
     .request()
-    .input("search", sql.VarChar(100), `%${search}%`).query(`
+    .input("search", sql.VarChar(100), `${search}%`).query(`
       SELECT TOP 20
           ChildID,
           FirstName,
