@@ -1,2 +1,1 @@
-export * from './routes';
-export { default as CosPage } from './pages/CosPage';
+export { default as COSFormPage } from './pages/COSFormPage';

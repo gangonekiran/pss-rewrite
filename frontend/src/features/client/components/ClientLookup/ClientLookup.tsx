@@ -9,6 +9,7 @@ import SearchableSelect, {
 import type { Client } from '../../../../types/client';
 
 import clientService from '../../../../services/client.service';
+import commonInfoService from '../../../../services/common-info.service';
 
 export interface ClientLookupRef {
   clearLookup: () => void;
@@ -58,7 +59,7 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
    */
   async function loadLookups() {
     try {
-      const regionData = await clientService.getAllRegions();
+      const regionData = await commonInfoService.regions();
 
       setRegions(
         regionData.map((region) => ({

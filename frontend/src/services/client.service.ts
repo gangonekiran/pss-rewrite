@@ -17,13 +17,6 @@ interface ClientApiResponse {
   NonEarlyIntervention?: boolean;
 }
 
-interface RegionApiResponse {
-  ID: number;
-  RName: string;
-  Description?: string | null;
-  Inactive: boolean;
-}
-
 class ClientService {
   /**
    * Map Backend (PascalCase) -> Frontend (camelCase)
@@ -154,14 +147,6 @@ class ClientService {
     return response.data;
   }
 
-  /**
-   * Get All Regions
-   */
-  async getAllRegions(): Promise<RegionApiResponse[]> {
-    const response = await api.get<RegionApiResponse[]>(`${BASE_URL}/regions`);
-
-    return response.data;
-  }
 }
 
 export default new ClientService();

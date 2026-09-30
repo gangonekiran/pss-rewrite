@@ -4,11 +4,11 @@ import type {
   ActiveFormRecord,
   ActiveFormResponse,
   DelayReasonsResponse,
-  RegionLookup,
   ServiceCoordinatorTypeLookup,
   SupervisoryUnionLookup,
-  TownLookup,
 } from '../types/active-form';
+
+import type { TownLookup } from '../types/common';
 
 const BASE_URL = '/active-forms';
 
@@ -55,11 +55,6 @@ class ActiveFormService {
   async delete(childId: number, id: number): Promise<{ success: boolean }> {
     const response = await api.delete<{ success: boolean }>(`${BASE_URL}/${childId}/${id}`);
 
-    return response.data;
-  }
-
-  async regions(): Promise<RegionLookup[]> {
-    const response = await api.get<RegionLookup[]>(`${BASE_URL}/lookups/regions`);
     return response.data;
   }
 

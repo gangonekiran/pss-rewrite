@@ -134,7 +134,6 @@ export async function remove(childIdRaw: unknown, idRaw: unknown) {
   return { success: true };
 }
 export const lookups = {
-  regions: () => repository.getAllRegions(),
   supervisoryUnions: () => repository.getSupervisoryUnions(),
   towns: (s?: string) => repository.getTowns(s),
   serviceCoordinatorTypes: () => repository.getServiceCoordinatorTypes(),

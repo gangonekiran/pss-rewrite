@@ -5,9 +5,12 @@ import inputFormService from '../../../../services/input-form.service';
 import type { InputFormHistoryItem, InputFormName } from '../../../../types/input-form';
 import { INPUT_FORM_OPTIONS } from '../../../../types/input-form';
 import ActiveFormPage from '../../../active-form/pages/ActiveFormPage';
+import { COSFormPage } from '../../../cos';
+import type { RegionLookup } from '../../../../types/common';
 
 interface InputFormsProps {
   childId?: number;
+  regions: RegionLookup[];
 }
 
 function formatDate(value: string | null | undefined): string {
@@ -43,7 +46,7 @@ function FormType({ value }: { value: string }) {
   return <span className={`font-medium ${className}`}>{actualValue}</span>;
 }
 
-export default function InputForms({ childId }: InputFormsProps) {
+export default function InputForms({ childId, regions }: InputFormsProps) {
   const [forms, setForms] = useState<InputFormHistoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -150,7 +153,7 @@ export default function InputForms({ childId }: InputFormsProps) {
 
   async function handleDelete(item: InputFormHistoryItem) {
     if (!childId) return;
-    console.log(item)
+    console.log(item);
     const confirmed = window.confirm(
       `Delete ${item.formType === 'aop' || item.formType === 'aop-capta' ? 'Active Form' : item.formType} dated ${formatDate(item.date)}?`,
     );
@@ -185,6 +188,21 @@ export default function InputForms({ childId }: InputFormsProps) {
       {selectedForm === 'active' ? (
         <ActiveFormModal
           childId={childId}
+          existing={editing}
+          onClose={() => {
+            setSelectedForm(null);
+            setEditing(null);
+          }}
+          onSaved={async () => {
+            setSelectedForm(null);
+            setEditing(null);
+            await loadForms();
+          }}
+        />
+      ) : selectedForm === 'cos-cover' ? (
+        <COSFormModal
+          childId={childId}
+          regions={regions}
           existing={editing}
           onClose={() => {
             setSelectedForm(null);
@@ -280,25 +298,15 @@ export default function InputForms({ childId }: InputFormsProps) {
                         <FormType value={item.formType} />
                       </td>
 
-                      <td className="whitespace-nowrap px-4 py-3">
-                        {formatDate(item.referral)}
-                      </td>
+                      <td className="whitespace-nowrap px-4 py-3">{formatDate(item.referral)}</td>
 
-                      <td className="whitespace-nowrap px-4 py-3">
-                        {formatDate(item.nopr)}
-                      </td>
+                      <td className="whitespace-nowrap px-4 py-3">{formatDate(item.nopr)}</td>
 
-                      <td className="whitespace-nowrap px-4 py-3">
-                        {formatDate(item.interim)}
-                      </td>
+                      <td className="whitespace-nowrap px-4 py-3">{formatDate(item.interim)}</td>
 
-                      <td className="whitespace-nowrap px-4 py-3">
-                        {formatDate(item.op)}
-                      </td>
+                      <td className="whitespace-nowrap px-4 py-3">{formatDate(item.op)}</td>
 
-                      <td className="whitespace-nowrap px-4 py-3">
-                        {formatDate(item.exit)}
-                      </td>
+                      <td className="whitespace-nowrap px-4 py-3">{formatDate(item.exit)}</td>
 
                       <td className="whitespace-nowrap px-4 py-3">
                         {item.loopError ? (
@@ -349,9 +357,7 @@ export default function InputForms({ childId }: InputFormsProps) {
             {/* CHECK ALL */}
             <input
               type="checkbox"
-              checked={INPUT_FORM_OPTIONS.every(
-                (option) => visibleForms[option.name],
-              )}
+              checked={INPUT_FORM_OPTIONS.every((option) => visibleForms[option.name])}
               onChange={(event) => {
                 const checked = event.target.checked;
 
@@ -449,25 +455,16 @@ interface ActiveFormModalProps {
   onSaved: () => Promise<void>;
 }
 
-function ActiveFormModal({
-  childId,
-  existing,
-  onClose,
-  onSaved,
-}: ActiveFormModalProps) {
+function ActiveFormModal({ childId, existing, onClose, onSaved }: ActiveFormModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
       <div className="flex h-[95vh] w-full max-w-7xl flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl">
         {/* HEADER */}
         <div className="flex shrink-0 items-center justify-between border-b border-gray-200 bg-gray-50 px-5 py-3">
           <div>
-            <h2 className="text-base font-semibold text-gray-800">
-              Active Form
-            </h2>
+            <h2 className="text-base font-semibold text-gray-800">Active Form</h2>
 
-            <p className="mt-0.5 text-xs text-gray-500">
-              Client ID: {childId}
-            </p>
+            <p className="mt-0.5 text-xs text-gray-500">Client ID: {childId}</p>
           </div>
 
           <button
@@ -494,6 +491,54 @@ function ActiveFormModal({
 }
 
 /* =============================================================
+   COS FORM MODAL
+============================================================= */
+interface COSFormModalProps {
+  childId: number;
+  existing?: InputFormHistoryItem | null;
+  regions: RegionLookup[];
+  onClose: () => void;
+  onSaved: () => Promise<void>;
+}
+
+function COSFormModal({ childId, existing, regions, onClose, onSaved }: COSFormModalProps) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+      <div
+        className="flex h-[95vh] w-full max-w-7xl flex-col overflow-hidden rounded-lg border border-gray-200 bg-whit
+e shadow-xl"
+      >
+        <div className="flex shrink-0 items-center justify-between border-b border-gray-200 bg-gray-50 px-5 py-3">
+          <div>
+            <h2 className="text-base font-semibold text-gray-800">Child Outcome Summary (COS)</h2>
+
+            <p className="mt-0.5 text-xs text-gray-500">Client ID: {childId}</p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-md p-1 text-gray-500 hover:bg-gray-200"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <COSFormPage
+            childId={childId}
+            regions={regions}
+            formId={existing?.id}
+            onClose={onClose}
+            onSaved={onSaved}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* =============================================================
    INPUT FORM EDITOR
 ============================================================= */
 
@@ -505,24 +550,14 @@ interface InputFormEditorProps {
   onSaved: () => Promise<void>;
 }
 
-function InputFormEditor({
-  childId,
-  formName,
-  existing,
-  onClose,
-  onSaved,
-}: InputFormEditorProps) {
+function InputFormEditor({ childId, formName, existing, onClose, onSaved }: InputFormEditorProps) {
   const option = INPUT_FORM_OPTIONS.find((item) => item.name === formName);
 
-  const [formDate, setFormDate] = useState(
-    existing?.date?.substring(0, 10) ?? '',
-  );
+  const [formDate, setFormDate] = useState(existing?.date?.substring(0, 10) ?? '');
 
   const [region, setRegion] = useState('');
 
-  const [formType, setFormType] = useState(
-    existing?.formType ?? option?.label ?? '',
-  );
+  const [formType, setFormType] = useState(existing?.formType ?? option?.label ?? '');
 
   const [saving, setSaving] = useState(false);
 
@@ -546,12 +581,7 @@ function InputFormEditor({
       };
 
       if (existing) {
-        await inputFormService.update(
-          formName,
-          childId,
-          existing.id,
-          payload,
-        );
+        await inputFormService.update(formName, childId, existing.id, payload);
       } else {
         await inputFormService.create(formName, childId, payload);
       }
@@ -575,9 +605,7 @@ function InputFormEditor({
               {existing ? 'View / Edit' : 'Add New'} {option?.label} Form
             </h2>
 
-            <p className="mt-0.5 text-xs text-gray-500">
-              Client ID: {childId}
-            </p>
+            <p className="mt-0.5 text-xs text-gray-500">Client ID: {childId}</p>
           </div>
 
           <button
@@ -608,9 +636,7 @@ function InputFormEditor({
 
             {/* FORM TYPE */}
             <label className="block">
-              <span className="mb-1 block text-xs font-medium text-gray-700">
-                Form Type
-              </span>
+              <span className="mb-1 block text-xs font-medium text-gray-700">Form Type</span>
 
               <input
                 value={formType}
@@ -622,9 +648,7 @@ function InputFormEditor({
 
           {/* REGION */}
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-gray-700">
-              Region
-            </span>
+            <span className="mb-1 block text-xs font-medium text-gray-700">Region</span>
 
             <input
               value={region}
@@ -640,10 +664,9 @@ function InputFormEditor({
               <AlertCircle size={15} className="mt-0.5 shrink-0" />
 
               <p>
-                This is the common input-form shell. The individual form
-                fields and business validations should be added per form
-                (Referral, Active, NOPR, COS, Insurance, Service Grid and Exit)
-                before production use.
+                This is the common input-form shell. The individual form fields and business
+                validations should be added per form (Referral, Active, NOPR, COS, Insurance,
+                Service Grid and Exit) before production use.
               </p>
             </div>
           </div>

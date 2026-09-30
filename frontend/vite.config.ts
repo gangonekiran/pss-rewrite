@@ -1,18 +1,52 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import path from 'node:path';
+import { playwright } from '@vitest/browser-playwright';
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  resolve: {
-    alias: {
-      '@': path.resolve(import.meta.dirname, 'src'),
+
+  test: {
+    setupFiles: ['./setup-file.ts'],
+
+    browser: {
+      provider: playwright({
+        launchOptions: {
+          executablePath:
+            'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        },
+      }),
+
+      enabled: true,
+
+      instances: [
+        {
+          browser: 'chromium',
+        },
+      ],
+    },
+
+    coverage: {
+      enabled: true,
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/mocks/*.*'],
     },
   },
-  test: {
-    environment: 'jsdom',
-    globals: true,
-    setupFiles: './src/test/setup.ts',
+
+  optimizeDeps: {
+    include: [
+      '@hookform/resolvers/zod',
+      '@tanstack/react-query',
+      'axios',
+      'dayjs',
+      'lucide-react',
+      'react-dom/client',
+      'react-hook-form',
+      'react-hot-toast',
+      'react-router-dom',
+      'react-select',
+      'zod',
+      'zustand',
+    ],
   },
 });

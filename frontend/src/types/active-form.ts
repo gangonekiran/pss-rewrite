@@ -69,11 +69,9 @@ export interface ActiveFormResponse {
 }
 
 export interface SupervisoryUnionLookup { SU_id: number; SUName: string; SortOrder?: number | null; }
-export interface TownLookup { Town: string; TownName: string; SU_id: number | null; CountyCode: string | null; CountyName: string | null; }
 export interface ServiceCoordinatorTypeLookup { SvcCordType: string; SvcCordTypeDesc: string; }
 export interface DelayReasonLookup { Reason: string; }
 export interface DelayReasonsResponse { family: DelayReasonLookup[]; provider: DelayReasonLookup[]; }
-export interface RegionLookup { ID: number; RName: string; Description?: string | null; Inactive?: boolean; }
 
 export interface ActiveFormValues {
   Region: number;

@@ -22,8 +22,11 @@ import {
   type ActiveFormValues,
   type ActiveFormClient,
   type DelayReasonsResponse,
-  type RegionLookup,
 } from '../../../types/active-form';
+
+import type { RegionLookup } from '../../../types/common';
+
+import commonInfoService from '../../../services/common-info.service';
 
 interface ActiveFormPageProps {
   childId: number;
@@ -323,7 +326,7 @@ export default function ActiveFormPage({ childId, onClose, onSaved, formId }: Ac
 
         const [activeResponse, regionResponse, reasonResponse] = await Promise.all([
           activeFormService.get(childId),
-          activeFormService.regions(),
+          commonInfoService.regions(),
           activeFormService.delayReasons(),
         ]);
 

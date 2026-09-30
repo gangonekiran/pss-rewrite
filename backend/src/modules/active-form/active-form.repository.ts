@@ -227,23 +227,6 @@ export async function remove(
   return Number(r.recordset[0]?.Affected ?? 0) > 0;
 }
 
-export async function getAllRegions() {
-  const pool = await getPool();
-
-  const result = await pool.request().query(`
-    SELECT
-      ID,
-      RName,
-      Description,
-      Inactive
-    FROM stblReportingRegion
-    WHERE Inactive = 0
-    ORDER BY RName;
-  `);
-
-  return result.recordset;
-}
-
 export async function getSupervisoryUnions() {
   const pool = await getPool();
 

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import PageContainer from '../../../layouts/PageContainer';
 
@@ -8,6 +8,8 @@ import ClientActions from '../components/ClientActions/ClientActions';
 import ClientTabs from '../components/ClientTabs/ClientTabs';
 
 import type { Client } from '../../../types/client';
+import type { RegionLookup } from '../../../types';
+import commonInfoService from '../../../services/common-info.service';
 
 export default function ClientPage() {
   const emptyClient: Client = {
@@ -27,6 +29,7 @@ export default function ClientPage() {
   const [isNewClient, setIsNewClient] = useState(true);
   const [isLocked, setIsLocked] = useState(true);
   const clientLookupRef = useRef<ClientLookupRef>(null);
+  const [regions, setRegions] = useState<RegionLookup[]>([]);
 
   const clearClient = () => {
     setClient(emptyClient);
@@ -36,6 +39,20 @@ export default function ClientPage() {
   const clearClientLookup = () => {
     clientLookupRef.current?.clearLookup();
   };
+
+  useEffect(() => {
+    const loadRegions = async () => {
+      try {
+        const data = await commonInfoService.regions();
+        setRegions(data);
+      } catch (error) {
+        console.error('Failed to load regions:', error);
+        setRegions([]);
+      }
+    };
+
+    void loadRegions();
+  }, []);
 
   return (
     <PageContainer>
@@ -55,7 +72,7 @@ export default function ClientPage() {
         setIsLocked={setIsLocked}
         clearClientLookup={clearClientLookup}
       />
-      <ClientTabs client={client} />
+      <ClientTabs client={client} regions={regions}/>
     </PageContainer>
   );
 }
