@@ -11,8 +11,6 @@ export const update = async (r: Request, s: Response) =>
   s.json(await service.update(r.params.childId, r.params.id, r.body ?? {}));
 export const remove = async (r: Request, s: Response) =>
   s.json(await service.remove(r.params.childId, r.params.id));
-export const regions = async (_r: Request, s: Response) =>
-  s.json(await service.lookups.regions());
 export const supervisoryUnions = async (_r: Request, s: Response) =>
   s.json(await service.lookups.supervisoryUnions());
 export const towns = async (r: Request, s: Response) =>

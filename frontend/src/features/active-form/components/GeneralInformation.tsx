@@ -1,7 +1,8 @@
 import { useFormContext } from 'react-hook-form';
 import { Field } from './FormField';
-import type { ActiveFormValues, RegionLookup } from '../../../types/active-form';
+import type { ActiveFormValues } from '../../../types/active-form';
 import { inputClass } from './formStyles';
+import type { RegionLookup } from '../../../types';
 
 interface Props {
   regions: RegionLookup[];

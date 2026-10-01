@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" font-family="Segoe UI, Arial, sans-serif">
+  <style>
+    .bg { fill: #ffffff; }
+    .frame { fill: none; stroke: #9ca3af; }
+    .input { fill: #ffffff; stroke: #9ca3af; }
+    .lbl { font-size: 12px; fill: #374151; }
+    .th { font-size: 12px; font-weight: bold; fill: #374151; }
+    .val { font-size: 12px; fill: #4b5563; }
+    .ph { font-size: 12px; fill: #9ca3af; }
+    .line { stroke: #e5e7eb; }
+    .c circle { fill: #dc2626; }
+    .c text { font-size: 11px; font-weight: bold; fill: #ffffff; text-anchor: middle; }
+  </style>
+
+  <rect class="bg" width="1200" height="720"/>
+
+  <!-- ===================== TABS ===================== -->
+  <rect class="frame" x="10" y="10" width="1180" height="390" rx="6"/>
+  <rect x="10" y="10" width="1180" height="40" fill="#f9fafb"/>
+  <text x="90" y="35" font-size="13" fill="#4b5563" text-anchor="middle">Client Status</text>
+  <rect x="170" y="10" width="160" height="40" fill="#ffffff"/>
+  <line x1="170" y1="49" x2="330" y2="49" stroke="#15803d" stroke-width="2"/>
+  <text x="250" y="35" font-size="13" font-weight="bold" fill="#15803d" text-anchor="middle">Input Forms</text>
+
+  <!-- ===================== HISTORY GRID ===================== -->
+  <rect x="10" y="60" width="980" height="32" fill="#f9fafb"/>
+  <text class="th" x="20" y="81">Date</text>
+  <text class="th" x="115" y="81">Form Type</text>
+  <text class="th" x="220" y="81">Referral</text>
+  <text class="th" x="310" y="81">NOPR</text>
+  <text class="th" x="395" y="81">interim</text>
+  <text class="th" x="480" y="81">OP</text>
+  <text class="th" x="565" y="81">Exit</text>
+  <text class="th" x="650" y="81">Loop Error</text>
+  <text class="th" x="760" y="81">View/Edit</text>
+  <text class="th" x="880" y="81">Delete</text>
+
+  <text class="val" x="20" y="113">3/31/2025</text>
+  <text x="115" y="113" font-size="12" font-weight="bold" fill="#15803d">Active</text>
+  <text class="val" x="220" y="113">2/3/2025</text><text class="val" x="310" y="113">–</text>
+  <text class="val" x="395" y="113">2/20/2025</text><text class="val" x="480" y="113">3/10/2025</text>
+  <text class="val" x="565" y="113">–</text><text class="val" x="650" y="113">–</text>
+  <text x="760" y="113" font-size="12" fill="#2563eb">✎ View/Edit</text>
+  <text x="880" y="113" font-size="12" fill="#dc2626">🗑 Delete</text>
+  <line x1="10" y1="124" x2="990" y2="124" class="line"/>
+
+  <text class="val" x="20" y="145">3/10/2025</text>
+  <text x="115" y="145" font-size="12" font-weight="bold" fill="#7e22ce">Service Grid</text>
+  <text class="val" x="220" y="145">–</text><text class="val" x="310" y="145">–</text>
+  <text class="val" x="395" y="145">–</text><text class="val" x="480" y="145">–</text>
+  <text class="val" x="565" y="145">–</text><text class="val" x="650" y="145">–</text>
+  <text x="760" y="145" font-size="12" fill="#2563eb">✎ View/Edit</text>
+  <text x="880" y="145" font-size="12" fill="#dc2626">🗑 Delete</text>
+  <line x1="10" y1="156" x2="990" y2="156" class="line"/>
+
+  <text class="val" x="20" y="177">2/28/2025</text>
+  <text x="115" y="177" font-size="12" font-weight="bold" fill="#1d4ed8">Referral</text>
+  <text class="val" x="220" y="177">2/28/2025</text><text class="val" x="310" y="177">–</text>
+  <text class="val" x="395" y="177">–</text><text class="val" x="480" y="177">–</text>
+  <text class="val" x="565" y="177">–</text>
+  <text x="650" y="177" font-size="12" font-weight="bold" fill="#dc2626">X</text>
+  <text x="760" y="177" font-size="12" fill="#2563eb">✎ View/Edit</text>
+  <text x="880" y="177" font-size="12" fill="#dc2626">🗑 Delete</text>
+  <line x1="10" y1="188" x2="990" y2="188" class="line"/>
+
+  <text x="20" y="390" font-size="11" fill="#9ca3af">Empty / loading / error states replace the rows: “No input forms available.” · “Loading input forms...” · “Unable to load input forms.”</text>
+
+  <!-- ===================== ADD NEW FORM PANEL ===================== -->
+  <line x1="990" y1="50" x2="990" y2="400" stroke="#d1d5db"/>
+  <rect x="991" y="51" width="198" height="40" fill="#f9fafb"/>
+  <text x="1000" y="76" font-size="13" font-weight="bold" fill="#374151">Add New Form</text>
+  <rect x="1158" y="63" width="16" height="16" rx="3" fill="#2563eb"/>
+  <text x="1166" y="76" font-size="11" fill="#ffffff" text-anchor="middle">✓</text>
+
+  <g font-size="12" fill="#1d4ed8">
+    <rect x="1000" y="100" width="140" height="30" rx="4" fill="#ffffff" stroke="#93c5fd"/><text x="1010" y="120">Active</text>
+    <rect x="1000" y="138" width="140" height="30" rx="4" fill="#ffffff" stroke="#93c5fd"/><text x="1010" y="158">COS</text>
+    <rect x="1000" y="176" width="140" height="30" rx="4" fill="#ffffff" stroke="#93c5fd"/><text x="1010" y="196">Exit</text>
+    <rect x="1000" y="214" width="140" height="30" rx="4" fill="#ffffff" stroke="#93c5fd"/><text x="1010" y="234">Insurance</text>
+    <rect x="1000" y="252" width="140" height="30" rx="4" fill="#ffffff" stroke="#93c5fd"/><text x="1010" y="272">No One Plan</text>
+    <rect x="1000" y="290" width="140" height="30" rx="4" fill="#ffffff" stroke="#93c5fd"/><text x="1010" y="310">Referral</text>
+    <rect x="1000" y="328" width="140" height="30" rx="4" fill="#ffffff" stroke="#93c5fd"/><text x="1010" y="348">Service Grid</text>
+  </g>
+  <g fill="#2563eb">
+    <rect x="1152" y="107" width="16" height="16" rx="3"/>
+    <rect x="1152" y="145" width="16" height="16" rx="3"/>
+    <rect x="1152" y="183" width="16" height="16" rx="3"/>
+    <rect x="1152" y="221" width="16" height="16" rx="3"/>
+    <rect x="1152" y="259" width="16" height="16" rx="3"/>
+    <rect x="1152" y="297" width="16" height="16" rx="3"/>
+    <rect x="1152" y="335" width="16" height="16" rx="3"/>
+  </g>
+  <text x="1182" y="230" font-size="9" fill="#6b7280" text-anchor="middle" transform="rotate(90 1182 230)">Show / Hide from List</text>
+
+  <!-- ===================== GENERIC FORM EDITOR (MODAL) ===================== -->
+  <text x="200" y="435" font-size="12" font-weight="bold" fill="#6b7280">Generic form editor (modal) — Exit, Insurance, No One Plan, Referral, Service Grid</text>
+  <rect x="200" y="450" width="560" height="250" rx="8" fill="#ffffff" stroke="#9ca3af"/>
+  <rect x="201" y="451" width="558" height="40" fill="#f9fafb"/>
+  <text x="215" y="469" font-size="13" font-weight="bold" fill="#1f2937">Add New Exit Form</text>
+  <text x="215" y="485" font-size="11" fill="#6b7280">Client ID: 1042</text>
+  <text x="735" y="476" font-size="16" fill="#6b7280">×</text>
+
+  <text class="lbl" x="215" y="515">Form Date <tspan fill="#dc2626">*</tspan></text>
+  <rect class="input" x="215" y="522" width="255" height="30" rx="4"/><text class="ph" x="225" y="542">mm/dd/yyyy</text>
+  <text class="lbl" x="490" y="515">Form Type</text>
+  <rect x="490" y="522" width="255" height="30" rx="4" fill="#f9fafb" stroke="#9ca3af"/><text class="val" x="500" y="542">Exit</text>
+  <text class="lbl" x="215" y="572">Region</text>
+  <rect class="input" x="215" y="579" width="530" height="30" rx="4"/><text class="ph" x="225" y="599">Enter region</text>
+  <rect x="215" y="618" width="530" height="26" rx="4" fill="#fffbeb" stroke="#fde68a"/>
+  <text x="225" y="635" font-size="10" fill="#92400e">Common input-form shell — individual form fields to be added per form before production use.</text>
+
+  <line x1="200" y1="655" x2="760" y2="655" stroke="#e5e7eb"/>
+  <rect x="585" y="663" width="75" height="30" rx="4" fill="#ffffff" stroke="#9ca3af"/><text x="622" y="683" font-size="12" fill="#374151" text-anchor="middle">Cancel</text>
+  <rect x="670" y="663" width="75" height="30" rx="4" fill="#2563eb"/><text x="707" y="683" font-size="12" fill="#ffffff" text-anchor="middle">✓ Save</text>
+
+  <!-- ===================== CALLOUTS ===================== -->
+  <g class="c"><circle cx="980" cy="60" r="11"/><text x="980" y="64">28</text></g>
+  <g class="c"><circle cx="735" cy="62" r="11"/><text x="735" y="66">29</text></g>
+  <g class="c"><circle cx="850" cy="108" r="11"/><text x="850" y="112">30</text></g>
+  <g class="c"><circle cx="955" cy="108" r="11"/><text x="955" y="112">31</text></g>
+  <g class="c"><circle cx="996" cy="115" r="11"/><text x="996" y="119">32</text></g>
+  <line x1="1160" y1="358" x2="1160" y2="374" stroke="#dc2626"/>
+  <g class="c"><circle cx="1160" cy="385" r="11"/><text x="1160" y="389">33</text></g>
+  <g class="c"><circle cx="1140" cy="71" r="11"/><text x="1140" y="75">34</text></g>
+  <g class="c"><circle cx="470" cy="522" r="11"/><text x="470" y="526">35</text></g>
+  <g class="c"><circle cx="745" cy="522" r="11"/><text x="745" y="526">36</text></g>
+  <g class="c"><circle cx="745" cy="579" r="11"/><text x="745" y="583">37</text></g>
+  <g class="c"><circle cx="750" cy="663" r="11"/><text x="750" y="667">38</text></g>
+  <g class="c"><circle cx="300" cy="10" r="11"/><text x="300" y="14">19</text></g>
+</svg>

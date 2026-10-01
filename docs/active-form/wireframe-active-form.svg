@@ -1,0 +1,174 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1540" viewBox="0 0 1200 1540" font-family="Segoe UI, Arial, sans-serif">
+  <style>
+    .bg { fill: #ffffff; }
+    .sec { fill: #ffffff; stroke: #e5e7eb; }
+    .input { fill: #ffffff; stroke: #d1d5db; }
+    .ro { fill: #f3f4f6; stroke: #d1d5db; }
+    .h { font-size: 15px; font-weight: bold; fill: #111827; }
+    .lbl { font-size: 13px; font-weight: 600; fill: #374151; }
+    .val { font-size: 13px; fill: #111827; }
+    .ph { font-size: 13px; fill: #9ca3af; }
+    .small { font-size: 11px; fill: #6b7280; }
+    .req { fill: #dc2626; }
+    .chk { fill: #ffffff; stroke: #9ca3af; }
+    .chk-on { fill: #2563eb; }
+    .cb { font-size: 13px; fill: #1f2937; }
+    .uionly { font-size: 13px; fill: #9ca3af; font-style: italic; }
+    .c circle { fill: #dc2626; }
+    .c text { font-size: 11px; font-weight: bold; fill: #ffffff; text-anchor: middle; }
+  </style>
+
+  <rect class="bg" width="1200" height="1540"/>
+  <rect x="5" y="5" width="1190" height="1530" rx="8" fill="none" stroke="#9ca3af"/>
+
+  <!-- Modal header -->
+  <rect x="6" y="6" width="1188" height="54" fill="#f9fafb"/>
+  <text x="25" y="30" font-size="15" font-weight="bold" fill="#1f2937">Active Form</text>
+  <text x="25" y="48" class="small">Client ID: 1042</text>
+  <text x="1165" y="38" font-size="18" fill="#6b7280">×</text>
+  <line x1="6" y1="60" x2="1194" y2="60" stroke="#e5e7eb"/>
+
+  <!-- Page heading -->
+  <text x="25" y="92" font-size="18" font-weight="600" fill="#1f2937">New Active Form</text>
+  <line x1="6" y1="108" x2="1194" y2="108" stroke="#e5e7eb"/>
+
+  <!-- 1. Client Information -->
+  <rect class="sec" x="25" y="120" width="1150" height="110" rx="8"/>
+  <rect x="26" y="121" width="1148" height="32" rx="8" fill="#eff6ff"/>
+  <text x="40" y="142" class="h">Client Information</text>
+  <text x="185" y="142" class="small">(Read Only)</text>
+  <g>
+    <text x="40" y="178" class="small">Child Last Name</text><text x="40" y="200" font-size="13" font-weight="600" fill="#111827">Smith</text>
+    <text x="182" y="178" class="small">Child First Name</text><text x="182" y="200" font-size="13" font-weight="600" fill="#111827">Anna</text>
+    <text x="324" y="178" class="small">SSN</text><text x="324" y="200" font-size="13" font-weight="600" fill="#111827">123456789</text>
+    <text x="466" y="178" class="small">DOB</text><text x="466" y="200" font-size="13" font-weight="600" fill="#111827">04/12/2024</text>
+    <text x="608" y="178" class="small">County</text><text x="608" y="200" font-size="13" font-weight="600" fill="#9ca3af">—</text>
+    <text x="750" y="178" class="small">Region</text><text x="750" y="200" font-size="13" font-weight="600" fill="#9ca3af">—</text>
+    <text x="892" y="172" class="small">Referral Date (From</text><text x="892" y="185" class="small">Referral Form)</text><text x="892" y="203" font-size="13" font-weight="600" fill="#9ca3af">—</text>
+    <text x="1034" y="178" class="small">Status</text><text x="1034" y="200" font-size="13" font-weight="600" fill="#9ca3af">—</text>
+  </g>
+
+  <!-- 2. General Information -->
+  <rect class="sec" x="25" y="245" width="1150" height="105" rx="8"/>
+  <text x="45" y="272" class="h">General Information</text>
+  <text x="45" y="297" class="lbl">Region <tspan class="req">*</tspan></text>
+  <rect class="input" x="45" y="304" width="355" height="34" rx="5"/><text x="57" y="326" class="val">Burlington</text><text x="382" y="326" class="ph">▾</text>
+  <text x="425" y="297" class="lbl">Date of Referral <tspan class="req">*</tspan></text>
+  <rect class="input" x="425" y="304" width="355" height="34" rx="5"/><text x="437" y="326" class="val">02/03/2025</text>
+  <text x="805" y="297" class="lbl">Status <tspan class="req">*</tspan></text>
+  <rect class="input" x="805" y="304" width="355" height="34" rx="5"/><text x="817" y="326" class="val">Active One Plan</text><text x="1142" y="326" class="ph">▾</text>
+
+  <!-- 3. Initial Evaluation -->
+  <rect class="sec" x="25" y="365" width="1150" height="285" rx="8"/>
+  <text x="45" y="392" class="h">Initial Evaluation / Assessment</text>
+  <text x="45" y="417" class="lbl">Date of Initial Evaluation / Assessment</text>
+  <rect class="input" x="45" y="424" width="555" height="34" rx="5"/><text x="57" y="446" class="val">02/20/2025</text>
+  <text x="620" y="417" class="lbl">Days Between Referral and Initial Evaluation (Read Only)</text>
+  <rect class="ro" x="620" y="424" width="490" height="34" rx="5"/><text x="632" y="446" class="val">17</text><text x="1120" y="446" class="small">days</text>
+  <text x="45" y="487" class="lbl">Reason for Delay</text>
+  <rect class="input" x="45" y="494" width="1115" height="34" rx="5"/><text x="57" y="516" class="ph">Select one reason (optional)</text><text x="1142" y="516" class="ph">▾</text>
+  <text x="45" y="557" class="lbl">Other reasons - details</text>
+  <rect class="input" x="45" y="564" width="1115" height="56" rx="5"/><text x="57" y="586" class="ph">Select Other reasons to enter details</text>
+  <text x="45" y="637" class="small">No character limit.</text>
+
+  <!-- 4. One Plan -->
+  <rect class="sec" x="25" y="665" width="1150" height="285" rx="8"/>
+  <text x="45" y="692" class="h">One Plan</text>
+  <text x="45" y="717" class="lbl">Date of One Plan</text>
+  <rect class="input" x="45" y="724" width="555" height="34" rx="5"/><text x="57" y="746" class="val">03/10/2025</text>
+  <text x="620" y="717" class="lbl">Days Between Referral and One Plan (Read Only)</text>
+  <rect class="ro" x="620" y="724" width="490" height="34" rx="5"/><text x="632" y="746" class="val">35</text><text x="1120" y="746" class="small">days</text>
+  <text x="45" y="787" class="lbl">Reason for Delay</text>
+  <rect class="input" x="45" y="794" width="1115" height="34" rx="5"/><text x="57" y="816" class="ph">Select one reason (optional)</text><text x="1142" y="816" class="ph">▾</text>
+  <text x="45" y="857" class="lbl">Other reasons - details</text>
+  <rect class="input" x="45" y="864" width="1115" height="56" rx="5"/><text x="57" y="886" class="ph">Select Other reasons to enter details</text>
+  <text x="45" y="937" class="small">No character limit.</text>
+
+  <!-- 5. Eligibility -->
+  <rect class="sec" x="25" y="965" width="1150" height="490" rx="8"/>
+  <text x="45" y="992" class="h">Eligibility</text>
+  <text x="45" y="1010" class="small">Select all that apply.  (grey italic = UI only, not saved)</text>
+
+  <!-- checkbox grid: 4 columns x 7 rows -->
+  <g>
+    <!-- row 1 -->
+    <rect class="chk" x="45" y="1027" width="14" height="14" rx="3"/><text x="67" y="1039" class="cb">All developmental delays</text>
+    <rect class="chk" x="325" y="1027" width="14" height="14" rx="3"/><text x="347" y="1039" class="cb">Adaptive</text>
+    <rect class="chk" x="605" y="1027" width="14" height="14" rx="3"/><text x="627" y="1039" class="cb">Cognitive</text>
+    <rect class="chk-on" x="885" y="1027" width="14" height="14" rx="3"/><text x="889" y="1038" font-size="10" fill="#fff">✓</text><text x="907" y="1039" class="cb">Communication (speech/lang)</text>
+    <!-- row 2 -->
+    <rect class="chk" x="45" y="1053" width="14" height="14" rx="3"/><text x="67" y="1065" class="cb">Motor</text>
+    <rect class="chk" x="325" y="1053" width="14" height="14" rx="3"/><text x="347" y="1065" class="cb">Social/emotional</text>
+    <rect class="chk" x="605" y="1053" width="14" height="14" rx="3"/><text x="627" y="1065" class="cb">Attachment disorder</text>
+    <rect class="chk-on" x="885" y="1053" width="14" height="14" rx="3"/><text x="889" y="1064" font-size="10" fill="#fff">✓</text><text x="907" y="1065" class="cb">Autism/PDD</text>
+    <!-- row 3 -->
+    <rect class="chk" x="45" y="1079" width="14" height="14" rx="3"/><text x="67" y="1091" class="cb">Suspected Autism</text>
+    <rect class="chk" x="325" y="1079" width="14" height="14" rx="3"/><text x="347" y="1091" class="cb">Blind/Visually Impaired</text>
+    <rect class="chk" x="605" y="1079" width="14" height="14" rx="3"/><text x="627" y="1091" class="cb">Deaf/Hard of Hearing</text>
+    <rect class="chk" x="885" y="1079" width="14" height="14" rx="3"/><text x="907" y="1091" class="cb">Down Syndrome</text>
+    <!-- row 4 -->
+    <rect class="chk" x="45" y="1105" width="14" height="14" rx="3"/><text x="67" y="1117" class="cb">Cerebral Palsy</text>
+    <rect class="chk" x="325" y="1105" width="14" height="14" rx="3"/><text x="347" y="1117" class="cb">Craniofacial Disorder</text>
+    <rect class="chk" x="605" y="1105" width="14" height="14" rx="3"/><text x="627" y="1117" class="cb">Medically Fragile</text>
+    <rect class="chk" x="885" y="1105" width="14" height="14" rx="3"/><text x="907" y="1117" class="cb">Oral Motor/Swallowing</text>
+    <!-- row 5 -->
+    <rect class="chk" x="45" y="1131" width="14" height="14" rx="3"/><text x="67" y="1143" class="cb">Severe Complications at Birth</text>
+    <rect class="chk" x="325" y="1131" width="14" height="14" rx="3"/><text x="347" y="1143" class="uionly">Torticollis</text>
+    <rect class="chk" x="605" y="1131" width="14" height="14" rx="3"/><text x="627" y="1143" class="uionly">Plagiocephaly</text>
+    <rect class="chk" x="885" y="1131" width="14" height="14" rx="3"/><text x="907" y="1143" class="uionly">Prematurity</text>
+    <!-- row 6 -->
+    <rect class="chk" x="45" y="1157" width="14" height="14" rx="3"/><text x="67" y="1169" class="uionly">Behavior</text>
+    <rect class="chk" x="325" y="1157" width="14" height="14" rx="3"/><text x="347" y="1169" class="uionly">Nutrition</text>
+    <rect class="chk" x="605" y="1157" width="14" height="14" rx="3"/><text x="627" y="1169" class="uionly">Neonatal Abstinence Syndrome (NAS)</text>
+    <rect class="chk" x="885" y="1157" width="14" height="14" rx="3"/><text x="907" y="1169" class="uionly">Cystic Fibrosis</text>
+    <!-- row 7 -->
+    <rect class="chk" x="45" y="1183" width="14" height="14" rx="3"/><text x="67" y="1195" class="uionly">Hypoxic-Ischemic Encephalopathy (HIE)</text>
+    <rect class="chk" x="325" y="1183" width="14" height="14" rx="3"/><text x="347" y="1195" class="uionly">Feeding</text>
+    <rect class="chk-on" x="605" y="1183" width="14" height="14" rx="3"/><text x="609" y="1194" font-size="10" fill="#fff">✓</text><text x="627" y="1195" class="cb">NMNEI</text>
+  </g>
+
+  <!-- Diagnosis dates -->
+  <text x="45" y="1232" class="lbl">ASD Diagnosis Date</text>
+  <rect class="input" x="45" y="1239" width="545" height="34" rx="5"/><text x="57" y="1261" class="val">01/15/2025</text>
+  <text x="615" y="1232" class="lbl">Suspected ASD Diagnosis Date</text>
+  <rect class="input" x="615" y="1239" width="545" height="34" rx="5"/><text x="627" y="1261" class="ph">mm/dd/yyyy</text>
+  <text x="45" y="1297" class="lbl">Vision Diagnosis Date</text>
+  <rect class="input" x="45" y="1304" width="545" height="34" rx="5"/><text x="57" y="1326" class="ph">mm/dd/yyyy</text>
+  <text x="615" y="1297" class="lbl">Hearing Diagnosis Date</text>
+  <rect class="input" x="615" y="1304" width="545" height="34" rx="5"/><text x="627" y="1326" class="ph">mm/dd/yyyy</text>
+
+  <!-- Other -->
+  <text x="45" y="1365" class="lbl">Other</text>
+  <rect class="input" x="45" y="1372" width="1115" height="56" rx="5"/><text x="57" y="1394" class="val">NMNEI</text>
+  <text x="45" y="1445" class="small">No character limit.</text>
+
+  <!-- Footer -->
+  <line x1="6" y1="1470" x2="1194" y2="1470" stroke="#e5e7eb"/>
+  <rect x="955" y="1484" width="100" height="36" rx="6" fill="#ffffff" stroke="#d1d5db"/><text x="1005" y="1507" font-size="13" fill="#374151" text-anchor="middle">× Cancel</text>
+  <rect x="1065" y="1484" width="100" height="36" rx="6" fill="#16a34a"/><text x="1115" y="1507" font-size="13" fill="#ffffff" text-anchor="middle">💾 Save</text>
+
+  <!-- ===================== CALLOUTS ===================== -->
+  <g class="c"><circle cx="130" cy="28" r="11"/><text x="130" y="32">1</text></g>
+  <g class="c"><circle cx="190" cy="86" r="11"/><text x="190" y="90">2</text></g>
+  <g class="c"><circle cx="575" cy="193" r="11"/><text x="575" y="197">3</text></g>
+  <g class="c"><circle cx="1150" cy="193" r="11"/><text x="1150" y="197">4</text></g>
+  <g class="c"><circle cx="400" cy="304" r="11"/><text x="400" y="308">5</text></g>
+  <g class="c"><circle cx="780" cy="304" r="11"/><text x="780" y="308">6</text></g>
+  <g class="c"><circle cx="1160" cy="304" r="11"/><text x="1160" y="308">7</text></g>
+  <g class="c"><circle cx="600" cy="424" r="11"/><text x="600" y="428">8</text></g>
+  <g class="c"><circle cx="1150" cy="424" r="11"/><text x="1150" y="428">9</text></g>
+  <g class="c"><circle cx="1160" cy="494" r="11"/><text x="1160" y="498">10</text></g>
+  <g class="c"><circle cx="1160" cy="564" r="11"/><text x="1160" y="568">11</text></g>
+  <g class="c"><circle cx="600" cy="724" r="11"/><text x="600" y="728">12</text></g>
+  <g class="c"><circle cx="1150" cy="724" r="11"/><text x="1150" y="728">13</text></g>
+  <g class="c"><circle cx="1160" cy="794" r="11"/><text x="1160" y="798">14</text></g>
+  <g class="c"><circle cx="1160" cy="864" r="11"/><text x="1160" y="868">15</text></g>
+  <g class="c"><circle cx="1160" cy="1034" r="11"/><text x="1160" y="1038">16</text></g>
+  <g class="c"><circle cx="1160" cy="1098" r="11"/><text x="1160" y="1102">17</text></g>
+  <g class="c"><circle cx="1160" cy="1150" r="11"/><text x="1160" y="1154">18</text></g>
+  <g class="c"><circle cx="690" cy="1190" r="11"/><text x="690" y="1194">19</text></g>
+  <g class="c"><circle cx="1160" cy="1239" r="11"/><text x="1160" y="1243">20</text></g>
+  <g class="c"><circle cx="1160" cy="1372" r="11"/><text x="1160" y="1376">21</text></g>
+  <g class="c"><circle cx="955" cy="1484" r="11"/><text x="955" y="1488">22</text></g>
+  <g class="c"><circle cx="1165" cy="1484" r="11"/><text x="1165" y="1488">23</text></g>
+</svg>

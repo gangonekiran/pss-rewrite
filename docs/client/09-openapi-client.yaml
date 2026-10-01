@@ -1,0 +1,690 @@
+openapi: 3.0.3
+
+info:
+  title: PSS Rewrite – Client API
+  version: 1.0.0
+  description: |
+    OpenAPI contract entries for the **Client** module (`backend/src/modules/client`),
+    mounted at `/api/clients`.
+
+    This contract describes the API **as currently implemented** (working tree, 2026-10-01),
+    with the database rules from the `dbCDD` DDL. Known gaps are flagged with
+    `x-known-issues` and refer to the IDs in `docs/client/03-business-rules.md`
+    (BR-GAP-xx). Operations marked `x-status: proposed` are not implemented yet.
+
+    Casing conventions:
+    - Request bodies use **camelCase** (`lastName`).
+    - Client rows in responses use the **PascalCase** database column names (`LastName`).
+    - Status and service-history responses use **camelCase**.
+
+    Error envelope: every unhandled error returns HTTP **500** with
+    `{ "success": false, "message": "..." }`. That includes validation errors that the
+    code tags as 400 (BR-GAP-06).
+  contact:
+    name: PSS Rewrite team
+
+servers:
+  - url: http://localhost:5000
+    description: Local development server
+
+tags:
+  - name: Clients
+    description: Client (child) demographics, lookup, status and service history
+
+# The client routes are currently NOT protected (BR-SEC-01 / BR-GAP-02).
+# Other modules use the `cookieAuth` scheme defined below.
+security: []
+
+paths:
+  /api/clients:
+    get:
+      tags: [Clients]
+      operationId: getAllClients
+      summary: List all clients
+      description: |
+        Returns every row of `stblPeople`, ordered by `LastName, FirstName`.
+        No paging or row limit. Returns full SSNs.
+      responses:
+        "200":
+          description: All clients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ClientRow"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags: [Clients]
+      operationId: createClient
+      summary: Create a client
+      description: |
+        Inserts a row into `stblPeople`.
+
+        Server-side transformation: strings are trimmed and empty strings become NULL;
+        `region` → integer; `gender` → first character; `ssTemp` / `nonEarlyIntervention` →
+        `1` only when exactly `true`; `dob` → `TRY_CONVERT(datetime2(0), dob, 23)` (an invalid
+        value becomes NULL); `insertUser` defaults to `SYSTEM`.
+      x-known-issues:
+        - "BR-GAP-01: the response is a message only; the new ChildID is not returned."
+        - "BR-GAP-05: lastName/firstName are not validated server-side; blank values are stored as NULL."
+        - "BR-GAP-07: region 0 is stored as-is (no FK to stblReportingRegion)."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClientRequest"
+            example:
+              region: 3
+              lastName: Smith
+              firstName: Anna
+              ss: "123456789"
+              ssTemp: false
+              dob: "2024-04-12"
+              gender: F
+              notes: ""
+              nonEarlyIntervention: false
+      responses:
+        "201":
+          description: Client created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+              example:
+                message: Client created
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/clients/search/lastname:
+    get:
+      tags: [Clients]
+      operationId: searchClientsByLastName
+      summary: Search clients by last name (starts-with)
+      description: "`LastName LIKE '<search>%'`, top 20, ordered by `LastName, FirstName`."
+      x-known-issues:
+        - "BR-GAP-19: % and _ in the search text act as SQL wildcards."
+      parameters:
+        - $ref: "#/components/parameters/SearchText"
+      responses:
+        "200":
+          description: Up to 20 matching clients
+          content:
+            application/json:
+              schema:
+                type: array
+                maxItems: 20
+                items:
+                  $ref: "#/components/schemas/ClientNameMatch"
+              example:
+                - ChildID: 101
+                  LastName: Smith
+                  FirstName: Anna
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/clients/search/firstname:
+    get:
+      tags: [Clients]
+      operationId: searchClientsByFirstName
+      summary: Search clients by first name (starts-with)
+      description: "`FirstName LIKE '<search>%'`, top 20, ordered by `FirstName, LastName`."
+      parameters:
+        - $ref: "#/components/parameters/SearchText"
+      responses:
+        "200":
+          description: Up to 20 matching clients
+          content:
+            application/json:
+              schema:
+                type: array
+                maxItems: 20
+                items:
+                  $ref: "#/components/schemas/ClientNameMatch"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/clients/search/ssn:
+    get:
+      tags: [Clients]
+      operationId: searchClientsBySsn
+      summary: Search clients by SSN (contains)
+      description: "`SS LIKE '%<search>%'`, top 20, ordered by `LastName, FirstName`. Returns full SSNs."
+      parameters:
+        - $ref: "#/components/parameters/SearchText"
+      responses:
+        "200":
+          description: Up to 20 matching clients
+          content:
+            application/json:
+              schema:
+                type: array
+                maxItems: 20
+                items:
+                  $ref: "#/components/schemas/ClientSsnMatch"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/clients/regions:
+    get:
+      tags: [Clients]
+      operationId: getActiveRegions
+      summary: List active reporting regions
+      description: |
+        `stblReportingRegion WHERE Inactive = 0 ORDER BY RName`.
+        The frontend uses the equivalent `/api/common-info/regions` instead.
+      x-known-issues:
+        - "BR-GAP-17: rows where Inactive is NULL are excluded."
+      responses:
+        "200":
+          description: Active regions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Region"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/clients/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ChildId"
+    get:
+      tags: [Clients]
+      operationId: getClient
+      summary: Get one client
+      x-known-issues:
+        - "BR-GAP-15: an unknown id returns 200 with an empty body (no 404)."
+      responses:
+        "200":
+          description: The client (empty body if the id does not exist)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientRow"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    put:
+      tags: [Clients]
+      operationId: updateClient
+      summary: Update a client (full replace)
+      description: |
+        Overwrites `Region, LastName, FirstName, SS, SSTemp, DOB, Gender, Notes,
+        NonEarlyIntervention`, and sets `LastUpdateDate = GETDATE()`,
+        `LastUpdateUser = lastUpdateUser ?? 'SYSTEM'`. Omitted optional fields become NULL/0.
+      x-known-issues:
+        - "BR-GAP-01: the response is a message only, not the updated client."
+        - "BR-GAP-06: 'LastName is required' / 'FirstName is required' are returned as 500."
+        - "BR-GAP-08: omitted fields (e.g. notes) are overwritten with NULL."
+        - "BR-GAP-09: names/notes are bound as VarChar (Unicode lost); names over 50 characters fail with 500."
+        - "BR-GAP-15: an unknown id still returns 200."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClientRequest"
+      responses:
+        "200":
+          description: Client updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+              example:
+                message: Client updated
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags: [Clients]
+      operationId: deleteClient
+      summary: Delete a client (hard delete, cascades)
+      description: |
+        `DELETE FROM stblPeople WHERE ChildID = @id`.
+
+        The database cascades the delete to `stblReferralForm`, `stblActiveForm`,
+        `stblNoOnePlanForm`, `stblExitForm`, `stblCOSCoverForm` (→ `stblCOSCoverSource`,
+        `stblCOSCoverTeam`), `stblServiceGridForm` (→ `stblServices`) and `stblInsuranceForm`.
+        Rows in `Loops`, `Services`, `stblAudit` and `stblLoopErrors` are left orphaned.
+      x-known-issues:
+        - "BR-GAP-02: unauthenticated."
+        - "BR-GAP-15: an unknown id still returns 200."
+      responses:
+        "200":
+          description: Client deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+              example:
+                message: Client deleted
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/clients/{id}/status:
+    parameters:
+      - $ref: "#/components/parameters/ChildId"
+    get:
+      tags: [Clients]
+      operationId: getClientStatus
+      summary: Client status and milestone dates as of a date
+      description: |
+        - `status`: `FormType` of the latest form (7 form tables) with `FormDate <= date`.
+        - `referralDate`: `MAX(stblActiveForm.ReferralDate) <= date`.
+        - `noOnePlanDate`: `MAX(stblNoOnePlanForm.StatusDate) <= date`.
+        - `interimDate`: `MAX(stblActiveForm.InterimDate) <= date`.
+        - `onePlanDate`: `MAX(stblCOSCoverForm.OnePlanDate) <= date`.
+        - `exitDate`: `MAX(stblExitForm.ExitDate) <= date`.
+        - `notes`: `stblPeople.Notes`.
+
+        An unknown client returns all-null fields with `notes: ""`.
+      x-known-issues:
+        - "BR-GAP-21: differs from the legacy rule (GetClientFormStats_rpt): 4 key forms, status labels, different source columns."
+      parameters:
+        - name: date
+          in: query
+          required: false
+          description: Status date (`YYYY-MM-DD`). Defaults to the server's current **UTC** date.
+          schema:
+            type: string
+            format: date
+          example: "2026-08-26"
+      responses:
+        "200":
+          description: Status as of the date
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientStatus"
+        "400":
+          description: The id is 0, missing or not a number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+              example:
+                message: Invalid ChildID
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/clients/{id}/service-history:
+    parameters:
+      - $ref: "#/components/parameters/ChildId"
+    get:
+      tags: [Clients]
+      operationId: getClientServiceHistory
+      summary: Services from the client's Service Grid forms
+      description: |
+        `stblServiceGridForm` ⋈ `Services` ⟕ `slstServiceNames`, newest form first.
+        `consent` is `Yes` when `Services.ConsentDate` is set, otherwise `Pending`.
+        `casePlan` is always empty.
+      x-known-issues:
+        - "BR-GAP-20: reads the reporting-warehouse table `Services`, not the live `stblServices`."
+        - "BR-GAP-25: duplicate SvcCode values in slstServiceNames can duplicate rows."
+      parameters:
+        - name: date
+          in: query
+          required: false
+          description: When present, only forms with `FormDate <= date`. (The frontend does not send it — BR-GAP-12.)
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Service lines
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ServiceHistoryItem"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/clients/{id}/notes:
+    parameters:
+      - $ref: "#/components/parameters/ChildId"
+    patch:
+      tags: [Clients]
+      operationId: updateClientNotes
+      summary: Save client notes (PROPOSED)
+      x-status: proposed
+      description: |
+        **Not implemented.** Required by the confirmed requirement that Client Status notes
+        must be saved (BR-GAP-10). Updates only `stblPeople.Notes` (`nvarchar(max)`) plus
+        `LastUpdateDate` / `LastUpdateUser`, so other columns are not overwritten.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [notes]
+              properties:
+                notes:
+                  type: string
+                  description: Full notes text. An empty string clears the notes.
+      responses:
+        "200":
+          description: Notes saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notes:
+                    type: string
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: access_token
+      description: JWT access token cookie set by `/api/auth/login`. **Not applied to /api/clients today.**
+
+  parameters:
+    ChildId:
+      name: id
+      in: path
+      required: true
+      description: Client ID (`stblPeople.ChildID`)
+      schema:
+        type: integer
+        minimum: 1
+      example: 101
+    SearchText:
+      name: search
+      in: query
+      required: true
+      description: Search text. Trimmed by the frontend; an empty value matches everything.
+      schema:
+        type: string
+        maxLength: 100
+
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    InternalServerError:
+      description: Unhandled error (also used for validation errors today)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            success: false
+            message: LastName is required
+
+  schemas:
+    ClientRequest:
+      type: object
+      description: Create/update body (camelCase). Maps to `stblPeople`.
+      required: [lastName, firstName]
+      properties:
+        childId:
+          type: integer
+          description: Ignored by the server (the id comes from the URL).
+        region:
+          type: integer
+          nullable: true
+          description: "`stblReportingRegion.ID`. Should be an active region; 0 or null = none."
+        lastName:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: "`LastName nvarchar(50)`, CHECK len > 0"
+        firstName:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: "`FirstName nvarchar(50)`, CHECK len > 0"
+        ss:
+          type: string
+          maxLength: 15
+          nullable: true
+          description: SSN. The FITP extract expects 9 digits without dashes.
+          example: "123456789"
+        ssTemp:
+          type: boolean
+          description: true = temporary SSN
+        dob:
+          type: string
+          format: date
+          nullable: true
+        gender:
+          type: string
+          enum: [M, F, U, ""]
+          nullable: true
+          description: M Male, F Female, U Unknown. Only the first character is stored.
+        notes:
+          type: string
+          nullable: true
+          description: "`Notes nvarchar(max)`"
+        nonEarlyIntervention:
+          type: boolean
+          description: false = EI client, true = non-EI client
+        insertUser:
+          type: string
+          maxLength: 50
+          description: Create only. Defaults to SYSTEM.
+        lastUpdateUser:
+          type: string
+          maxLength: 50
+          description: Update only. Defaults to SYSTEM.
+
+    ClientRow:
+      type: object
+      description: A `stblPeople` row as returned by `SELECT *` (PascalCase).
+      properties:
+        ChildID:
+          type: integer
+        Region:
+          type: integer
+          nullable: true
+        LastName:
+          type: string
+          maxLength: 50
+          nullable: true
+        FirstName:
+          type: string
+          maxLength: 50
+          nullable: true
+        SS:
+          type: string
+          maxLength: 15
+          nullable: true
+        SSTemp:
+          type: boolean
+          nullable: true
+        DOB:
+          type: string
+          format: date-time
+          nullable: true
+        Gender:
+          type: string
+          maxLength: 1
+          nullable: true
+        Notes:
+          type: string
+          nullable: true
+        SSMA_TimeStamp:
+          type: object
+          description: 'rowversion, serialised by Node as `{ "type": "Buffer", "data": [...] }`'
+          properties:
+            type:
+              type: string
+            data:
+              type: array
+              items:
+                type: integer
+        InsertDate:
+          type: string
+          format: date-time
+        InsertUser:
+          type: string
+          maxLength: 50
+        LastUpdateDate:
+          type: string
+          format: date-time
+        LastUpdateUser:
+          type: string
+          maxLength: 50
+        NonEarlyIntervention:
+          type: boolean
+      example:
+        ChildID: 101
+        Region: 3
+        LastName: Smith
+        FirstName: Anna
+        SS: "123456789"
+        SSTemp: false
+        DOB: "2024-04-12T00:00:00.000Z"
+        Gender: F
+        Notes: Family prefers morning visits
+        InsertDate: "2025-01-10T14:22:05.000Z"
+        InsertUser: SYSTEM
+        LastUpdateDate: "2025-03-01T09:15:00.000Z"
+        LastUpdateUser: SYSTEM
+        NonEarlyIntervention: false
+
+    ClientNameMatch:
+      type: object
+      properties:
+        ChildID:
+          type: integer
+        LastName:
+          type: string
+          nullable: true
+        FirstName:
+          type: string
+          nullable: true
+
+    ClientSsnMatch:
+      type: object
+      properties:
+        ChildID:
+          type: integer
+        SS:
+          type: string
+          nullable: true
+        FirstName:
+          type: string
+          nullable: true
+        LastName:
+          type: string
+          nullable: true
+
+    Region:
+      type: object
+      properties:
+        ID:
+          type: integer
+        RName:
+          type: string
+          maxLength: 255
+          nullable: true
+        Description:
+          type: string
+          maxLength: 255
+          nullable: true
+        Inactive:
+          type: boolean
+          nullable: true
+      example:
+        ID: 1
+        RName: Burlington
+        Description: Chittenden
+        Inactive: false
+
+    ClientStatus:
+      type: object
+      properties:
+        notes:
+          type: string
+        status:
+          type: string
+          nullable: true
+          description: Latest FormType, e.g. `Referral`, `Active`, `aop`, `Exit`
+        referralDate:
+          type: string
+          format: date-time
+          nullable: true
+        noOnePlanDate:
+          type: string
+          format: date-time
+          nullable: true
+        interimDate:
+          type: string
+          format: date-time
+          nullable: true
+        onePlanDate:
+          type: string
+          format: date-time
+          nullable: true
+        exitDate:
+          type: string
+          format: date-time
+          nullable: true
+      example:
+        notes: Family prefers morning visits
+        status: Active
+        referralDate: "2025-02-03T00:00:00.000Z"
+        noOnePlanDate: null
+        interimDate: "2025-02-20T00:00:00.000Z"
+        onePlanDate: "2025-03-10T00:00:00.000Z"
+        exitDate: null
+
+    ServiceHistoryItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          nullable: true
+          description: "`Services.ID` (nullable in the warehouse table)"
+        date:
+          type: string
+          format: date-time
+          description: Service Grid `FormDate`
+        serviceName:
+          type: string
+        frequency:
+          type: string
+        consent:
+          type: string
+          enum: ["Yes", "Pending"]
+        casePlan:
+          type: string
+          description: Always empty (placeholder)
+      example:
+        id: 5521
+        date: "2025-03-10T00:00:00.000Z"
+        serviceName: Speech Therapy
+        frequency: 1x/week
+        consent: "Yes"
+        casePlan: ""
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string

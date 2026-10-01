@@ -1,0 +1,628 @@
+openapi: 3.0.3
+
+info:
+  title: PSS Rewrite – Active Form API
+  version: 1.0.0
+  description: |
+    OpenAPI contract entries for the **Active Form** module (`backend/src/modules/active-form`),
+    mounted at `/api/active-forms`. Writes to `dbo.stblActiveForm`.
+
+    Describes the API **as currently implemented** (working tree, 2026-10-01). Known gaps are
+    flagged with `x-known-issues` and refer to `docs/active-form/03-business-rules.md` (AF-GAP-xx).
+
+    - Bodies and responses use the **PascalCase database column names**. On write, two aliases
+      are accepted: `status` → `FormType`, `onePlanDate` → `InitialMeetingDate`.
+    - Only whitelisted columns are written; other keys, `ID` and `ChildID` are ignored silently.
+    - Every error returns HTTP **500** `{ "success": false, "message": "..." }`, including the
+      400/404 conditions listed per operation (AF-GAP-13).
+  contact:
+    name: PSS Rewrite team
+
+servers:
+  - url: http://localhost:5000
+    description: Local development server
+
+tags:
+  - name: Active Form
+    description: Active Form (initial evaluation, One Plan, delay reasons, eligibility)
+  - name: Active Form Lookups
+    description: Lookup lists for the Active Form
+
+# Not protected today (AF-GAP-06). Other modules use `cookieAuth`.
+security: []
+
+paths:
+  /api/active-forms/lookups/supervisory-unions:
+    get:
+      tags: [Active Form Lookups]
+      operationId: getSupervisoryUnions
+      summary: Active supervisory unions
+      description: "`slstSU WHERE Inactive = 0`, ordered by SortOrder (nulls last), then SUName. Not used by the UI."
+      responses:
+        "200":
+          description: Supervisory unions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SupervisoryUnion"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /api/active-forms/lookups/towns:
+    get:
+      tags: [Active Form Lookups]
+      operationId: getTowns
+      summary: Towns with county
+      description: "`slstTownCodes` LEFT JOIN `slstCounties`, ordered by TownName. Not used by the UI."
+      parameters:
+        - name: search
+          in: query
+          required: false
+          description: Contains-match on TownName or Town code
+          schema:
+            type: string
+            maxLength: 100
+      responses:
+        "200":
+          description: Towns
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Town"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /api/active-forms/lookups/service-coordinator-types:
+    get:
+      tags: [Active Form Lookups]
+      operationId: getServiceCoordinatorTypes
+      summary: Service coordinator types
+      description: "`slstSvcCordType` ordered by description. Not used by the UI."
+      responses:
+        "200":
+          description: Coordinator types
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ServiceCoordinatorType"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /api/active-forms/lookups/delay-reasons:
+    get:
+      tags: [Active Form Lookups]
+      operationId: getDelayReasons
+      summary: Delay reasons (family and provider)
+      description: |
+        `family` = `slstActiveDelayFC` (due to family/child circumstances);
+        `provider` = `slstActiveDelayNFC` (not due to family/child circumstances — non-compliant).
+        Both ordered by Reason.
+      responses:
+        "200":
+          description: Delay reasons
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DelayReasons"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /api/active-forms/{childId}:
+    parameters:
+      - $ref: "#/components/parameters/ChildId"
+    get:
+      tags: [Active Form]
+      operationId: getActiveFormsForClient
+      summary: Client header and all Active Forms for the client
+      description: Forms ordered by ReferralDate (nulls last) DESC, then ID DESC.
+      x-known-issues:
+        - "AF-GAP-06: unauthenticated; returns the client's SSN."
+      responses:
+        "200":
+          description: Client and forms
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActiveFormsResponse"
+        "500":
+          description: "Errors (sent as 500): `ChildID must be a positive integer`, `Client not found`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      tags: [Active Form]
+      operationId: createActiveForm
+      summary: Create an Active Form
+      description: |
+        1. Validates `childId` and loads the client.
+        2. Applies aliases (`status`, `onePlanDate`).
+        3. Rejects `Region: ""`. Validates `ReferralDate`, `InitialEvalDate` and
+           `InitialMeetingDate` (YYYY-MM-DD, real date, not before the child's DOB).
+        4. If `Town` is sent, resolves it in `slstTownCodes` and sets `Town`, `CountyCode`
+           and `SU_id`.
+        5. Inserts whitelisted columns and returns the new row.
+      x-known-issues:
+        - "AF-GAP-03: the UI sends status `aop`/`aop-capta`; legacy expects FormType 'Active' plus CAPTA."
+        - "AF-GAP-04: 45-day compliance columns are not derived or saved."
+        - "AF-GAP-11: required fields, Region 0, referral ordering and text lengths are not checked server-side."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActiveFormWrite"
+            example:
+              FormDate: "2026-10-01"
+              Region: 3
+              ReferralDate: "2025-02-03"
+              status: aop
+              InitialEvalDate: "2025-02-20"
+              DelayFC: null
+              DelayNotFC: null
+              InitialMeetingDate: "2025-03-10"
+              DDCommunication: true
+              DCAutism: true
+              AutismDate: "2025-01-15"
+              DCOtherDesc: NMNEI
+      responses:
+        "201":
+          description: Created row
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActiveForm"
+        "500":
+          description: |
+            Errors (sent as 500): `ChildID must be a positive integer`, `Client not found`,
+            `Region must be selected`, `{Field} must use YYYY-MM-DD format`,
+            `{Field} must be a valid date`, `{Field} cannot be before child DOB`,
+            `Town was not found in slstTownCodes`, SQL errors (e.g. truncation).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/active-forms/{childId}/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ChildId"
+      - $ref: "#/components/parameters/FormId"
+    get:
+      tags: [Active Form]
+      operationId: getActiveForm
+      summary: One Active Form (not used by the UI)
+      responses:
+        "200":
+          description: The row
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActiveForm"
+        "500":
+          description: "Errors (sent as 500): `Client not found`, `Active Form not found`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      tags: [Active Form]
+      operationId: updateActiveForm
+      summary: Update an Active Form (partial)
+      description: |
+        Only the keys sent are updated. Date checks run on the existing row merged with the
+        body. Sets `LastUpdateDate = GETDATE()` (LastUpdateUser is not changed).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActiveFormWrite"
+      responses:
+        "200":
+          description: Updated row
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActiveForm"
+        "500":
+          description: "Errors (sent as 500): as for create, plus `Active Form not found`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags: [Active Form]
+      operationId: deleteActiveForm
+      summary: Delete an Active Form
+      description: Hard delete of the row. The UI deletes via `DELETE /api/input-forms/active/{childId}/{id}` instead.
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        "500":
+          description: "Errors (sent as 500): `Client not found`, `Active Form not found`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: access_token
+      description: JWT access token cookie. **Not applied to /api/active-forms today.**
+
+  parameters:
+    ChildId:
+      name: childId
+      in: path
+      required: true
+      description: Client ID (`stblPeople.ChildID`)
+      schema:
+        type: integer
+        minimum: 1
+      example: 1042
+    FormId:
+      name: id
+      in: path
+      required: true
+      description: Active Form ID (`stblActiveForm.ID`)
+      schema:
+        type: integer
+        minimum: 1
+      example: 881
+
+  responses:
+    Error:
+      description: Unhandled error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    Date:
+      type: string
+      format: date
+      nullable: true
+      description: YYYY-MM-DD
+
+    ActiveFormWrite:
+      type: object
+      description: |
+        Writable columns of `stblActiveForm` (plus aliases). All optional at the API level;
+        the UI requires Region, ReferralDate, status, InitialEvalDate and onePlanDate/InitialMeetingDate.
+        Access Yes/No `int` columns use -1 = Yes, 0 = No.
+      properties:
+        status:
+          type: string
+          description: Alias for FormType. UI values `aop` (Active One Plan) or `aop-capta` (Active One Plan – CAPTA).
+          maxLength: 12
+        onePlanDate:
+          $ref: "#/components/schemas/Date"
+        FormDate:
+          $ref: "#/components/schemas/Date"
+        FormType:
+          type: string
+          maxLength: 12
+          description: DB default `Active`
+        Region:
+          type: integer
+          description: stblReportingRegion.ID
+        MonthReporting:
+          type: integer
+          nullable: true
+        SU_id:
+          type: integer
+          nullable: true
+        SUName:
+          type: string
+          maxLength: 50
+          minLength: 1
+          nullable: true
+        CountyCode:
+          type: string
+          maxLength: 12
+          minLength: 1
+          nullable: true
+        Town:
+          type: string
+          description: Town code or name; resolved via slstTownCodes. Column is nvarchar(3).
+          nullable: true
+        FamilyIsSvcCord:
+          type: boolean
+        SvcCordFirstName:
+          type: string
+          maxLength: 50
+          nullable: true
+        SvcCordLastName:
+          type: string
+          maxLength: 50
+          nullable: true
+        SvcCordType:
+          type: integer
+          description: 1 EI, 2 School, 3 CSHN, 4 Other
+          nullable: true
+        SvcCordOtherDesc:
+          type: string
+          maxLength: 255
+          nullable: true
+        CAPTA:
+          type: integer
+          enum: [-1, 0]
+          nullable: true
+        ReferralDate:
+          $ref: "#/components/schemas/Date"
+        ReReferralDate:
+          $ref: "#/components/schemas/Date"
+        Address:
+          type: string
+          maxLength: 255
+          nullable: true
+        ZipCode:
+          type: string
+          maxLength: 255
+          nullable: true
+        Ethnicity:
+          type: integer
+          description: 1 Hispanic/Latino, 2 American Indian/Alaska Native, 3 Asian, 4 Black/African American, 5 Native Hawaiian/Pacific Islander, 6 White, 99 Two or more
+          nullable: true
+        InterimDate:
+          $ref: "#/components/schemas/Date"
+        InitialEvalDate:
+          $ref: "#/components/schemas/Date"
+        EvalWithin45Days:
+          type: integer
+          enum: [-1, 0]
+          nullable: true
+        DelayFC:
+          type: string
+          maxLength: 50
+          nullable: true
+          description: Family/child-circumstance reason (slstActiveDelayFC)
+        DelayFCOther:
+          type: string
+          nullable: true
+        DelayNotFC:
+          type: string
+          maxLength: 50
+          nullable: true
+          description: Non-compliant reason (slstActiveDelayNFC)
+        DelayNotFCOther:
+          type: string
+          nullable: true
+        InitEval45Compliant:
+          type: boolean
+        InitEval45FC:
+          type: boolean
+        InitEval45NC:
+          type: boolean
+        InitialMeetingDate:
+          $ref: "#/components/schemas/Date"
+        MeetingWithin45Days:
+          type: integer
+          enum: [-1, 0]
+          nullable: true
+        MeetingDelayFC:
+          type: string
+          maxLength: 50
+          nullable: true
+        MeetingDelayFCOther:
+          type: string
+          nullable: true
+        MeetingDelayNC:
+          type: string
+          maxLength: 50
+          nullable: true
+        MeetingDelayNCOther:
+          type: string
+          nullable: true
+        InitMeeting45Compliant:
+          type: boolean
+        InitMeeting45FC:
+          type: boolean
+        InitMeeting45NC:
+          type: boolean
+        BothCompliant:
+          type: boolean
+        BothFC:
+          type: boolean
+        BothNC:
+          type: boolean
+        DDAll:
+          type: boolean
+        DDAdaptive:
+          type: boolean
+        DDCognitive:
+          type: boolean
+        DDCommunication:
+          type: boolean
+        DDMotor:
+          type: boolean
+        DDSocial:
+          type: boolean
+        DCAttachment:
+          type: boolean
+        DCAutism:
+          type: boolean
+        DCSuspected:
+          type: boolean
+        DCBlind:
+          type: boolean
+        DCDeaf:
+          type: boolean
+        DCDown:
+          type: boolean
+        DCCerebral:
+          type: boolean
+        DCCraniofacial:
+          type: boolean
+        DCFragile:
+          type: boolean
+        DCOral:
+          type: boolean
+        DCBirth:
+          type: boolean
+        DCOther:
+          type: boolean
+        DCOtherDesc:
+          type: string
+          maxLength: 255
+          nullable: true
+          description: Other condition text; may contain a line `NMNEI`
+        ConsentDate:
+          $ref: "#/components/schemas/Date"
+        AutismDate:
+          $ref: "#/components/schemas/Date"
+        SuspectedDate:
+          $ref: "#/components/schemas/Date"
+        BlindDate:
+          $ref: "#/components/schemas/Date"
+        DeafDate:
+          $ref: "#/components/schemas/Date"
+
+    ActiveForm:
+      description: A full `stblActiveForm` row (`SELECT *`). Dates are returned as ISO date-times.
+      allOf:
+        - $ref: "#/components/schemas/ActiveFormWrite"
+        - type: object
+          properties:
+            ID:
+              type: integer
+            ChildID:
+              type: integer
+            SSMA_TimeStamp:
+              type: object
+              description: rowversion serialised by Node as a Buffer object
+            InsertDate:
+              type: string
+              format: date-time
+            InsertUser:
+              type: string
+            LastUpdateDate:
+              type: string
+              format: date-time
+            LastUpdateUser:
+              type: string
+
+    ActiveFormClient:
+      type: object
+      properties:
+        ChildID:
+          type: integer
+        Region:
+          type: integer
+          nullable: true
+        LastName:
+          type: string
+          nullable: true
+        FirstName:
+          type: string
+          nullable: true
+        SS:
+          type: string
+          nullable: true
+        SSTemp:
+          type: boolean
+          nullable: true
+        DOB:
+          type: string
+          format: date-time
+          nullable: true
+        Gender:
+          type: string
+          nullable: true
+        Notes:
+          type: string
+          nullable: true
+        NonEarlyIntervention:
+          type: boolean
+
+    ActiveFormsResponse:
+      type: object
+      properties:
+        client:
+          $ref: "#/components/schemas/ActiveFormClient"
+        forms:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActiveForm"
+
+    SupervisoryUnion:
+      type: object
+      properties:
+        SU_id:
+          type: integer
+        SUName:
+          type: string
+        SortOrder:
+          type: integer
+          nullable: true
+
+    Town:
+      type: object
+      properties:
+        Town:
+          type: string
+        TownName:
+          type: string
+        SU_id:
+          type: integer
+          nullable: true
+        CountyCode:
+          type: string
+          nullable: true
+        CountyName:
+          type: string
+          nullable: true
+
+    ServiceCoordinatorType:
+      type: object
+      properties:
+        SvcCordType:
+          type: integer
+        SvcCordTypeDesc:
+          type: string
+          nullable: true
+
+    DelayReasons:
+      type: object
+      properties:
+        family:
+          type: array
+          items:
+            type: object
+            properties:
+              Reason:
+                type: string
+        provider:
+          type: array
+          items:
+            type: object
+            properties:
+              Reason:
+                type: string
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string

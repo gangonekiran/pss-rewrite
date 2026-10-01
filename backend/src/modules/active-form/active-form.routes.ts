@@ -4,7 +4,6 @@ import * as controller from "./active-form.controller";
 const router=Router();
 
 // Lookup routes must come before /:childId.
-router.get("/lookups/regions",controller.regions);
 router.get("/lookups/supervisory-unions",controller.supervisoryUnions);
 router.get("/lookups/towns",controller.towns);
 router.get("/lookups/service-coordinator-types",controller.serviceCoordinatorTypes);
