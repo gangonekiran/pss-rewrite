@@ -219,7 +219,7 @@ paths:
         - "BR-GAP-01: the response is a message only, not the updated client."
         - "BR-GAP-06: 'LastName is required' / 'FirstName is required' are returned as 500."
         - "BR-GAP-08: omitted fields (e.g. notes) are overwritten with NULL."
-        - "BR-GAP-09: names/notes are bound as VarChar (Unicode lost); names over 50 characters fail with 500."
+        - "BR-GAP-09: names are bound as VarChar (Unicode lost); names over 50 characters fail with 500. Notes are bound as NVarChar(MAX)."
         - "BR-GAP-15: an unknown id still returns 200."
       requestBody:
         required: true
@@ -353,8 +353,8 @@ paths:
       summary: Save client notes (PROPOSED)
       x-status: proposed
       description: |
-        **Not implemented.** Required by the confirmed requirement that Client Status notes
-        must be saved (BR-GAP-10). Updates only `stblPeople.Notes` (`nvarchar(max)`) plus
+        **Not implemented, by decision.** Client Status notes are saved only by Done,
+        through `PUT /api/clients/{id}` / `POST /api/clients` (BR-GAP-10). Updates only `stblPeople.Notes` (`nvarchar(max)`) plus
         `LastUpdateDate` / `LastUpdateUser`, so other columns are not overwritten.
       requestBody:
         required: true

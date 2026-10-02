@@ -13,6 +13,10 @@ import type { Client } from '../../../../types/client';
 
 interface ClientStatusProps {
   client: Client;
+  /** Notes can only be edited while the client is unlocked. */
+  isLocked?: boolean;
+  /** Updates client.notes on the page; Done saves it with the client. */
+  onClientNotesChange?: (notes: string) => void;
 }
 
 interface ClientStatusData {
@@ -27,6 +31,8 @@ interface ClientStatusData {
 
 export default function ClientStatus({
   client,
+  isLocked = false,
+  onClientNotesChange,
 }: ClientStatusProps) {
   const [services, setServices] = useState<
     ServiceHistoryItem[]
@@ -48,8 +54,6 @@ export default function ClientStatus({
 
   const [statusData, setStatusData] =
     useState<ClientStatusData | null>(null);
-    
-  const [notes, setNotes] = useState<string>('');
 
   const [loading, setLoading] = useState(false);
 
@@ -74,7 +78,6 @@ export default function ClientStatus({
         );
 
         setStatusData(data);
-        setNotes(data.notes ?? '');
       } catch (error) {
         console.error(
           'Failed to load client status:',
@@ -82,7 +85,6 @@ export default function ClientStatus({
         );
 
         setStatusData(null);
-        setNotes('');
         setError('Unable to load client status.');
       } finally {
         setLoading(false);
@@ -384,9 +386,9 @@ export default function ClientStatus({
             =================================================== */}
             <div className="col-span-6 border-gray-200">
               <Notes
-                value={notes}
-                onChange={setNotes}
-                readOnly={false}
+                value={client.notes ?? ''}
+                onChange={onClientNotesChange}
+                readOnly={isLocked}
               />
             </div>
           </div>

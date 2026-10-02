@@ -95,7 +95,7 @@ export async function createClient(client: Client) {
 
   request.input(
     "Notes",
-    sql.NVarChar(4000),
+    sql.NVarChar(sql.MAX),
     client.notes &&
       String(client.notes).trim() !== ""
       ? String(client.notes).trim()
@@ -204,7 +204,7 @@ export async function updateClient(id: number, client: Client) {
     )
     .input(
       "Notes",
-      sql.VarChar(4000),
+      sql.NVarChar(sql.MAX),
       notes !== undefined && notes !== null ? String(notes) : null,
     )
     .input(

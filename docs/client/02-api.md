@@ -347,8 +347,9 @@ As shown in 2.10, 2.11 and 2.5.
 | `Client.Gender` | `"M"` example | DB also allows `U` (Unknown) |
 | `Client.SS` example | `123-45-6789` | FITP extract expects 9 digits without dashes |
 
-## 6. Proposed endpoint (requirement confirmed)
+## 6. Proposed endpoint (not needed)
 
 | Method | Path | Body | Purpose |
 | ------ | ---- | ---- | ------- |
+| ~~PATCH~~ | ~~`/api/clients/{id}/notes`~~ | — | **Not implemented by decision:** notes are saved only by Done through `PUT /api/clients/{id}` / `POST /api/clients`. Original proposal: |
 | PATCH | `/api/clients/{id}/notes` | `{ "notes": string }` | Save Client Status notes to `stblPeople.Notes` (`nvarchar(max)`, bind as `NVarChar(MAX)`) without overwriting other columns. Sets `LastUpdateDate`/`LastUpdateUser`. Returns the updated `notes`. |

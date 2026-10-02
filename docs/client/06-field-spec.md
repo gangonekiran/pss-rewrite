@@ -52,7 +52,7 @@ Legend — **Req**: Y required · N optional · — n/a. **Edit**: L = editable 
 | S7 | Interim Date    | Label        | date      | same | R | — | `interimDate` | |
 | S8 | One Plan Date   | Label        | date      | same | R | — | `onePlanDate` | |
 | S9 | Exit Date       | Label        | date      | same | R | — | `exitDate` | |
-| S10 | Notes          | Textarea (min 260 px) | `nvarchar(max)` | Placeholder "Enter notes here..." | A (but **not saved yet**) | `stblPeople.Notes` | `notes` | **Requirement: must save.** Add a Save action (or save on blur) calling `PATCH /api/clients/{id}/notes`; respect the Lock state |
+| S10 | Notes          | Textarea (min 260 px) | `nvarchar(max)` | Placeholder "Enter notes here..." | L | `stblPeople.Notes` | `client.notes` | Saved only by **Done** with the rest of the client (`PUT` existing / `POST` new). Read-only when locked. No separate Save Notes button. |
 
 ### Service History table
 

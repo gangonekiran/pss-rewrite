@@ -188,7 +188,6 @@ Two tabs: **Client Status** (default) and **Input Forms**. Tab state is local; s
 | ------------ | ------- |
 | `statusDate` | "Client Status On" date, defaults to local today (`YYYY-MM-DD`). |
 | `statusData` | Response of `GET /:id/status`. |
-| `notes`      | Copy of `statusData.notes`, editable in `Notes`. |
 | `services`   | Response of `GET /:id/service-history`. |
 | `loading`, `error` | UI flags. |
 
@@ -200,7 +199,7 @@ Effects: status reloads when `childId` **or** `statusDate` changes (so the Go bu
 
 ### 3.6 [components/Notes/Notes.tsx](../../frontend/src/features/client/components/Notes/Notes.tsx)
 
-Controlled `<textarea>` with `value`, `onChange`, `readOnly`. Rendered from `ClientStatus` with `readOnly={false}` ([ClientStatus.tsx:389](../../frontend/src/features/client/components/ClientStatus/ClientStatus.tsx#L389)), but nothing persists the edited value. The requirement is that notes **must save** to `stblPeople.Notes` (BR-GAP-10).
+Controlled `<textarea>` with `value`, `onChange`, `readOnly`. `ClientStatus` shows `client.notes`, reports edits through `onClientNotesChange` (which updates `client` in `ClientPage`), and makes it read-only while locked. **Done** saves the notes with the client (BR-GAP-10, fixed); there is no separate save.
 
 ### 3.7 [components/ServiceHistory/ServiceHistory.tsx](../../frontend/src/features/client/components/ServiceHistory/ServiceHistory.tsx) and [ServiceHistoryItem.tsx](../../frontend/src/features/client/components/ServiceHistory/ServiceHistoryItem.tsx)
 

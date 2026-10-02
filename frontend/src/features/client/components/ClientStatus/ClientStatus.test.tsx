@@ -86,8 +86,18 @@ const serviceHistory = [
   },
 ];
 
-async function renderClientStatus(client = createClient()) {
-  const screen = await render(<ClientStatus client={client} />);
+async function renderClientStatus(
+  client = createClient(),
+  onClientNotesChange?: (notes: string) => void,
+  isLocked = false,
+) {
+  const screen = await render(
+    <ClientStatus
+      client={client}
+      isLocked={isLocked}
+      onClientNotesChange={onClientNotesChange}
+    />,
+  );
   return { screen };
 }
 
@@ -185,14 +195,14 @@ test('loads service history when a client is selected', async () => {
   await expect.element(screen.getByText('Service History: 2')).toBeVisible();
 });
 
-test('loads notes returned by the status API', async () => {
-  const { screen } = await renderClientStatus();
+test("shows the client's notes, not the notes returned by the status API", async () => {
+  const { screen } = await renderClientStatus(createClient({ notes: 'Saved client notes' }));
 
   await vi.waitFor(() => {
     expect(clientService.getStatus).toHaveBeenCalled();
   });
 
-  await expect.element(screen.getByLabelText('Notes')).toHaveValue('Client status notes');
+  await expect.element(screen.getByLabelText('Notes')).toHaveValue('Saved client notes');
 });
 
 test('loads status for a selected date when Go is clicked', async () => {
@@ -245,18 +255,50 @@ test('loads today when Today is clicked', async () => {
   });
 });
 
-test('updates notes when Notes is changed', async () => {
-  const { screen } = await renderClientStatus();
+test('reports edited notes to the page so Done can save them', async () => {
+  const onClientNotesChange = vi.fn();
+
+  const { screen } = await renderClientStatus(createClient(), onClientNotesChange);
 
   await vi.waitFor(() => {
     expect(clientService.getStatus).toHaveBeenCalled();
   });
 
+  await screen.getByLabelText('Notes').fill('Updated client notes');
+
+  expect(onClientNotesChange).toHaveBeenLastCalledWith('Updated client notes');
+});
+
+test('lets a new client (no ChildID) edit notes', async () => {
+  const onClientNotesChange = vi.fn();
+
+  const { screen } = await renderClientStatus(
+    createClient({ childId: undefined, notes: 'Draft' }),
+    onClientNotesChange,
+  );
+
   const notes = screen.getByLabelText('Notes');
 
-  await notes.fill('Updated client notes');
+  await expect.element(notes).toHaveValue('Draft');
+  await expect.element(notes).not.toHaveAttribute('readonly');
 
-  await expect.element(notes).toHaveValue('Updated client notes');
+  await notes.fill('New client notes');
+
+  expect(onClientNotesChange).toHaveBeenLastCalledWith('New client notes');
+});
+
+test('makes notes read only while the client is locked', async () => {
+  const { screen } = await renderClientStatus(createClient({ notes: 'Locked notes' }), undefined, true);
+
+  await expect.element(screen.getByLabelText('Notes')).toHaveValue('Locked notes');
+  await expect.element(screen.getByLabelText('Notes')).toHaveAttribute('readonly');
+});
+
+test('has no separate Save Notes button', async () => {
+  const { screen } = await renderClientStatus();
+
+  await expect.element(screen.getByLabelText('Notes')).toBeVisible();
+  await expect.element(screen.getByRole('button', { name: /save notes/i })).not.toBeInTheDocument();
 });
 
 test('renders dash values when status data contains nulls', async () => {

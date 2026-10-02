@@ -36,6 +36,12 @@ export default function ClientPage() {
     setIsNewClient(true);
   };
 
+  // Notes on the Client Status tab edit client.notes, which Done
+  // saves together with the rest of the client (POST / PUT).
+  const handleClientNotesChange = (notes: string) => {
+    setClient((current) => ({ ...current, notes }));
+  };
+
   const clearClientLookup = () => {
     clientLookupRef.current?.clearLookup();
   };
@@ -72,7 +78,12 @@ export default function ClientPage() {
         setIsLocked={setIsLocked}
         clearClientLookup={clearClientLookup}
       />
-      <ClientTabs client={client} regions={regions}/>
+      <ClientTabs
+        client={client}
+        regions={regions}
+        isLocked={isLocked}
+        onClientNotesChange={handleClientNotesChange}
+      />
     </PageContainer>
   );
 }

@@ -9,11 +9,13 @@ import type { RegionLookup } from '../../../../types';
 interface ClientTabsProps {
   client: Client;
   regions: RegionLookup[];
+  isLocked?: boolean;
+  onClientNotesChange?: (notes: string) => void;
 }
 
 type Tab = 'status' | 'forms';
 
-export default function ClientTabs({ client, regions }: ClientTabsProps) {
+export default function ClientTabs({ client, regions, isLocked, onClientNotesChange }: ClientTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>('status');
 
   return (
@@ -47,7 +49,9 @@ export default function ClientTabs({ client, regions }: ClientTabsProps) {
 
       {/* Tab Content */}
       <div>
-        {activeTab === 'status' && <ClientStatus client={client} />}
+        {activeTab === 'status' && (
+          <ClientStatus client={client} isLocked={isLocked} onClientNotesChange={onClientNotesChange} />
+        )}
 
         {activeTab === 'forms' && (
           <div className="rounded-md border border-dashed border-gray-300 bg-gray-50 py-10 text-center text-sm text-gray-500">
