@@ -35,6 +35,10 @@ const swaggerOptions: swaggerJSDoc.Options = {
         name: "Input Forms",
         description: "Client input form APIs",
       },
+      {
+        name: "Common Info",
+        description: "Shared lookups (regions, towns)",
+      },
     ],
 
     components: {

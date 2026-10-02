@@ -1,3 +1,5 @@
 export const COMMON_INFO_TABLES = {
-  regions: 'dbo.stblRegion',
+  regions: 'dbo.stblReportingRegion',
+  towns: 'dbo.slstTownCodes',
+  counties: 'dbo.slstCounties',
 } as const;

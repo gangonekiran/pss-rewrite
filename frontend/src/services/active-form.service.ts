@@ -8,8 +8,6 @@ import type {
   SupervisoryUnionLookup,
 } from '../types/active-form';
 
-import type { TownLookup } from '../types/common';
-
 const BASE_URL = '/active-forms';
 
 class ActiveFormService {
@@ -62,13 +60,6 @@ class ActiveFormService {
     const response = await api.get<SupervisoryUnionLookup[]>(
       `${BASE_URL}/lookups/supervisory-unions`,
     );
-    return response.data;
-  }
-
-  async towns(search?: string): Promise<TownLookup[]> {
-    const response = await api.get<TownLookup[]>(`${BASE_URL}/lookups/towns`, {
-      params: search ? { search } : undefined,
-    });
     return response.data;
   }
 

@@ -3,6 +3,7 @@ import { Field } from './FormField';
 import type { ActiveFormValues } from '../../../types/active-form';
 import { inputClass } from './formStyles';
 import type { RegionLookup } from '../../../types';
+import { RegionSelect } from '../../common-info';
 
 interface Props {
   regions: RegionLookup[];
@@ -24,22 +25,16 @@ export default function GeneralInformation({ regions }: Props) {
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
         {/* Region */}
         <Field label="Region" required error={errors.Region?.message}>
-          <select
+          <RegionSelect
             {...register('Region', {
               valueAsNumber: true,
               required: 'Region is required',
               validate: (value) => value > 0 || 'Region is required',
             })}
+            regions={regions}
+            placeholderValue="0"
             className={inputClass}
-          >
-            <option value="0">Select region</option>
-
-            {regions.map((region) => (
-              <option key={region.ID} value={region.ID}>
-                {region.RName}
-              </option>
-            ))}
-          </select>
+          />
         </Field>
 
         {/* Date of Referral */}

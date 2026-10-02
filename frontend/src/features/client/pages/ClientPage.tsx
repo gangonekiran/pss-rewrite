@@ -67,6 +67,7 @@ export default function ClientPage() {
         client={client}
         setClient={setClient}
         isLocked={isLocked}
+        regions={regions}
       />
       <ClientActions
         client={client}

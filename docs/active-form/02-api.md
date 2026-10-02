@@ -38,7 +38,7 @@ Not in Swagger UI today (no `@swagger` annotations — AF-GAP-18).
 | # | Method | Path | Purpose | Used by UI |
 | - | ------ | ---- | ------- | ---------- |
 | 2.1 | GET | `/lookups/supervisory-unions` | Active supervisory unions | No |
-| 2.2 | GET | `/lookups/towns?search=` | Towns with county | No |
+| 2.2 | ~~GET~~ | ~~`/lookups/towns?search=`~~ | **Moved** to `GET /api/common-info/towns?search=` | No |
 | 2.3 | GET | `/lookups/service-coordinator-types` | Coordinator types | No |
 | 2.4 | GET | `/lookups/delay-reasons` | Family and provider delay reasons | **Yes** |
 | 2.5 | GET | `/{childId}` | Client header + all Active Forms | **Yes** (open new/edit) |
@@ -60,7 +60,9 @@ ORDER BY CASE WHEN SortOrder IS NULL THEN 1 ELSE 0 END, SortOrder, SUName
 [ { "SU_id": 12, "SUName": "Chittenden South", "SortOrder": 1 } ]
 ```
 
-### 2.2 GET /lookups/towns
+### 2.2 GET /lookups/towns → moved to `/api/common-info/towns`
+
+The town lookup now lives in the common-info module and is shared by every form with a Town field. Create/update still validate `Town` against `slstTownCodes` (through common-info) and fill `CountyCode` / `SU_id`. Same parameters and response:
 
 | Param | In | Required | Notes |
 | ----- | -- | -------- | ----- |

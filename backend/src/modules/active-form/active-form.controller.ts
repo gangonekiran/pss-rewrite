@@ -13,12 +13,6 @@ export const remove = async (r: Request, s: Response) =>
   s.json(await service.remove(r.params.childId, r.params.id));
 export const supervisoryUnions = async (_r: Request, s: Response) =>
   s.json(await service.lookups.supervisoryUnions());
-export const towns = async (r: Request, s: Response) =>
-  s.json(
-    await service.lookups.towns(
-      typeof r.query.search === "string" ? r.query.search : undefined,
-    ),
-  );
 export const serviceCoordinatorTypes = async (_r: Request, s: Response) =>
   s.json(await service.lookups.serviceCoordinatorTypes());
 export const delayReasons = async (_r: Request, s: Response) =>

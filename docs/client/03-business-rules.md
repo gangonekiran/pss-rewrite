@@ -218,7 +218,7 @@ Severity is a suggestion for triage. Items marked **(DDL)** were found or re-rat
 | BR-GAP-14 | Low | Status tie-break compares record IDs across different tables. Legacy used `slstFormNames.Sort`. | `getClientStatus` |
 | BR-GAP-15 | Low | `GET /:id` returns `200` with an empty body for unknown IDs; `PUT`/`DELETE` succeed on unknown IDs. | controller |
 | BR-GAP-16 | Low | Lookup searches fire on every keystroke. There are **no indexes** on `LastName`, `FirstName`, `SS` (only the PK), so every keystroke scans `stblPeople`. | ClientLookup; DDL |
-| BR-GAP-17 | Low | Regions are fetched twice on page load; `/api/clients/regions` duplicates `/api/common-info/regions`. `WHERE Inactive = 0` also hides regions where `Inactive` is NULL (the column is nullable). | — |
+| BR-GAP-17 | Low | ✅ **Duplicates fixed:** regions are loaded once by `ClientPage` (passed to `ClientLookup`), and `/api/clients/regions` was removed in favour of `/api/common-info/regions`. Still open: `WHERE Inactive = 0` hides regions where `Inactive` is NULL (the column is nullable). | common-info |
 | BR-GAP-18 | Low | `isNewClient` is maintained but never read. | ClientPage / ClientActions |
 | BR-GAP-19 | Low | `%` or `_` typed in the search boxes act as SQL wildcards. | repository |
 | BR-GAP-25 | Low (DDL) | `slstServiceNames.SvcCode` is not unique (PK is `SvcNameID`). If a code repeats, the service-history join returns duplicate rows. | `getServiceHistory` |

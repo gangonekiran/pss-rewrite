@@ -50,32 +50,7 @@ paths:
         "500":
           $ref: "#/components/responses/Error"
 
-  /api/active-forms/lookups/towns:
-    get:
-      tags: [Active Form Lookups]
-      operationId: getTowns
-      summary: Towns with county
-      description: "`slstTownCodes` LEFT JOIN `slstCounties`, ordered by TownName. Not used by the UI."
-      parameters:
-        - name: search
-          in: query
-          required: false
-          description: Contains-match on TownName or Town code
-          schema:
-            type: string
-            maxLength: 100
-      responses:
-        "200":
-          description: Towns
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Town"
-        "500":
-          $ref: "#/components/responses/Error"
-
+  # Towns moved to GET /api/common-info/towns (common-info module).
   /api/active-forms/lookups/service-coordinator-types:
     get:
       tags: [Active Form Lookups]

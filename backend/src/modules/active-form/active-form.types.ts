@@ -10,8 +10,3 @@ export interface ActiveFormWithClient {
   client: ActiveFormClient;
   form: ActiveFormRecord | null;
 }
-
-export interface TownLookup {
-  Town: string; TownName: string; SU_id: number | null;
-  CountyCode: string | null; CountyName: string | null;
-}

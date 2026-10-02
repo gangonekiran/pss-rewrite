@@ -118,7 +118,7 @@ All `bit NULL DEFAULT 0` unless stated.
 | `slstActiveDelayNFC` | `Reason nvarchar(255) NN` | PK `Reason` | Delay lists (provider) | Same |
 | `stblReportingRegion` | `ID int`, `RName nvarchar(255)`, `Description`, `Inactive bit` | PK `ID` | Region dropdown (via `/api/common-info/regions`) | |
 | `slstSU` | `SU_id int`, `SUName nvarchar(50) NN`, `SortOrder int`, `Inactive bit` (default 0) | PK `SU_id` | `/lookups/supervisory-unions` (unused by UI) | "number assigned … by the Vermont Department of Education" |
-| `slstTownCodes` | `Town nvarchar(5)`, `TownName nvarchar(25)`, `VDHTownCodes nvarchar(5)`, `SU_id int`, `CountyCode nvarchar(255) NN` | PK `Town`; FK `SU_id → slstSU` | `/lookups/towns`, town mapping | |
+| `slstTownCodes` | `Town nvarchar(5)`, `TownName nvarchar(25)`, `VDHTownCodes nvarchar(5)`, `SU_id int`, `CountyCode nvarchar(255) NN` | PK `Town`; FK `SU_id → slstSU` | `/api/common-info/towns`, town mapping | |
 | `slstCounties` | `CountyCode nvarchar(255)`, `CountyName nvarchar(50) NN` | PK `CountyCode` | Joined to towns | |
 | `slstSvcCordType` | `SvcCordType int IDENTITY`, `SvcCordTypeDesc nvarchar(255)` | PK | `/lookups/service-coordinator-types` (unused by UI) | |
 | `slstEthnicity` | `ID int`, `Ethnicity nvarchar(50) NN` | PK `ID` | — (not used) | |

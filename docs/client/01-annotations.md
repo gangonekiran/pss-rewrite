@@ -65,7 +65,7 @@ Express `Router` mounted at `/api/clients` in [app.ts](../../backend/src/app.ts#
 | 2     | GET    | `/search/lastname`       | `searchLastName`    |
 | 3     | GET    | `/search/firstname`      | `searchFirstName`   |
 | 4     | GET    | `/search/ssn`            | `searchSSN`         |
-| 5     | GET    | `/regions`               | `getAllRegions`     |
+| 5     | ~~GET~~ | ~~`/regions`~~          | removed — use `GET /api/common-info/regions` |
 | 6     | GET    | `/:id`                   | `getClient`         |
 | 7     | POST   | `/`                      | `createClient`      |
 | 8     | PUT    | `/:id`                   | `updateClient`      |
@@ -93,7 +93,6 @@ Thin HTTP adapters. Express 5 forwards rejected promises to [error.middleware.ts
 | `searchSSN`         | same                                                                   | `200` array                                |
 | `getClientStatus`   | validates id (→ `400 "Invalid ChildID"`); `date` defaults to today (UTC) | `200` status object                      |
 | `getServiceHistory` | id; optional `date`                                                    | `200` array                                |
-| `getAllRegions`     | none                                                                   | `200` array                                |
 
 > **Annotation:** `createClient` / `updateClient` discard the row the repository returns ([client.controller.ts:9](../../backend/src/modules/client/client.controller.ts#L9), [:13](../../backend/src/modules/client/client.controller.ts#L13)). The frontend expects the saved client back — see [Business Rules BR-GAP-01](03-business-rules.md#known-gaps-and-defects).
 
@@ -121,7 +120,6 @@ All SQL lives here. Every query uses `request.input(...)` parameters — no stri
 | `searchSSN`          | `stblPeople`                                                   | `TOP 20`, `SS LIKE '%x%'` (contains) ([:299](../../backend/src/modules/client/client.repository.ts#L299)). |
 | `getClientStatus`    | `stblPeople`, 7 × `stbl*Form`                                  | One SELECT of 7 scalar sub-queries — see [API §2.10](02-api.md#210-get-apiclientsidstatus). Differs from the legacy procedure `GetClientFormStats_rpt` (BR-GAP-21). |
 | `getServiceHistory`  | `stblServiceGridForm` ⋈ **`Services`** (warehouse) ⟕ `slstServiceNames` | `Consent = 'Yes'` if `ConsentDate` not null else `'Pending'`; `CasePlan` always `NULL`. Reads the reporting-warehouse copy instead of the live `stblServices`. The legacy equivalent is `GetServiceHistory_rpt` (BR-GAP-20). |
-| `getAllRegions`      | `stblReportingRegion`                                          | `Inactive = 0`, ordered by `RName`. Duplicate of `/api/common-info/regions`. |
 
 ---
 
@@ -154,7 +152,7 @@ Container page.
 | DOB        | `<input type=date>` + disabled → | **Bound directly to `client.dob`** and not disabled when locked ([:302-313](../../frontend/src/features/client/components/ClientLookup/ClientLookup.tsx#L302-L313)). The → button is permanently disabled — DOB lookup is not implemented. |
 | SSN        | `SearchableSelect` + → | Via `searchSSN`. Option label is the SSN.                                                            |
 
-**Right panel — Client details** (all disabled when `isLocked`): Client ID (read-only, shows `New` when no id), Last Name, Gender (`M`/`F` only; the DB also allows `U` = Unknown), First Name, SS# (`maxLength=10`; DB `nvarchar(15)`; FITP extract expects 9 digits), Region (`SearchableSelect` of active regions), Birth Date, computed Age, Non-EI checkbox.
+**Right panel — Client details** (all disabled when `isLocked`): Client ID (read-only, shows `New` when no id), Last Name, Gender (`M`/`F` only; the DB also allows `U` = Unknown), First Name, SS# (`maxLength=10`; DB `nvarchar(15)`; FITP extract expects 9 digits), Region (`SearchableSelect` built from the `regions` prop, which `ClientPage` loads once from common-info), Birth Date, computed Age, Non-EI checkbox.
 
 | Function               | Annotation                                                                                     |
 | ---------------------- | ---------------------------------------------------------------------------------------------- |

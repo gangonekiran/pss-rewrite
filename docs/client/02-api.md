@@ -42,7 +42,7 @@ All unhandled errors go through [error.middleware.ts](../../backend/src/middlewa
 | 2.2  | GET    | `/api/clients/search/lastname`         | Prefix search by last name           | ClientLookup |
 | 2.3  | GET    | `/api/clients/search/firstname`        | Prefix search by first name          | ClientLookup |
 | 2.4  | GET    | `/api/clients/search/ssn`              | Contains search by SSN               | ClientLookup |
-| 2.5  | GET    | `/api/clients/regions`                 | Active reporting regions             | Not used (UI uses `/api/common-info/regions`) |
+| 2.5  | ~~GET~~ | ~~`/api/clients/regions`~~            | **Removed** (duplicate)              | Use `/api/common-info/regions` |
 | 2.6  | GET    | `/api/clients/{id}`                    | Get one client                       | ClientLookup |
 | 2.7  | POST   | `/api/clients`                         | Create client                        | ClientActions |
 | 2.8  | PUT    | `/api/clients/{id}`                    | Update client                        | ClientActions |
@@ -109,7 +109,9 @@ Same as 2.2 on `FirstName`; ordered `FirstName, LastName`.
 
 ---
 
-### 2.5 GET /api/clients/regions
+### 2.5 GET /api/clients/regions (removed)
+
+Removed as a duplicate. Regions come from the common-info module: `GET /api/common-info/regions` (same query and response):
 
 ```json
 [ { "ID": 1, "RName": "Burlington", "Description": "Chittenden", "Inactive": false } ]

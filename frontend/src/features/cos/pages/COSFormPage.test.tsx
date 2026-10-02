@@ -138,9 +138,6 @@ beforeEach(() => {
   vi.mocked(inputFormService.getOne).mockResolvedValue(existingForm);
   vi.mocked(inputFormService.create).mockResolvedValue({});
   vi.mocked(inputFormService.update).mockResolvedValue({});
-
-  // The page logs the regions prop on every render
-  vi.spyOn(console, 'log').mockImplementation(() => {});
 });
 
 afterEach(() => {

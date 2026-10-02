@@ -1,3 +1,4 @@
+import { lookups as commonInfoLookups } from "../common-info/common-info.service";
 import * as repository from "./active-form.repository";
 import type { ActiveFormRecord } from "./active-form.types";
 
@@ -80,7 +81,7 @@ async function child(childId: number) {
 async function townMapping(p: ActiveFormRecord) {
   if (p.Town === undefined || p.Town === null || String(p.Town).trim() === "")
     return;
-  const t = await repository.getTown(String(p.Town).trim());
+  const t = await commonInfoLookups.town(String(p.Town).trim());
   if (!t) error("Town was not found in slstTownCodes");
   p.Town = t.Town;
   p.CountyCode = t.CountyCode;
@@ -135,7 +136,6 @@ export async function remove(childIdRaw: unknown, idRaw: unknown) {
 }
 export const lookups = {
   supervisoryUnions: () => repository.getSupervisoryUnions(),
-  towns: (s?: string) => repository.getTowns(s),
   serviceCoordinatorTypes: () => repository.getServiceCoordinatorTypes(),
   delayReasons: () => repository.getDelayReasons(),
 };

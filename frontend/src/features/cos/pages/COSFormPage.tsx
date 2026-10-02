@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import inputFormService from '../../../services/input-form.service';
 import { Field } from '../../active-form/components/FormField';
 import type { RegionLookup } from '../../../types/common';
+import { RegionSelect } from '../../common-info';
 
 interface COSFormPageProps {
   childId: number;
@@ -115,8 +116,6 @@ export default function COSFormPage({
   onClose,
   onSaved,
 }: COSFormPageProps) {
-  console.log(regions);
-
   const [form, setForm] = useState<COSFormData>(createInitialForm);
 
   const [errors, setErrors] = useState<COSFormErrors>({});
@@ -349,7 +348,8 @@ export default function COSFormPage({
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
             {/* REGION */}
             <Field label="Region" required error={errors.Region}>
-              <select
+              <RegionSelect
+                regions={regions}
                 value={form.Region}
                 onChange={(event) =>
                   updateForm({
@@ -357,15 +357,7 @@ export default function COSFormPage({
                   })
                 }
                 className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              >
-                <option value="">Select region</option>
-
-                {regions.map((region) => (
-                  <option key={region.ID} value={region.ID}>
-                    {region.RName}
-                  </option>
-                ))}
-              </select>
+              />
             </Field>
 
             {/* ONE PLAN DATE */}

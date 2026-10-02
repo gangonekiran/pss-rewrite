@@ -73,8 +73,6 @@ export type WritableColumn = (typeof WRITABLE_COLUMNS)[number];
 export const DELAY_FAMILY_LOOKUP = "dbo.slstActiveDelayFC";
 export const DELAY_PROVIDER_LOOKUP = "dbo.slstActiveDelayNFC";
 export const SU_LOOKUP = "dbo.slstSU";
-export const TOWN_LOOKUP = "dbo.slstTownCodes";
-export const COUNTY_LOOKUP = "dbo.slstCounties";
 export const SERVICE_COORDINATOR_LOOKUP = "dbo.slstSvcCordType";
 
 /**

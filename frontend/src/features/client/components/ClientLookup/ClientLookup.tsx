@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import { forwardRef, useImperativeHandle, useMemo, useState } from 'react';
 
 import type { Dispatch, SetStateAction } from 'react';
 
@@ -7,9 +7,9 @@ import SearchableSelect, {
 } from '../../../../components/select/SearchableSelect';
 
 import type { Client } from '../../../../types/client';
+import type { RegionLookup } from '../../../../types/common';
 
 import clientService from '../../../../services/client.service';
-import commonInfoService from '../../../../services/common-info.service';
 
 export interface ClientLookupRef {
   clearLookup: () => void;
@@ -19,10 +19,12 @@ interface ClientLookupProps {
   client: Client;
   setClient: Dispatch<SetStateAction<Client>>;
   isLocked: boolean;
+  /** Loaded once by ClientPage (common-info regions). */
+  regions: RegionLookup[];
 }
 
 const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function ClientLookup(
-  { client, setClient, isLocked },
+  { client, setClient, isLocked, regions: regionList },
   ref,
 ) {
   const [firstNames, setFirstNames] = useState<SelectOption[]>([]);
@@ -35,7 +37,14 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
 
   const [selectedSSN, setSelectedSSN] = useState<SelectOption | null>(null);
 
-  const [regions, setRegions] = useState<SelectOption[]>([]);
+  const regions = useMemo<SelectOption[]>(
+    () =>
+      regionList.map((region) => ({
+        value: region.ID,
+        label: region.RName,
+      })),
+    [regionList],
+  );
 
   const [loading, setLoading] = useState(false);
 
@@ -50,31 +59,6 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
       setSsns([]);
     },
   }));
-
-  /**
-   * Load regions.
-   *
-   * Names are no longer loaded here because name lookup
-   * is performed through the dedicated search APIs.
-   */
-  async function loadLookups() {
-    try {
-      const regionData = await commonInfoService.regions();
-
-      setRegions(
-        regionData.map((region) => ({
-          value: region.ID,
-          label: region.RName,
-        })),
-      );
-    } catch (error) {
-      console.error('Failed to load client lookups:', error);
-    }
-  }
-
-  useEffect(() => {
-    void loadLookups();
-  }, []);
 
   /**
    * Convert client results to full-name options.

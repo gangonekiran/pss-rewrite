@@ -2,18 +2,15 @@ import { Request } from "mssql";
 import { getPool, sql } from "../../config/database";
 import {
   ACTIVE_FORM_TABLE,
-  COUNTY_LOOKUP,
   DELAY_FAMILY_LOOKUP,
   DELAY_PROVIDER_LOOKUP,
   SERVICE_COORDINATOR_LOOKUP,
   SU_LOOKUP,
-  TOWN_LOOKUP,
   WRITABLE_COLUMNS,
 } from "./active-form.config";
 import type {
   ActiveFormClient,
   ActiveFormRecord,
-  TownLookup,
 } from "./active-form.types";
 
 const allowed = new Set<string>(WRITABLE_COLUMNS);
@@ -244,63 +241,6 @@ export async function getSupervisoryUnions() {
   `);
 
   return r.recordset;
-}
-
-export async function getTowns(search?: string) {
-  const pool = await getPool();
-  const req = pool.request();
-
-  let where = "";
-
-  if (search?.trim()) {
-    req.input(
-      "Search",
-      sql.VarChar(100),
-      `%${search.trim()}%`,
-    );
-
-    where =
-      "WHERE t.TownName LIKE @Search OR t.Town LIKE @Search";
-  }
-
-  const r = await req.query(`
-    SELECT
-      t.Town,
-      t.TownName,
-      t.SU_id,
-      t.CountyCode,
-      c.CountyName
-    FROM ${TOWN_LOOKUP} t
-    LEFT JOIN ${COUNTY_LOOKUP} c
-      ON c.CountyCode = t.CountyCode
-    ${where}
-    ORDER BY t.TownName;
-  `);
-
-  return r.recordset as TownLookup[];
-}
-
-export async function getTown(town: string) {
-  const pool = await getPool();
-
-  const r = await pool
-    .request()
-    .input("Town", sql.VarChar(100), town)
-    .query(`
-      SELECT TOP 1
-        t.Town,
-        t.TownName,
-        t.SU_id,
-        t.CountyCode,
-        c.CountyName
-      FROM ${TOWN_LOOKUP} t
-      LEFT JOIN ${COUNTY_LOOKUP} c
-        ON c.CountyCode = t.CountyCode
-      WHERE t.Town = @Town
-         OR t.TownName = @Town;
-    `);
-
-  return r.recordset[0] as TownLookup | undefined;
 }
 
 export async function getServiceCoordinatorTypes() {

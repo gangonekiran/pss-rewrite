@@ -167,28 +167,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /api/clients/regions:
-    get:
-      tags: [Clients]
-      operationId: getActiveRegions
-      summary: List active reporting regions
-      description: |
-        `stblReportingRegion WHERE Inactive = 0 ORDER BY RName`.
-        The frontend uses the equivalent `/api/common-info/regions` instead.
-      x-known-issues:
-        - "BR-GAP-17: rows where Inactive is NULL are excluded."
-      responses:
-        "200":
-          description: Active regions
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Region"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
+  # /api/clients/regions was removed; use GET /api/common-info/regions.
   /api/clients/{id}:
     parameters:
       - $ref: "#/components/parameters/ChildId"

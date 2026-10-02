@@ -6,7 +6,6 @@ import { render } from 'vitest-browser-react';
 import { test } from '../../../../../test-extend';
 
 import clientService from '../../../../services/client.service';
-import commonInfoService from '../../../../services/common-info.service';
 import type { Client } from '../../../../types/client';
 
 import ClientLookup, { type ClientLookupRef } from './ClientLookup';
@@ -17,12 +16,6 @@ vi.mock('../../../../services/client.service', () => ({
     searchLastName: vi.fn(),
     searchSSN: vi.fn(),
     getById: vi.fn(),
-  },
-}));
-
-vi.mock('../../../../services/common-info.service', () => ({
-  default: {
-    regions: vi.fn(),
   },
 }));
 
@@ -150,7 +143,7 @@ async function renderClientLookup(clientOverrides: Partial<Client> = {}, isLocke
   const setClient = vi.fn();
 
   const screen = await render(
-    <ClientLookup client={client} setClient={setClient} isLocked={isLocked} />,
+    <ClientLookup client={client} setClient={setClient} isLocked={isLocked} regions={regions} />,
   );
 
   return {
@@ -162,7 +155,6 @@ async function renderClientLookup(clientOverrides: Partial<Client> = {}, isLocke
 
 beforeEach(() => {
   vi.resetAllMocks();
-  vi.mocked(commonInfoService.regions).mockResolvedValue([]);
 });
 
 afterEach(() => {
@@ -174,8 +166,6 @@ afterEach(() => {
 ========================================================= */
 
 test('renders client lookup fields', async () => {
-  vi.mocked(commonInfoService.regions).mockResolvedValue(regions);
-
   const { screen } = await renderClientLookup();
 
   await expect.element(screen.getByText('Lookup Client')).toBeVisible();
@@ -191,14 +181,8 @@ test('renders client lookup fields', async () => {
   await expect.element(screen.getByText('Client ID')).toBeVisible();
 });
 
-test('loads regions when ClientLookup mounts', async () => {
-  vi.mocked(commonInfoService.regions).mockResolvedValue(regions);
-
+test('shows a region option for each region passed in', async () => {
   const { screen } = await renderClientLookup();
-
-  await vi.waitFor(() => {
-    expect(commonInfoService.regions).toHaveBeenCalledTimes(1);
-  });
 
   await expect.element(screen.getByRole('button', { name: 'Region 1' })).toBeVisible();
 
@@ -613,8 +597,6 @@ test('populates all three lookup inputs after a client is loaded', async () => {
 ========================================================= */
 
 test('displays client information', async () => {
-  vi.mocked(commonInfoService.regions).mockResolvedValue(regions);
-
   const { screen } = await renderClientLookup();
 
   await expect.element(screen.getByText('123', { exact: true })).toBeVisible();
@@ -635,8 +617,6 @@ test('shows placeholder age when there is no DOB', async () => {
 });
 
 test('disables client fields when locked', async () => {
-  vi.mocked(commonInfoService.regions).mockResolvedValue(regions);
-
   const { screen } = await renderClientLookup({}, true);
 
   const textboxes = screen.getByRole('textbox');
@@ -709,8 +689,6 @@ test('updates gender when a gender is selected', async () => {
 ========================================================= */
 
 test('updates region when a region is selected', async () => {
-  vi.mocked(commonInfoService.regions).mockResolvedValue(regions);
-
   const { screen, setClient } = await renderClientLookup();
 
   await screen.getByRole('button', { name: 'Region 2' }).click();
@@ -796,7 +774,13 @@ test('clearLookup clears lookup selections and search results', async () => {
   const ref = createRef<ClientLookupRef>();
 
   const screen = await render(
-    <ClientLookup client={createClient()} setClient={vi.fn()} isLocked={false} ref={ref} />,
+    <ClientLookup
+      client={createClient()}
+      setClient={vi.fn()}
+      isLocked={false}
+      regions={regions}
+      ref={ref}
+    />,
   );
 
   const firstNameInput = screen.getByPlaceholder('Search First Name');
@@ -823,22 +807,6 @@ test('clearLookup clears lookup selections and search results', async () => {
 /* =========================================================
    ERROR HANDLING
 ========================================================= */
-
-test('handles region loading failure', async () => {
-  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-  vi.mocked(commonInfoService.regions).mockRejectedValue(new Error('Region loading failed'));
-
-  await renderClientLookup();
-
-  await vi.waitFor(() => {
-    expect(commonInfoService.regions).toHaveBeenCalledTimes(1);
-  });
-
-  await vi.waitFor(() => {
-    expect(consoleError).toHaveBeenCalled();
-  });
-});
 
 test('handles client loading failure', async () => {
   const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});

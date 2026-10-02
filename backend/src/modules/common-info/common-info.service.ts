@@ -1,10 +1,7 @@
 import * as repository from './common-info.repository';
-import type { RegionLookup } from './common-info.types';
-
-export async function getRegions(): Promise<RegionLookup[]> {
-  return repository.getAllRegions();
-}
 
 export const lookups = {
-  regions: () => repository.getAllRegions()
+  regions: () => repository.getAllRegions(),
+  towns: (search?: string) => repository.getTowns(search),
+  town: (town: string) => repository.getTown(town),
 };
