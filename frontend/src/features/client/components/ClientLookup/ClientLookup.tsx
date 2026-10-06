@@ -20,11 +20,13 @@ interface ClientLookupProps {
   setClient: Dispatch<SetStateAction<Client>>;
   isLocked: boolean;
   /** Loaded once by ClientPage (common-info regions). */
-  regions: RegionLookup[];
+  regions?: RegionLookup[];
 }
 
+const NO_REGIONS: RegionLookup[] = [];
+
 const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function ClientLookup(
-  { client, setClient, isLocked, regions: regionList },
+  { client, setClient, isLocked, regions: regionList = NO_REGIONS },
   ref,
 ) {
   const [firstNames, setFirstNames] = useState<SelectOption[]>([]);
@@ -138,17 +140,24 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
     }
   }
 
-  function calculateAge(dob?: string) {
+  function toDateInputValue(value?: string | null): string {
+    return value ? value.slice(0, 10) : '';
+  }
+
+  function calculateAge(dob?: string | null): number | string {
     if (!dob) return '--';
 
-    const birth = new Date(dob);
+    const [year, month, day] = dob.slice(0, 10).split('-').map(Number);
+
+    if (!year || !month || !day) return '--';
+
     const today = new Date();
 
-    let age = today.getFullYear() - birth.getFullYear();
+    let age = today.getFullYear() - year;
 
-    const month = today.getMonth() - birth.getMonth();
+    const monthDiff = today.getMonth() + 1 - month;
 
-    if (month < 0 || (month === 0 && today.getDate() < birth.getDate())) {
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < day)) {
       age--;
     }
 
@@ -285,7 +294,7 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
               <div className="relative">
                 <input
                   type="date"
-                  value={client.dob ?? ''}
+                  value={toDateInputValue(client.dob)}
                   onChange={(e) =>
                     setClient({
                       ...client,
@@ -500,7 +509,7 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
 
             <input
               type="date"
-              value={client.dob ?? ''}
+              value={toDateInputValue(client.dob)}
               disabled={isLocked}
               onChange={(e) =>
                 setClient({
