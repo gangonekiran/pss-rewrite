@@ -1,4 +1,4 @@
-import { act, createRef } from 'react';
+import { createRef } from 'react';
 
 import { afterEach, beforeEach, expect, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -79,28 +79,29 @@ vi.mock('../../../../components/select/SearchableSelect', () => ({
   ),
 }));
 
-async function clickArrow(
-  screen: Awaited<ReturnType<typeof renderClientLookup>>['screen'],
-  index: number,
-) {
-  const arrow = screen.getByRole('button', { name: '→' }).nth(index);
-
-  await expect.element(arrow).toBeEnabled();
-
-  // Native click: bypasses pointer simulation and any overlap in the narrow test viewport
-  (arrow.element() as HTMLButtonElement).click();
-}
-
 /*
  * Textbox indices (date inputs DO count as textboxes here):
  *   0 first-name lookup, 1 last-name lookup, 2 lookup DOB, 3 SSN lookup,
  *   then the detail section:
  */
+const TB_LOOKUP_DOB = 2;
 const TB_LAST_NAME = 4;
 const TB_FIRST_NAME = 5;
 const TB_SS = 6;
 const TB_REGION = 7;
 const TB_BIRTH_DATE = 8;
+
+/*
+ * DOM order of the arrow buttons:
+ *   0 = first name
+ *   1 = last name
+ *   2 = DOB (always disabled)
+ *   3 = SSN
+ */
+const ARROW_FIRST_NAME = 0;
+const ARROW_LAST_NAME = 1;
+const ARROW_DOB = 2;
+const ARROW_SSN = 3;
 
 const createClient = (overrides: Partial<Client> = {}): Client => ({
   childId: 123,
@@ -127,17 +128,6 @@ const regions = [
   },
 ];
 
-/*
- * DOM order of the arrow buttons:
- *   0 = first name
- *   1 = last name
- *   2 = DOB (always disabled)
- *   3 = SSN
- */
-const ARROW_FIRST_NAME = 0;
-const ARROW_LAST_NAME = 1;
-const ARROW_SSN = 3;
-
 async function renderClientLookup(clientOverrides: Partial<Client> = {}, isLocked = false) {
   const client = createClient(clientOverrides);
   const setClient = vi.fn();
@@ -151,6 +141,34 @@ async function renderClientLookup(clientOverrides: Partial<Client> = {}, isLocke
     client,
     setClient,
   };
+}
+
+async function clickArrow(
+  screen: Awaited<ReturnType<typeof renderClientLookup>>['screen'],
+  index: number,
+) {
+  const arrow = screen.getByRole('button', { name: '→' }).nth(index);
+
+  await expect.element(arrow).toBeEnabled();
+
+  // Native click: bypasses pointer simulation and any overlap in the narrow test viewport
+  (arrow.element() as HTMLButtonElement).click();
+}
+
+function pad(value: number) {
+  return String(value).padStart(2, '0');
+}
+
+/*
+ * Builds a yyyy-mm-dd date of birth whose birthday (this year) falls
+ * `daysFromToday` days from today, for a person turning `years`.
+ * The string is assembled from its parts so a Feb 29 birthday never rolls over.
+ */
+function dobWithBirthdayOn(daysFromToday: number, years: number) {
+  const target = new Date();
+  target.setDate(target.getDate() + daysFromToday);
+
+  return `${target.getFullYear() - years}-${pad(target.getMonth() + 1)}-${pad(target.getDate())}`;
 }
 
 beforeEach(() => {
@@ -429,7 +447,7 @@ test('arrow buttons are disabled until a result is selected', async () => {
 
   await expect.element(arrows.nth(ARROW_FIRST_NAME)).toBeDisabled();
   await expect.element(arrows.nth(ARROW_LAST_NAME)).toBeDisabled();
-  await expect.element(arrows.nth(2)).toBeDisabled();
+  await expect.element(arrows.nth(ARROW_DOB)).toBeDisabled();
   await expect.element(arrows.nth(ARROW_SSN)).toBeDisabled();
 });
 
@@ -456,11 +474,7 @@ test('loads client when first name result is selected and arrow is clicked', asy
   // Did the selection register?
   await expect.element(firstNameInput).toHaveValue('Jane Doe');
 
-  const arrow = screen.getByRole('button', { name: '→' }).nth(ARROW_FIRST_NAME);
-  await expect.element(arrow).toBeEnabled();
-
-  // Native click, bypassing Playwright's pointer simulation
-  (arrow.element() as HTMLButtonElement).click();
+  await clickArrow(screen, ARROW_FIRST_NAME);
 
   await vi.waitFor(() => {
     expect(clientService.getById).toHaveBeenCalledWith(101);
@@ -492,30 +506,15 @@ test('loads client when last name result is selected and arrow is clicked', asyn
 
   await expect.element(input).toHaveValue('Jane Smith');
 
-  const arrow = screen.getByRole('button', { name: '→' }).nth(ARROW_LAST_NAME);
-  await expect.element(arrow).toBeEnabled();
+  await clickArrow(screen, ARROW_LAST_NAME);
 
-  const el = arrow.element() as HTMLButtonElement;
-  const rect = el.getBoundingClientRect();
-  const hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
+  await vi.waitFor(() => {
+    expect(clientService.getById).toHaveBeenCalledWith(102);
+  });
 
-  // Is something covering the arrow?
-  expect(
-    hit === el || el.contains(hit),
-    `arrow is covered by: ${hit?.outerHTML} (viewport ${window.innerWidth}px)`,
-  ).toBe(true);
-
-  // Native click, bypassing pointer simulation
-  el.click();
-
-  await new Promise((resolve) => setTimeout(resolve, 300));
-
-  expect(
-    vi.mocked(clientService.getById).mock.calls,
-    'native click did not reach loadClient/getById',
-  ).toEqual([[102]]);
-
-  expect(setClient).toHaveBeenCalledWith(selectedClient);
+  await vi.waitFor(() => {
+    expect(setClient).toHaveBeenCalledWith(selectedClient);
+  });
 });
 
 test('loads client when SSN result is selected and arrow is clicked', async () => {
@@ -538,28 +537,15 @@ test('loads client when SSN result is selected and arrow is clicked', async () =
 
   await expect.element(input).toHaveValue('111-22-3333');
 
-  const arrow = screen.getByRole('button', { name: '→' }).nth(ARROW_SSN);
-  await expect.element(arrow).toBeEnabled();
+  await clickArrow(screen, ARROW_SSN);
 
-  const el = arrow.element() as HTMLButtonElement;
-  const rect = el.getBoundingClientRect();
-  const hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
+  await vi.waitFor(() => {
+    expect(clientService.getById).toHaveBeenCalledWith(103);
+  });
 
-  expect(
-    hit === el || el.contains(hit),
-    `arrow is covered by: ${hit?.outerHTML} (viewport ${window.innerWidth}px)`,
-  ).toBe(true);
-
-  el.click();
-
-  await new Promise((resolve) => setTimeout(resolve, 300));
-
-  expect(
-    vi.mocked(clientService.getById).mock.calls,
-    'native click did not reach loadClient/getById',
-  ).toEqual([[103]]);
-
-  expect(setClient).toHaveBeenCalledWith(selectedClient);
+  await vi.waitFor(() => {
+    expect(setClient).toHaveBeenCalledWith(selectedClient);
+  });
 });
 
 test('populates all three lookup inputs after a client is loaded', async () => {
@@ -616,6 +602,33 @@ test('shows placeholder age when there is no DOB', async () => {
   await expect.element(screen.getByText('--', { exact: true })).toBeVisible();
 });
 
+test('shows the full age on the birthday', async () => {
+  const { screen } = await renderClientLookup({ dob: dobWithBirthdayOn(0, 6) });
+
+  await expect.element(screen.getByText('6', { exact: true })).toBeVisible();
+});
+
+test('shows one year less the day before the birthday', async () => {
+  const { screen } = await renderClientLookup({ dob: dobWithBirthdayOn(1, 6) });
+
+  await expect.element(screen.getByText('5', { exact: true })).toBeVisible();
+});
+
+test('shows a date-time DOB in both date inputs without the time part', async () => {
+  const { screen } = await renderClientLookup({ dob: '2020-05-23T00:00:00' });
+
+  const textboxes = screen.getByRole('textbox');
+
+  await expect.element(textboxes.nth(TB_LOOKUP_DOB)).toHaveValue('2020-05-23');
+  await expect.element(textboxes.nth(TB_BIRTH_DATE)).toHaveValue('2020-05-23');
+});
+
+test('shows the selected region of the client', async () => {
+  const { screen } = await renderClientLookup({ region: 1 });
+
+  await expect.element(screen.getByRole('textbox').nth(TB_REGION)).toHaveValue('Region 1');
+});
+
 test('disables client fields when locked', async () => {
   const { screen } = await renderClientLookup({}, true);
 
@@ -633,14 +646,23 @@ test('disables client fields when locked', async () => {
   await expect.element(screen.getByLabelText('Non-EI')).toBeDisabled();
 });
 
+test('keeps the lookup DOB search enabled when locked', async () => {
+  const { screen } = await renderClientLookup({ dob: '2020-01-01' }, true);
+
+  await expect.element(screen.getByRole('textbox').nth(TB_LOOKUP_DOB)).not.toBeDisabled();
+  await expect.element(screen.getByRole('button', { name: 'Clear DOB' })).toBeInTheDocument();
+});
+
 test('allows editing client fields when unlocked', async () => {
   const { screen } = await renderClientLookup({}, false);
 
   const textboxes = screen.getByRole('textbox');
 
+  await expect.element(textboxes.nth(TB_LOOKUP_DOB)).not.toBeDisabled();
   await expect.element(textboxes.nth(TB_LAST_NAME)).not.toBeDisabled();
   await expect.element(textboxes.nth(TB_FIRST_NAME)).not.toBeDisabled();
   await expect.element(textboxes.nth(TB_SS)).not.toBeDisabled();
+  await expect.element(textboxes.nth(TB_REGION)).not.toBeDisabled();
   await expect.element(textboxes.nth(TB_BIRTH_DATE)).not.toBeDisabled();
 
   await expect.element(screen.getByRole('combobox')).not.toBeDisabled();
@@ -660,20 +682,6 @@ test('updates last name, first name and SS# when edited', async () => {
 
   await textboxes.nth(TB_SS).fill('111-22-333');
   expect(setClient).toHaveBeenCalledWith(expect.objectContaining({ ss: '111-22-333' }));
-});
-
-test('allows editing client fields when unlocked', async () => {
-  const { screen } = await renderClientLookup({}, false);
-
-  const textboxes = screen.getByRole('textbox');
-
-  await expect.element(textboxes.nth(3)).not.toBeDisabled();
-  await expect.element(textboxes.nth(4)).not.toBeDisabled();
-  await expect.element(textboxes.nth(5)).not.toBeDisabled();
-
-  await expect.element(screen.getByRole('combobox')).not.toBeDisabled();
-
-  await expect.element(screen.getByLabelText('Non-EI')).not.toBeDisabled();
 });
 
 test('updates gender when a gender is selected', async () => {
@@ -714,6 +722,18 @@ test('updates DOB when birth date changes', async () => {
   expect(setClient).toHaveBeenCalledWith(
     expect.objectContaining({
       dob: '2021-05-15',
+    }),
+  );
+});
+
+test('updates DOB when the lookup DOB changes', async () => {
+  const { screen, setClient } = await renderClientLookup();
+
+  await screen.getByRole('textbox').nth(TB_LOOKUP_DOB).fill('2019-03-04');
+
+  expect(setClient).toHaveBeenCalledWith(
+    expect.objectContaining({
+      dob: '2019-03-04',
     }),
   );
 });
@@ -794,9 +814,9 @@ test('clearLookup clears lookup selections and search results', async () => {
 
   expect(ref.current).not.toBeNull();
 
-  await act(async () => {
-    ref.current?.clearLookup();
-  });
+  // No act(): browser mode does not set up React's act environment.
+  // The assertions below retry until the state update has rendered.
+  ref.current?.clearLookup();
 
   await expect.element(firstNameInput).toHaveValue('');
   await expect.element(screen.getByPlaceholder('Search Last Name')).toHaveValue('');
@@ -821,7 +841,7 @@ test('handles client loading failure', async () => {
   await screen.getByPlaceholder('Search First Name').fill('John');
   await screen.getByRole('button', { name: 'John Smith' }).click();
 
-  await clickArrow(screen, ARROW_FIRST_NAME); // helper from my earlier message
+  await clickArrow(screen, ARROW_FIRST_NAME);
 
   await vi.waitFor(() => {
     expect(clientService.getById).toHaveBeenCalledWith(123);

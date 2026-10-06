@@ -1,8 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import Notes from '../Notes';
 import ServiceHistoryTable from '../ServiceHistory/ServiceHistory';
@@ -34,9 +30,7 @@ export default function ClientStatus({
   isLocked = false,
   onClientNotesChange,
 }: ClientStatusProps) {
-  const [services, setServices] = useState<
-    ServiceHistoryItem[]
-  >([]);
+  const [services, setServices] = useState<ServiceHistoryItem[]>([]);
 
   const getToday = (): string => {
     const today = new Date();
@@ -48,12 +42,9 @@ export default function ClientStatus({
     ].join('-');
   };
 
-  const [statusDate, setStatusDate] = useState<string>(
-    getToday(),
-  );
+  const [statusDate, setStatusDate] = useState<string>(getToday());
 
-  const [statusData, setStatusData] =
-    useState<ClientStatusData | null>(null);
+  const [statusData, setStatusData] = useState<ClientStatusData | null>(null);
 
   const [loading, setLoading] = useState(false);
 
@@ -72,17 +63,11 @@ export default function ClientStatus({
         setLoading(true);
         setError('');
 
-        const data = await clientService.getStatus(
-          client.childId,
-          date,
-        );
+        const data = await clientService.getStatus(client.childId, date);
 
         setStatusData(data);
       } catch (error) {
-        console.error(
-          'Failed to load client status:',
-          error,
-        );
+        console.error('Failed to load client status:', error);
 
         setStatusData(null);
         setError('Unable to load client status.');
@@ -96,26 +81,17 @@ export default function ClientStatus({
   /**
    * Load service history from backend
    */
-  const loadServiceHistory = useCallback(
-    async (childId: number): Promise<void> => {
-      try {
-        const data =
-          await clientService.getServiceHistory(
-            childId,
-          );
+  const loadServiceHistory = useCallback(async (childId: number): Promise<void> => {
+    try {
+      const data = await clientService.getServiceHistory(childId);
 
-        setServices(data);
-      } catch (error) {
-        console.error(
-          'Unable to load service history:',
-          error,
-        );
+      setServices(data);
+    } catch (error) {
+      console.error('Unable to load service history:', error);
 
-        setServices([]);
-      }
-    },
-    [],
-  );
+      setServices([]);
+    }
+  }, []);
 
   /**
    * Automatically load status when
@@ -129,11 +105,7 @@ export default function ClientStatus({
     // API call intentionally updates component state.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadStatus(statusDate);
-  }, [
-    client.childId,
-    statusDate,
-    loadStatus,
-  ]);
+  }, [client.childId, statusDate, loadStatus]);
 
   /**
    * Automatically load service history
@@ -147,10 +119,7 @@ export default function ClientStatus({
     // API call intentionally updates component state.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadServiceHistory(client.childId);
-  }, [
-    client.childId,
-    loadServiceHistory,
-  ]);
+  }, [client.childId, loadServiceHistory]);
 
   /**
    * Go button
@@ -172,14 +141,17 @@ export default function ClientStatus({
   /**
    * Format backend date
    */
-  function formatDate(
-    value: string | null | undefined,
-  ): string {
+  function formatDate(value: string | null | undefined): string {
     if (!value) {
       return '—';
     }
 
-    const date = new Date(value);
+    // Date-only strings are parsed as UTC by new Date(); build them as local dates instead.
+    const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+
+    const date = dateOnly
+      ? new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]))
+      : new Date(value);
 
     if (Number.isNaN(date.getTime())) {
       return '—';
@@ -191,9 +163,7 @@ export default function ClientStatus({
   /**
    * Status text color
    */
-  function getStatusClass(
-    status: string | null | undefined,
-  ): string {
+  function getStatusClass(status: string | null | undefined): string {
     if (!status) {
       return 'text-gray-700';
     }
@@ -215,16 +185,12 @@ export default function ClientStatus({
           HEADER
       ========================================================= */}
       <div className="flex items-center gap-3 border-b border-gray-200 bg-gray-50 p-3">
-        <label className="text-sm font-medium text-gray-700">
-          Client Status On
-        </label>
+        <label className="text-sm font-medium text-gray-700">Client Status On</label>
 
         <input
           type="date"
           value={statusDate}
-          onChange={(e) =>
-            setStatusDate(e.target.value)
-          }
+          onChange={(e) => setStatusDate(e.target.value)}
           className="h-9 rounded-md border border-gray-300 px-2 text-sm focus:border-blue-500 focus:outline-none"
         />
 
@@ -256,10 +222,7 @@ export default function ClientStatus({
         {/* =======================================================
             LEFT PANEL
         ======================================================= */}
-        <div
-          className="col-span-6 border-gray-200 p-4"
-          style={{ paddingRight: 0 }}
-        >
+        <div className="col-span-6 border-gray-200 p-4" style={{ paddingRight: 0 }}>
           <div className="grid grid-cols-12 gap-4">
             {/* ===================================================
                 STATUS DETAILS
@@ -274,9 +237,7 @@ export default function ClientStatus({
 
               {/* Error */}
               {client.childId && error && (
-                <div className="py-8 text-center text-sm text-red-600">
-                  {error}
-                </div>
+                <div className="py-8 text-center text-sm text-red-600">{error}</div>
               )}
 
               {/* Data */}
@@ -285,82 +246,46 @@ export default function ClientStatus({
                   <tbody>
                     {/* STATUS */}
                     <tr className="border-b border-gray-100">
-                      <td className="py-2 font-medium text-gray-700">
-                        Status
-                      </td>
+                      <td className="py-2 font-medium text-gray-700">Status</td>
 
-                      <td
-                        className={`py-2 font-semibold ${getStatusClass(
-                          statusData?.status,
-                        )}`}
-                      >
+                      <td className={`py-2 font-semibold ${getStatusClass(statusData?.status)}`}>
                         {statusData?.status ?? '—'}
                       </td>
                     </tr>
 
                     {/* REFERRAL DATE */}
                     <tr className="border-b border-gray-100">
-                      <td className="py-2 font-medium text-gray-700">
-                        Referral Date
-                      </td>
+                      <td className="py-2 font-medium text-gray-700">Referral Date</td>
 
-                      <td className="py-2">
-                        {formatDate(
-                          statusData?.referralDate,
-                        )}
-                      </td>
+                      <td className="py-2">{formatDate(statusData?.referralDate)}</td>
                     </tr>
 
                     {/* NO ONE PLAN DATE */}
                     <tr className="border-b border-gray-100">
-                      <td className="py-2 font-medium text-gray-700">
-                        No One Plan Date
-                      </td>
+                      <td className="py-2 font-medium text-gray-700">No One Plan Date</td>
 
-                      <td className="py-2">
-                        {formatDate(
-                          statusData?.noOnePlanDate,
-                        )}
-                      </td>
+                      <td className="py-2">{formatDate(statusData?.noOnePlanDate)}</td>
                     </tr>
 
                     {/* INTERIM DATE */}
                     <tr className="border-b border-gray-100">
-                      <td className="py-2 font-medium text-gray-700">
-                        Interim Date
-                      </td>
+                      <td className="py-2 font-medium text-gray-700">Interim Date</td>
 
-                      <td className="py-2">
-                        {formatDate(
-                          statusData?.interimDate,
-                        )}
-                      </td>
+                      <td className="py-2">{formatDate(statusData?.interimDate)}</td>
                     </tr>
 
                     {/* ONE PLAN DATE */}
                     <tr className="border-b border-gray-100">
-                      <td className="py-2 font-medium text-gray-700">
-                        One Plan Date
-                      </td>
+                      <td className="py-2 font-medium text-gray-700">One Plan Date</td>
 
-                      <td className="py-2">
-                        {formatDate(
-                          statusData?.onePlanDate,
-                        )}
-                      </td>
+                      <td className="py-2">{formatDate(statusData?.onePlanDate)}</td>
                     </tr>
 
                     {/* EXIT DATE */}
                     <tr>
-                      <td className="py-2 font-medium text-gray-700">
-                        Exit Date
-                      </td>
+                      <td className="py-2 font-medium text-gray-700">Exit Date</td>
 
-                      <td className="py-2">
-                        {formatDate(
-                          statusData?.exitDate,
-                        )}
-                      </td>
+                      <td className="py-2">{formatDate(statusData?.exitDate)}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -372,8 +297,7 @@ export default function ClientStatus({
                   <span className="text-base">ℹ️</span>
 
                   <p>
-                    To view client status for an
-                    earlier date, change
+                    To view client status for an earlier date, change
                     <strong> Client Status On </strong>
                     and click <strong>Go</strong>.
                   </p>
@@ -400,9 +324,7 @@ export default function ClientStatus({
         <div className="col-span-6 p-4">
           <div className="grid grid-cols-12">
             <div className="col-span-12">
-              <ServiceHistoryTable
-                services={services}
-              />
+              <ServiceHistoryTable services={services} />
             </div>
           </div>
         </div>
