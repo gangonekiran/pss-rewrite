@@ -233,9 +233,8 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
                 type="button"
                 disabled={!selectedFirstName || loading}
                 onClick={() => {
-                  if (!selectedFirstName) return;
-
-                  const childId = Number(selectedFirstName.value);
+                  // A null selection gives NaN, so it is skipped below
+                  const childId = Number(selectedFirstName?.value);
 
                   if (!Number.isNaN(childId)) {
                     void loadClient(childId);
@@ -271,9 +270,8 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
                 type="button"
                 disabled={!selectedLastName || loading}
                 onClick={() => {
-                  if (!selectedLastName) return;
-
-                  const childId = Number(selectedLastName.value);
+                  // A null selection gives NaN, so it is skipped below
+                  const childId = Number(selectedLastName?.value);
 
                   if (!Number.isNaN(childId)) {
                     void loadClient(childId);
@@ -355,9 +353,8 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
                 type="button"
                 disabled={!selectedSSN || loading}
                 onClick={() => {
-                  if (!selectedSSN) return;
-
-                  const childId = Number(selectedSSN.value);
+                  // A null selection gives NaN, so it is skipped below
+                  const childId = Number(selectedSSN?.value);
 
                   if (!Number.isNaN(childId)) {
                     void loadClient(childId);

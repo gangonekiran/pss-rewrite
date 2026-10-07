@@ -120,10 +120,22 @@ vi.mock('../components/ClientActions/ClientActions', () => ({
 }));
 
 vi.mock('../components/ClientTabs/ClientTabs', () => ({
-  default: ({ client, regions }: { client: Client; regions: unknown[] }) => (
+  default: ({
+    client,
+    regions,
+    onClientNotesChange,
+  }: {
+    client: Client;
+    regions: unknown[];
+    onClientNotesChange: (notes: string) => void;
+  }) => (
     <div data-testid="client-tabs">
       <p>Tabs client id: {String(client.childId)}</p>
       <p>Tabs regions: {regions.length}</p>
+      <p>Tabs notes: [{client.notes}]</p>
+      <button type="button" onClick={() => onClientNotesChange('Updated notes')}>
+        Mock change notes
+      </button>
     </div>
   ),
 }));
@@ -235,6 +247,17 @@ test('a client edited through the actions reaches the lookup', async () => {
   await screen.getByRole('button', { name: 'Mock edit first name', exact: true }).click();
 
   await expect.element(screen.getByText('Lookup first name: [Edited]', { exact: true })).toBeVisible();
+});
+
+test('notes changed in the tabs update the client and keep its other fields', async () => {
+  const { screen } = await renderClientPage();
+
+  await screen.getByRole('button', { name: 'Mock load client', exact: true }).click();
+  await screen.getByRole('button', { name: 'Mock change notes', exact: true }).click();
+
+  await expect.element(screen.getByText('Tabs notes: [Updated notes]', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Tabs client id: 500', { exact: true })).toBeVisible();
+  await expect.element(screen.getByText('Lookup first name: [Jane]', { exact: true })).toBeVisible();
 });
 
 /* =========================================================

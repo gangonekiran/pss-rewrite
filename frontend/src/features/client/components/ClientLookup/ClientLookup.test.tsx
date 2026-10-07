@@ -25,6 +25,8 @@ vi.mock('../../../../services/client.service', () => ({
  *
  * The mock renders a text input (typing triggers onInputChange) and one
  * button per option. Clicking a button calls onChange with that option.
+ * Escape / Enter in the input report the 'menu-close' / 'set-value'
+ * input actions, and a "Clear" button calls onChange(null).
  */
 vi.mock('../../../../components/select/SearchableSelect', () => ({
   default: ({
@@ -63,7 +65,22 @@ vi.mock('../../../../components/select/SearchableSelect', () => ({
             action: 'input-change',
           })
         }
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') {
+            onInputChange?.(event.currentTarget.value, { action: 'menu-close' });
+          }
+
+          if (event.key === 'Enter') {
+            onInputChange?.(event.currentTarget.value, { action: 'set-value' });
+          }
+        }}
       />
+
+      {value && (
+        <button type="button" disabled={isDisabled} onClick={() => onChange?.(null)}>
+          Clear {placeholder}
+        </button>
+      )}
 
       {options.map((option) => (
         <button
@@ -852,4 +869,182 @@ test('handles client loading failure', async () => {
   });
 
   expect(setClient).not.toHaveBeenCalled();
+});
+
+test('does not load a client when the selected result has no client ID', async () => {
+  vi.mocked(clientService.searchFirstName).mockResolvedValue([
+    createClient({ childId: 0, firstName: 'John', lastName: 'Smith' }),
+  ]);
+
+  const { screen, setClient } = await renderClientLookup();
+
+  await screen.getByPlaceholder('Search First Name').fill('John');
+  await screen.getByRole('button', { name: 'John Smith' }).click();
+
+  await clickArrow(screen, ARROW_FIRST_NAME);
+
+  await expect.element(screen.getByText('Loading...')).not.toBeInTheDocument();
+
+  expect(clientService.getById).not.toHaveBeenCalled();
+  expect(setClient).not.toHaveBeenCalled();
+});
+
+/* =========================================================
+   SEARCH INPUT ACTIONS
+========================================================= */
+
+function pressKey(input: Element, key: string) {
+  input.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+}
+
+test('searches again with the input text when a lookup menu closes', async () => {
+  vi.mocked(clientService.searchFirstName).mockResolvedValue([
+    createClient({ childId: 101, firstName: 'Jane', lastName: 'Doe' }),
+  ]);
+  vi.mocked(clientService.searchLastName).mockResolvedValue([
+    createClient({ childId: 102, firstName: 'Jane', lastName: 'Smith' }),
+  ]);
+  vi.mocked(clientService.searchSSN).mockResolvedValue([
+    createClient({ childId: 103, ss: '111-22-3333' }),
+  ]);
+
+  const { screen } = await renderClientLookup();
+
+  const firstNameInput = screen.getByPlaceholder('Search First Name');
+  const lastNameInput = screen.getByPlaceholder('Search Last Name');
+  const ssnInput = screen.getByPlaceholder('Search SSN');
+
+  await firstNameInput.fill('Jane');
+  await screen.getByRole('button', { name: 'Jane Doe' }).click();
+  await lastNameInput.fill('Smith');
+  await screen.getByRole('button', { name: 'Jane Smith' }).click();
+  await ssnInput.fill('111');
+  await screen.getByRole('button', { name: '111-22-3333' }).click();
+
+  pressKey(firstNameInput.element(), 'Escape');
+  pressKey(lastNameInput.element(), 'Escape');
+  pressKey(ssnInput.element(), 'Escape');
+
+  await vi.waitFor(() => {
+    expect(clientService.searchFirstName).toHaveBeenLastCalledWith('Jane Doe');
+    expect(clientService.searchLastName).toHaveBeenLastCalledWith('Jane Smith');
+    expect(clientService.searchSSN).toHaveBeenLastCalledWith('111-22-3333');
+  });
+});
+
+test('ignores lookup input actions other than typing and menu close', async () => {
+  const { screen } = await renderClientLookup();
+
+  pressKey(screen.getByPlaceholder('Search First Name').element(), 'Enter');
+  pressKey(screen.getByPlaceholder('Search Last Name').element(), 'Enter');
+  pressKey(screen.getByPlaceholder('Search SSN').element(), 'Enter');
+
+  expect(clientService.searchFirstName).not.toHaveBeenCalled();
+  expect(clientService.searchLastName).not.toHaveBeenCalled();
+  expect(clientService.searchSSN).not.toHaveBeenCalled();
+});
+
+/* =========================================================
+   MISSING VALUES
+========================================================= */
+
+test('builds lookup labels from blank values when names and SSN are missing', async () => {
+  const nameless = createClient({
+    childId: 104,
+    firstName: undefined,
+    lastName: undefined,
+    ss: undefined,
+  });
+
+  vi.mocked(clientService.searchFirstName).mockResolvedValue([{ ...nameless, firstName: 'Ann' }]);
+  vi.mocked(clientService.searchLastName).mockResolvedValue([{ ...nameless, lastName: 'Lee' }]);
+  vi.mocked(clientService.searchSSN).mockResolvedValue([nameless]);
+  vi.mocked(clientService.getById).mockResolvedValue(nameless);
+
+  const { screen, setClient } = await renderClientLookup();
+
+  await screen.getByPlaceholder('Search First Name').fill('Ann');
+  await screen.getByPlaceholder('Search Last Name').fill('Lee');
+  await screen.getByPlaceholder('Search SSN').fill('1');
+
+  // Labels are trimmed when one name part is missing
+  await expect.element(screen.getByRole('button', { name: 'Ann', exact: true })).toBeVisible();
+  await expect.element(screen.getByRole('button', { name: 'Lee', exact: true })).toBeVisible();
+
+  await vi.waitFor(() => {
+    expect(clientService.searchSSN).toHaveBeenCalledWith('1');
+  });
+
+  await screen.getByRole('button', { name: 'Ann', exact: true }).click();
+  await clickArrow(screen, ARROW_FIRST_NAME);
+
+  await vi.waitFor(() => {
+    expect(setClient).toHaveBeenCalledWith(nameless);
+  });
+
+  // The loaded client has no names or SSN, so every lookup shows blank
+  await expect.element(screen.getByPlaceholder('Search First Name')).toHaveValue('');
+  await expect.element(screen.getByPlaceholder('Search Last Name')).toHaveValue('');
+  await expect.element(screen.getByPlaceholder('Search SSN')).toHaveValue('');
+});
+
+test('does not load a client when the selected result has a non-numeric ID', async () => {
+  const noId = createClient({ childId: undefined, firstName: 'Jane', lastName: 'Doe' });
+
+  vi.mocked(clientService.searchFirstName).mockResolvedValue([noId]);
+  vi.mocked(clientService.searchLastName).mockResolvedValue([noId]);
+  vi.mocked(clientService.searchSSN).mockResolvedValue([noId]);
+
+  const { screen, setClient } = await renderClientLookup();
+
+  await screen.getByPlaceholder('Search First Name').fill('Jane');
+  await screen.getByRole('button', { name: 'Jane Doe' }).first().click();
+  await clickArrow(screen, ARROW_FIRST_NAME);
+
+  await screen.getByPlaceholder('Search Last Name').fill('Doe');
+  await screen.getByRole('button', { name: 'Jane Doe' }).nth(1).click();
+  await clickArrow(screen, ARROW_LAST_NAME);
+
+  await screen.getByPlaceholder('Search SSN').fill('123');
+  await screen.getByRole('button', { name: '123-45-6789' }).click();
+  await clickArrow(screen, ARROW_SSN);
+
+  expect(clientService.getById).not.toHaveBeenCalled();
+  expect(setClient).not.toHaveBeenCalled();
+});
+
+test('shows empty detail fields when optional client values are missing', async () => {
+  const { screen } = await renderClientLookup({
+    gender: undefined,
+    ss: undefined,
+    region: undefined,
+    nonEarlyIntervention: undefined,
+  });
+
+  const textboxes = screen.getByRole('textbox');
+
+  await expect.element(screen.getByRole('combobox')).toHaveValue('');
+  await expect.element(textboxes.nth(TB_SS)).toHaveValue('');
+  await expect.element(textboxes.nth(TB_REGION)).toHaveValue('');
+  await expect.element(screen.getByRole('checkbox')).not.toBeChecked();
+});
+
+test('shows no region when the client region is not in the list', async () => {
+  const { screen } = await renderClientLookup({ region: 99 });
+
+  await expect.element(screen.getByRole('textbox').nth(TB_REGION)).toHaveValue('');
+});
+
+test('clears the region when the region selection is cleared', async () => {
+  const { screen, client, setClient } = await renderClientLookup({ region: 1 });
+
+  await screen.getByRole('button', { name: 'Clear Select Region' }).click();
+
+  expect(setClient).toHaveBeenCalledWith({ ...client, region: undefined });
+});
+
+test('shows placeholder age when the DOB is malformed', async () => {
+  const { screen } = await renderClientLookup({ dob: 'not-a-date' });
+
+  await expect.element(screen.getByText('--', { exact: true })).toBeVisible();
 });
