@@ -2,16 +2,16 @@ import { describe, expect, it, vi } from 'vitest';
 import { createRequest, createResponse } from 'node-mocks-http';
 import type { IRecordSet } from 'mssql';
 
-import * as service from '../cos-cover-form.service';
+import * as service from './cos-cover-form.service';
 import {
   create,
   get,
   getOne,
   remove,
   update,
-} from '../cos-cover-form.controller';
+} from './cos-cover-form.controller';
 
-vi.mock('../cos-cover-form.service', () => ({
+vi.mock('./cos-cover-form.service', () => ({
   get: vi.fn(),
   getOne: vi.fn(),
   create: vi.fn(),
