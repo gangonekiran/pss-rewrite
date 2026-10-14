@@ -1,6 +1,6 @@
-import { forwardRef, useImperativeHandle, useMemo, useState } from 'react';
+import { useImperativeHandle, useMemo, useState } from 'react';
 
-import type { Dispatch, SetStateAction } from 'react';
+import type { Dispatch, Ref, SetStateAction } from 'react';
 
 import SearchableSelect, {
   type SelectOption,
@@ -21,14 +21,19 @@ interface ClientLookupProps {
   isLocked: boolean;
   /** Loaded once by ClientPage (common-info regions). */
   regions?: RegionLookup[];
+  /** Exposes clearLookup() to ClientPage. React 19 passes ref as a regular prop. */
+  ref?: Ref<ClientLookupRef>;
 }
 
 const NO_REGIONS: RegionLookup[] = [];
 
-const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function ClientLookup(
-  { client, setClient, isLocked, regions: regionList = NO_REGIONS },
+function ClientLookup({
+  client,
+  setClient,
+  isLocked,
+  regions: regionList = NO_REGIONS,
   ref,
-) {
+}: ClientLookupProps) {
   const [firstNames, setFirstNames] = useState<SelectOption[]>([]);
   const [lastNames, setLastNames] = useState<SelectOption[]>([]);
   const [ssns, setSsns] = useState<SelectOption[]>([]);
@@ -550,6 +555,6 @@ const ClientLookup = forwardRef<ClientLookupRef, ClientLookupProps>(function Cli
       </div>
     </div>
   );
-});
+}
 
 export default ClientLookup;

@@ -32,18 +32,17 @@ vi.mock('../../../layouts/PageContainer', () => ({
 vi.mock('../components/ClientLookup/ClientLookup', async () => {
   const React = await import('react');
 
-  const MockClientLookup = React.forwardRef(function MockClientLookup(
-    {
-      client,
-      setClient,
-      isLocked,
-    }: {
-      client: Client;
-      setClient: (client: Client) => void;
-      isLocked: boolean;
-    },
-    ref: React.ForwardedRef<{ clearLookup: () => void }>,
-  ) {
+  function MockClientLookup({
+    client,
+    setClient,
+    isLocked,
+    ref,
+  }: {
+    client: Client;
+    setClient: (client: Client) => void;
+    isLocked: boolean;
+    ref?: React.Ref<{ clearLookup: () => void }>;
+  }) {
     React.useImperativeHandle(ref, () => ({
       clearLookup: clearLookupMock,
     }));
@@ -68,7 +67,7 @@ vi.mock('../components/ClientLookup/ClientLookup', async () => {
         </button>
       </div>
     );
-  });
+  }
 
   return { default: MockClientLookup };
 });

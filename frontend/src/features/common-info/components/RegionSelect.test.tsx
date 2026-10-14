@@ -63,7 +63,7 @@ test('works as a controlled select', async () => {
   expect(onChange.mock.results[0].value).toBe('1');
 });
 
-test('passes select attributes through and forwards the ref', async () => {
+test('passes select attributes through and passes the ref to the select', async () => {
   const ref = createRef<HTMLSelectElement>();
 
   const screen = await render(
@@ -77,4 +77,19 @@ test('passes select attributes through and forwards the ref', async () => {
   await expect.element(select).toBeDisabled();
 
   expect(ref.current).toBe(select.element());
+});
+
+test('works with a callback ref, like react-hook-form register()', async () => {
+  let node: HTMLSelectElement | null = null;
+
+  const screen = await render(
+    <RegionSelect
+      ref={(el) => {
+        node = el;
+      }}
+      regions={regions}
+    />,
+  );
+
+  expect(node).toBe(screen.getByRole('combobox').element());
 });
