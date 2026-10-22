@@ -14,6 +14,7 @@ import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./config/swagger";
 import { activeFormRoutes } from "./modules/active-form";
 import { commonInfoRoutes } from "./modules/common-info";
+import { exitFormRoutes } from "./modules/exit-form";
 
 const app = express();
 
@@ -56,6 +57,8 @@ app.use("/api/clients", clientRoutes);
 app.use("/api/input-forms", inputFormRoutes);
 
 app.use('/api/active-forms', activeFormRoutes);
+
+app.use('/api/exit-forms', exitFormRoutes);
 
 app.use('/api/common-info', commonInfoRoutes);
 

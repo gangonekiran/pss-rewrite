@@ -39,6 +39,10 @@ const swaggerOptions: swaggerJSDoc.Options = {
         name: "Common Info",
         description: "Shared lookups (regions, towns)",
       },
+      {
+        name: "Exit Forms",
+        description: "Exit form (stblExitForm) APIs",
+      },
     ],
 
     components: {

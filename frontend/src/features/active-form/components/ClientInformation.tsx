@@ -1,7 +1,8 @@
 import type { ActiveFormClient } from '../../../types/active-form';
 
 interface ClientInformationProps {
-  client: ActiveFormClient;
+  // Only the fields shown here, so the Exit Form can reuse this card.
+  client: Pick<ActiveFormClient, 'LastName' | 'FirstName' | 'SS' | 'DOB'>;
   county?: string | null;
   regionName?: string | null;
   referralDate?: string | null;
