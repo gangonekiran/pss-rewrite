@@ -1,6 +1,6 @@
 /**
- * Pure Exit Form rules: payload normalisation, validation and the
- * calculated transition values. No database access here.
+ * Pure Exit Form rules: payload normalisation and validation.
+ * No database access here.
  */
 import {
   COLUMNS,
@@ -10,10 +10,9 @@ import {
   EXIT_PRIOR_TO_AGE_3,
   NOT_THIS_EXIT_PATH,
   REFERRED_TO,
-  STATUS_OPTIONS,
   type WritableColumn,
 } from "./exit-form.config";
-import type { ExitFormCalculated, ExitFormRecord } from "./exit-form.types";
+import type { ExitFormRecord } from "./exit-form.types";
 
 export function error(message: string, status = 400): never {
   throw Object.assign(new Error(message), { status });
@@ -102,21 +101,12 @@ function checkCode(
 /**
  * Turns a raw request body into column → typed value.
  * - Unknown keys and audit columns are dropped.
- * - `status` ("exit" / "exit-capta") sets CAPTA.
  * - FormType is always the legacy literal 'Exit'.
  * Only keys present in the body are returned, so it works for partial updates.
  */
 export function normalizePayload(raw: ExitFormRecord): ExitFormRecord {
-  const body = { ...(raw ?? {}) };
+  const body = raw ?? {};
   const out: ExitFormRecord = {};
-
-  if (body.status !== undefined && body.CAPTA === undefined) {
-    const option = STATUS_OPTIONS.find((o) => o.value === body.status);
-    if (!option) {
-      error(`status must be one of: ${STATUS_OPTIONS.map((o) => o.value).join(", ")}`);
-    }
-    body.CAPTA = option.capta;
-  }
 
   for (const [key, value] of Object.entries(body)) {
     if (!columnNames.has(key) || value === undefined) continue;
@@ -196,7 +186,7 @@ export function validateRecord(record: ExitFormRecord, dobRaw: unknown) {
     ["ReReferralDate", "Re-referral Date", record.ReReferralDate],
     ["ExitDate", "Date of Exit", record.ExitDate],
     ["TransitionPlanCompleted", "Date Written Transition Plan", record.TransitionPlanCompleted],
-    ["CLLEANotificationDate", "Date LEA Notified", record.CLLEANotificationDate],
+    ["CLLEANotificationDate", "LEA Notification Date", record.CLLEANotificationDate],
     ["TransitionMeeting", "Date of Transition Conference", record.TransitionMeeting],
   ];
 
@@ -207,6 +197,12 @@ export function validateRecord(record: ExitFormRecord, dobRaw: unknown) {
 
   if (exitDate && referralDate && exitDate < referralDate) {
     error("Date of Exit cannot be before Date of Referral");
+  }
+
+  for (const [field, label, value] of dates) {
+    if (field !== "TransitionPlanCompleted" && field !== "CLLEANotificationDate") continue;
+    const d = toIsoDate(value);
+    if (referralDate && d && d < referralDate) error(`${label} cannot be before Date of Referral`);
   }
 
   for (const [field, label, value] of dates) {
@@ -224,68 +220,7 @@ export function validateRecord(record: ExitFormRecord, dobRaw: unknown) {
   if (record.ExitAtAge3 === EXIT_AT_AGE_3_NOT_ELIGIBLE && isBlank(record.ReferredTo)) {
     error(
       'Referred To is required when the child is NOT eligible for Part B ' +
-        '(choose "Not Eligible for Part B" if there was no referral)',
+        '(choose "Exited with no referral" if there was no referral)',
     );
   }
-}
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-function utc(date: string) {
-  return new Date(`${date}T00:00:00Z`);
-}
-
-function daysBetween(from: string | null, to: string | null): number | null {
-  if (!from || !to) return null;
-  return Math.round((utc(to).getTime() - utc(from).getTime()) / DAY_MS);
-}
-
-function addYears(date: string, years: number) {
-  const d = utc(date);
-  d.setUTCFullYear(d.getUTCFullYear() + years);
-  return d.toISOString().slice(0, 10);
-}
-
-function addMonths(date: string, months: number) {
-  const d = utc(date);
-  d.setUTCMonth(d.getUTCMonth() + months);
-  return d.toISOString().slice(0, 10);
-}
-
-function addDays(date: string, days: number) {
-  return new Date(utc(date).getTime() + days * DAY_MS).toISOString().slice(0, 10);
-}
-
-function within90To180(days: number | null) {
-  return days === null ? null : days >= 90 && days <= 180;
-}
-
-export function calculate(record: ExitFormRecord, dobRaw: unknown): ExitFormCalculated {
-  const dob = toIsoDate(dobRaw);
-  const exitDate = toIsoDate(record.ExitDate);
-  const lea = toIsoDate(record.CLLEANotificationDate);
-  const conference = toIsoDate(record.TransitionMeeting);
-  const plan = toIsoDate(record.TransitionPlanCompleted);
-
-  const thirdBirthday = dob ? addYears(dob, 3) : null;
-  const conferenceDays = daysBetween(conference, exitDate);
-  const planDays = daysBetween(plan, exitDate);
-
-  let leaWindow: boolean | null = null;
-  if (lea && thirdBirthday) {
-    const earliest = addMonths(thirdBirthday, -6);
-    const latest = addDays(thirdBirthday, -90);
-    leaWindow = lea >= earliest && lea <= latest;
-  }
-
-  return {
-    thirdBirthday,
-    daysLEANotificationBeforeExit: daysBetween(lea, exitDate),
-    daysTransitionConferenceBeforeExit: conferenceDays,
-    daysTransitionPlanBeforeExit: planDays,
-    daysExitBeforeThirdBirthday: daysBetween(exitDate, thirdBirthday),
-    leaNotificationWindowMet: leaWindow,
-    transitionConferenceWindowMet: within90To180(conferenceDays),
-    transitionPlanWindowMet: within90To180(planDays),
-  };
 }

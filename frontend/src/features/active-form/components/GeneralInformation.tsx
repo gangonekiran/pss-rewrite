@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Field } from './FormField';
 import type { ActiveFormValues } from '../../../types/active-form';
@@ -14,6 +15,7 @@ export default function GeneralInformation({ regions }: Props) {
     register,
     formState: { errors },
   } = useFormContext<ActiveFormValues>();
+  const regionId = useId();
 
   return (
     <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
@@ -26,6 +28,7 @@ export default function GeneralInformation({ regions }: Props) {
         {/* Region */}
         <Field label="Region" required error={errors.Region?.message}>
           <RegionSelect
+            id={regionId}
             {...register('Region', {
               valueAsNumber: true,
               required: 'Region is required',

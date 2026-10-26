@@ -1,8 +1,6 @@
 import type { ReactNode } from 'react';
 
-export { Field } from '../../active-form/components/FormField';
-
-/** Same card as the Active Form sections. */
+/** Card for each Exit Form section. */
 export function Section({
   title,
   description,

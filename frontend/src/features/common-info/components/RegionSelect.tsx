@@ -3,6 +3,7 @@ import type { ComponentPropsWithRef } from 'react';
 import type { RegionLookup } from '../../../types/common';
 
 export interface RegionSelectProps extends Omit<ComponentPropsWithRef<'select'>, 'children'> {
+  id: string;
   /** Regions from commonInfoService.regions(). */
   regions: RegionLookup[];
   /** Text of the empty first option. */
@@ -14,10 +15,10 @@ export interface RegionSelectProps extends Omit<ComponentPropsWithRef<'select'>,
 /**
  * Native region <select> shared by the input forms. Works both as a
  * controlled select (value/onChange) and with react-hook-form's
- * register(), which passes a ref. In React 19 `ref` is a regular prop,
- * so no forwardRef is needed.
+ * register(), which needs the ref.
  */
 export default function RegionSelect({
+  id,
   regions,
   placeholder = 'Select region',
   placeholderValue = '',
@@ -25,7 +26,7 @@ export default function RegionSelect({
   ...selectProps
 }: RegionSelectProps) {
   return (
-    <select ref={ref} {...selectProps}>
+    <select id={id} ref={ref} {...selectProps}>
       <option value={placeholderValue}>{placeholder}</option>
 
       {regions.map((region) => (

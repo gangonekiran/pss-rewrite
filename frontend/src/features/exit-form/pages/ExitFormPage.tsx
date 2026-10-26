@@ -3,7 +3,7 @@ import { FormProvider, useForm, useWatch, type Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { Save, TriangleAlert, X } from 'lucide-react';
+import { Save, X } from 'lucide-react';
 
 import PageContainer from '../../../layouts/PageContainer';
 import commonInfoService from '../../../services/common-info.service';
@@ -16,7 +16,7 @@ import {
   type ExitFormValues,
 } from '../../../types/exit-form';
 
-import ClientInformation from '../../active-form/components/ClientInformation';
+import { ClientInformation } from '../../common-info';
 import ExitDetails from '../components/ExitDetails';
 import GeneralInformation from '../components/GeneralInformation';
 import TransitionInformation from '../components/TransitionInformation';
@@ -35,7 +35,6 @@ interface Lookups {
   client: ExitFormClient;
   regions: RegionLookup[];
   options: ExitFormOptions;
-  warnings: string[];
 }
 
 function apiMessage(error: unknown, fallback: string) {
@@ -46,7 +45,13 @@ function apiMessage(error: unknown, fallback: string) {
 }
 
 /** Read-only client card + General Information, sharing the live region and referral date. */
-function ClientAndGeneral({ lookups, control }: { lookups: Lookups; control: Control<ExitFormValues> }) {
+function ClientAndGeneral({
+  lookups,
+  control,
+}: {
+  lookups: Lookups;
+  control: Control<ExitFormValues>;
+}) {
   const [regionId, referralDate] = useWatch({ control, name: ['Region', 'ReferralDate'] });
 
   return (
@@ -111,13 +116,16 @@ export default function ExitFormPage({ childId, formId, onClose, onSaved }: Exit
           client: exitResponse.client,
           regions: regions ?? [],
           options,
-          warnings: defaults?.warnings ?? [],
         });
 
         /*
          * NEW MODE: prefill from the latest Active / Referral form.
          */
-        reset(existing ? recordToValues(existing) : defaultsToValues(defaults, exitResponse.client.Region));
+        reset(
+          existing
+            ? recordToValues(existing)
+            : defaultsToValues(defaults, exitResponse.client.Region),
+        );
       } catch (error) {
         if (cancelled) return;
         console.error('Failed to load Exit Form:', error);
@@ -188,26 +196,14 @@ export default function ExitFormPage({ childId, formId, onClose, onSaved }: Exit
       >
         {/* Header */}
         <div className="sticky top-0 z-20 flex shrink-0 items-center justify-between border-b border-gray-200 bg-white px-5 py-3">
-          <h1 className="text-lg font-semibold text-gray-800">{isEdit ? 'Edit Exit Form' : 'New Exit Form'}</h1>
+          <h1 className="text-lg font-semibold text-gray-800">
+            {isEdit ? 'Edit Exit Form' : 'New Exit Form'}
+          </h1>
         </div>
 
         {/* Form */}
         <div className="flex-1 px-5 py-5">
           <div className="space-y-6">
-            {lookups.warnings.length > 0 && (
-              <div
-                role="alert"
-                className="flex gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
-              >
-                <TriangleAlert size={16} className="mt-0.5 shrink-0" />
-                <div>
-                  {lookups.warnings.map((warning) => (
-                    <p key={warning}>{warning}</p>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* 1. Client Information + 2. General Information */}
             <ClientAndGeneral lookups={lookups} control={control} />
 

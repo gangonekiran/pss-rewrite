@@ -15,7 +15,7 @@ const regions: RegionLookup[] = [
 ];
 
 test('renders the placeholder followed by one option per region', async () => {
-  const screen = await render(<RegionSelect regions={regions} />);
+  const screen = await render(<RegionSelect id="region" regions={regions} />);
 
   const options = screen.getByRole('option');
 
@@ -31,7 +31,7 @@ test('renders the placeholder followed by one option per region', async () => {
 
 test('uses a custom placeholder text and value', async () => {
   const screen = await render(
-    <RegionSelect regions={regions} placeholder="Choose" placeholderValue="0" />,
+    <RegionSelect id="region" regions={regions} placeholder="Choose" placeholderValue="0" />,
   );
 
   const placeholder = screen.getByRole('option', { name: 'Choose' });
@@ -41,7 +41,7 @@ test('uses a custom placeholder text and value', async () => {
 });
 
 test('renders only the placeholder when there are no regions', async () => {
-  const screen = await render(<RegionSelect regions={[]} />);
+  const screen = await render(<RegionSelect id="region" regions={[]} />);
 
   expect(screen.getByRole('option').elements()).toHaveLength(1);
 });
@@ -51,7 +51,9 @@ test('works as a controlled select', async () => {
   // select to its value prop right after onChange.
   const onChange = vi.fn((event: React.ChangeEvent<HTMLSelectElement>) => event.target.value);
 
-  const screen = await render(<RegionSelect regions={regions} value="2" onChange={onChange} />);
+  const screen = await render(
+    <RegionSelect id="region" regions={regions} value="2" onChange={onChange} />,
+  );
 
   const select = screen.getByRole('combobox');
 
@@ -67,7 +69,14 @@ test('passes select attributes through and passes the ref to the select', async 
   const ref = createRef<HTMLSelectElement>();
 
   const screen = await render(
-    <RegionSelect ref={ref} regions={regions} name="Region" className="my-select" disabled />,
+    <RegionSelect
+      id="region"
+      ref={ref}
+      regions={regions}
+      name="Region"
+      className="my-select"
+      disabled
+    />,
   );
 
   const select = screen.getByRole('combobox');
@@ -84,6 +93,7 @@ test('works with a callback ref, like react-hook-form register()', async () => {
 
   const screen = await render(
     <RegionSelect
+      id="region"
       ref={(el) => {
         node = el;
       }}

@@ -26,6 +26,7 @@ export function recordToValues(form: ExitFormRecord): ExitFormValues {
     ExitDate: toDateInput(form.ExitDate),
 
     TransitionPlanCompleted: toDateInput(form.TransitionPlanCompleted),
+    TransitionPlanReason: str(form.TransitionPlanReason),
     CLLEANotificationDate: toDateInput(form.CLLEANotificationDate),
     TransitionMeeting: toDateInput(form.TransitionMeeting),
 
@@ -33,14 +34,14 @@ export function recordToValues(form: ExitFormRecord): ExitFormValues {
     ExitPriorToAge3: prior,
     MovedOtherRegion: str(form.MovedOtherRegion),
     ExitAtAge3: atAge3,
-    EXFNoPartB1: Boolean(form.EXFNoPartB1),
-    EXFNoPartB2: Boolean(form.EXFNoPartB2),
-    EXFNoPartB3: Boolean(form.EXFNoPartB3),
     ReferredTo: codeString(form.ReferredTo),
   };
 }
 
-export function defaultsToValues(defaults: ExitFormDefaults | null, clientRegion: unknown): ExitFormValues {
+export function defaultsToValues(
+  defaults: ExitFormDefaults | null,
+  clientRegion: unknown,
+): ExitFormValues {
   return {
     ...DEFAULT_EXIT_FORM_VALUES,
     Region: Number(defaults?.Region ?? clientRegion ?? 0),
@@ -71,15 +72,13 @@ export function valuesToPayload(values: ExitFormValues): Record<string, unknown>
     ExitDate: values.ExitDate || null,
 
     TransitionPlanCompleted: values.TransitionPlanCompleted || null,
+    TransitionPlanReason: nullable(values.TransitionPlanReason),
     CLLEANotificationDate: values.CLLEANotificationDate || null,
     TransitionMeeting: values.TransitionMeeting || null,
 
     ExitPriorToAge3: prior ? code(values.ExitPriorToAge3) : null,
     MovedOtherRegion: prior ? nullable(values.MovedOtherRegion) : null,
     ExitAtAge3: atAge3 ? code(values.ExitAtAge3) : null,
-    EXFNoPartB1: atAge3 && values.EXFNoPartB1,
-    EXFNoPartB2: atAge3 && values.EXFNoPartB2,
-    EXFNoPartB3: atAge3 && values.EXFNoPartB3,
     ReferredTo: code(values.ReferredTo),
   };
 }

@@ -1,7 +1,6 @@
 /**
- * Live version of the API's `Calculated` block (backend exit-form.rules.ts),
- * so the Transition Information step updates while the user types.
- * All dates are YYYY-MM-DD and compared in UTC.
+ * Day counts and 3rd birthday for the Transition Information step,
+ * updated while the user types. All dates are YYYY-MM-DD and compared in UTC.
  */
 import type { ExitFormCalculated } from '../../../types/exit-form';
 
@@ -30,10 +29,6 @@ function shift(date: string, { years = 0, months = 0, days = 0 }) {
   return d.toISOString().slice(0, 10);
 }
 
-function within90To180(days: number | null) {
-  return days === null ? null : days >= 90 && days <= 180;
-}
-
 export function thirdBirthday(dob: unknown): string {
   const d = toDateInput(dob);
   return d ? shift(d, { years: 3 }) : '';
@@ -41,6 +36,7 @@ export function thirdBirthday(dob: unknown): string {
 
 export function calculateExit(
   values: {
+    ReferralDate: string;
     ExitDate: string;
     CLLEANotificationDate: string;
     TransitionMeeting: string;
@@ -50,25 +46,13 @@ export function calculateExit(
 ): ExitFormCalculated {
   const birthday = thirdBirthday(dob);
   const exit = values.ExitDate;
-  const lea = values.CLLEANotificationDate;
-
-  const conferenceDays = daysBetween(values.TransitionMeeting, exit);
-  const planDays = daysBetween(values.TransitionPlanCompleted, exit);
-
-  let leaWindow: boolean | null = null;
-  if (lea && birthday) {
-    leaWindow = lea >= shift(birthday, { months: -6 }) && lea <= shift(birthday, { days: -90 });
-  }
 
   return {
     thirdBirthday: birthday || null,
-    daysLEANotificationBeforeExit: daysBetween(lea, exit),
-    daysTransitionConferenceBeforeExit: conferenceDays,
-    daysTransitionPlanBeforeExit: planDays,
+    daysReferralToTransitionPlan: daysBetween(values.ReferralDate, values.TransitionPlanCompleted),
+    daysLEANotificationBeforeExit: daysBetween(values.CLLEANotificationDate, exit),
+    daysTransitionConferenceBeforeExit: daysBetween(values.TransitionMeeting, exit),
     daysExitBeforeThirdBirthday: daysBetween(exit, birthday),
-    leaNotificationWindowMet: leaWindow,
-    transitionConferenceWindowMet: within90To180(conferenceDays),
-    transitionPlanWindowMet: within90To180(planDays),
   };
 }
 

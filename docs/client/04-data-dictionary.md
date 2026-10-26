@@ -97,9 +97,9 @@ Key column meanings:
 | `OnePlanDate` | COS | `datetime2(0)` | One Plan date recorded on the COS entry form |
 | `EntryOrExit` | COS | `int` | `-1` Entry · `0` Exit · NULL no entry |
 | `ExitDate` | Exit, COS | `datetime2(0)` | Date of exit |
-| `ExitPriorToAge3` | Exit | `int` | 1 Development at appropriate level · 2 Moved to other region · 3 Moved out of state · 4 Withdrawn by parent · 5 Unable to contact · 6 Deceased |
-| `ExitAtAge3` | Exit | `int` | 1 Potentially eligible · 2 Potentially eligible – family declined · 3 Thought eligible – EEE not determined · 4 Not eligible |
-| `ReferredTo` | Exit | `int` | 1 Head Start · 2 Community child care / preschool · 3 School-based preschool · 4 CIS Coordinator · 99 Not eligible – no referrals |
+| `ExitPriorToAge3` | Exit | `int` | 7 Non-EI Client Exit · 8 Referral to CIS-EI · 1 Development at appropriate level · 2 Moved to other region · 3 Moved out of state · 4 Withdrawn by parent · 5 Unable to contact · 6 Deceased |
+| `ExitAtAge3` | Exit | `int` | 1 Potentially eligible · 2 Potentially eligible – family declined · 3 Thought eligible – potential eligibility not determined · 4 Not eligible |
+| `ReferredTo` | Exit | `int` | 1 Head Start · 2 Community child care / preschool · 3 School-based preschool · 4 CIS Coordinator · 5 Other · 99 Exited with no referral |
 | `Region` | all except Service Grid / Insurance | `int` | Region on the form (may differ from the client's current region) |
 
 ### 2.4 stblServices — live service lines (legacy source of service history)

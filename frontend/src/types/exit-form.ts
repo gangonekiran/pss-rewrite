@@ -11,51 +11,32 @@ export interface ExitFormClient {
   NonEarlyIntervention: boolean | null;
 }
 
-/** Derived by the API from the saved dates; never sent back. */
+/** Values shown in Transition Information, worked out from the dates as the user types. */
 export interface ExitFormCalculated {
   thirdBirthday: string | null;
+  daysReferralToTransitionPlan: number | null;
   daysLEANotificationBeforeExit: number | null;
   daysTransitionConferenceBeforeExit: number | null;
-  daysTransitionPlanBeforeExit: number | null;
   daysExitBeforeThirdBirthday: number | null;
-  leaNotificationWindowMet: boolean | null;
-  transitionConferenceWindowMet: boolean | null;
-  transitionPlanWindowMet: boolean | null;
 }
 
-/** A stblExitForm row as returned by /api/exit-forms. Yes/No columns are -1 / 0. */
+/** A stblExitForm row as returned by /api/exit-forms (the columns the form uses). */
 export interface ExitFormRecord {
   ID?: number;
   ChildID?: number;
   FormDate?: string | null;
   FormType?: string | null;
   Region?: number | null;
-  SU_id?: number | null;
-  SUName?: string | null;
-  CountyCode?: string | null;
-  Town?: string | null;
-  SvcCordFirstName?: string | null;
-  SvcCordLastName?: string | null;
-  CAPTA?: number | null;
   ReferralDate?: string | null;
   ExitDate?: string | null;
   TransitionPlanCompleted?: string | null;
   TransitionPlanReason?: string | null;
   CLLEANotificationDate?: string | null;
-  Notified90Days?: number | null;
-  NotifiedReason?: string | null;
-  NotifyStatePartC?: number | null;
   TransitionMeeting?: string | null;
-  TransitionMeeting90day?: number | null;
-  NoTransitionMtgReason?: string | null;
   ExitPriorToAge3?: number | null;
   MovedOtherRegion?: string | null;
   ExitAtAge3?: number | null;
-  EXFNoPartB1?: boolean | null;
-  EXFNoPartB2?: boolean | null;
-  EXFNoPartB3?: boolean | null;
   ReferredTo?: number | null;
-  Calculated?: ExitFormCalculated;
   [key: string]: unknown;
 }
 
@@ -68,9 +49,6 @@ export interface ExitFormResponse {
 export interface ExitFormDefaults {
   Region: number | null;
   ReferralDate: string | null;
-  /** Most recent Referral / NOPR / Active / Exit form type, or null if none. */
-  previousFormType: string | null;
-  warnings: string[];
 }
 
 export interface CodeOption {
@@ -79,11 +57,9 @@ export interface CodeOption {
 }
 
 export interface ExitFormOptions {
-  formType: string;
   exitPriorToAge3: CodeOption[];
   exitAtAge3: CodeOption[];
   referredTo: CodeOption[];
-  noPartBReasons: Array<{ column: 'EXFNoPartB1' | 'EXFNoPartB2' | 'EXFNoPartB3'; label: string }>;
 }
 
 /** When the child left the program: one of the two legacy exit paths. */
@@ -98,6 +74,7 @@ export interface ExitFormValues {
 
   // Transition Information
   TransitionPlanCompleted: string;
+  TransitionPlanReason: string;
   CLLEANotificationDate: string;
   TransitionMeeting: string;
 
@@ -106,9 +83,6 @@ export interface ExitFormValues {
   ExitPriorToAge3: string;
   MovedOtherRegion: string;
   ExitAtAge3: string;
-  EXFNoPartB1: boolean;
-  EXFNoPartB2: boolean;
-  EXFNoPartB3: boolean;
   ReferredTo: string;
 }
 
@@ -118,6 +92,7 @@ export const DEFAULT_EXIT_FORM_VALUES: ExitFormValues = {
   ExitDate: '',
 
   TransitionPlanCompleted: '',
+  TransitionPlanReason: '',
   CLLEANotificationDate: '',
   TransitionMeeting: '',
 
@@ -125,8 +100,5 @@ export const DEFAULT_EXIT_FORM_VALUES: ExitFormValues = {
   ExitPriorToAge3: '',
   MovedOtherRegion: '',
   ExitAtAge3: '',
-  EXFNoPartB1: false,
-  EXFNoPartB2: false,
-  EXFNoPartB3: false,
   ReferredTo: '',
 };

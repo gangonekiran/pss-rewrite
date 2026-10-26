@@ -5,10 +5,7 @@ import {
   COLUMNS,
   EXIT_FORM_TABLE,
   EXIT_FORM_TYPE,
-  FORM_NAMES_LOOKUP,
-  KEY_FORMS_VIEW,
   REFERRAL_FORM_TABLE,
-  SU_LOOKUP,
   type WritableColumn,
 } from "./exit-form.config";
 import type { ExitFormClient, ExitFormRecord } from "./exit-form.types";
@@ -174,32 +171,8 @@ export async function remove(childId: number, id: number) {
   return Number(r.recordset[0]?.Affected ?? 0) > 0;
 }
 
-export async function getSupervisoryUnion(suId: number) {
-  const pool = await getPool();
-  const r = await pool
-    .request()
-    .input("SU_id", sql.Int, suId)
-    .query(`
-      SELECT SU_id, SUName
-      FROM ${SU_LOOKUP}
-      WHERE SU_id = @SU_id;
-    `);
-  return (r.recordset[0] as { SU_id: number; SUName: string } | undefined) ?? null;
-}
-
-const PREFILL_COLUMNS = `
-  Region,
-  SU_id,
-  SUName,
-  CountyCode,
-  Town,
-  SvcCordFirstName,
-  SvcCordLastName,
-  SvcCordType,
-  SvcCordOtherDesc,
-  ReferralDate,
-  ReReferralDate
-`;
+/** The only values a new Exit form copies from earlier forms. */
+const PREFILL_COLUMNS = "Region, ReferralDate";
 
 /** Latest Referral form, by (re)referral date. */
 export async function findLatestReferral(childId: number) {
@@ -208,7 +181,7 @@ export async function findLatestReferral(childId: number) {
     .request()
     .input("ChildID", sql.Int, childId)
     .query(`
-      SELECT TOP 1 ${PREFILL_COLUMNS}, CAPTAReferral AS CAPTA, FormDate
+      SELECT TOP 1 ${PREFILL_COLUMNS}
       FROM ${REFERRAL_FORM_TABLE}
       WHERE ChildID = @ChildID
       ORDER BY
@@ -225,7 +198,7 @@ export async function findLatestActive(childId: number) {
     .request()
     .input("ChildID", sql.Int, childId)
     .query(`
-      SELECT TOP 1 ${PREFILL_COLUMNS}, CAPTA, FormDate
+      SELECT TOP 1 ${PREFILL_COLUMNS}
       FROM ${ACTIVE_FORM_TABLE}
       WHERE ChildID = @ChildID
       ORDER BY
@@ -234,28 +207,4 @@ export async function findLatestActive(childId: number) {
         ID DESC;
     `);
   return (r.recordset[0] as ExitFormRecord | undefined) ?? null;
-}
-
-/**
- * Most recent key form (Referral / No One Plan / Active / Exit).
- * Same-day ties go to the later step in slstFormNames.Sort, like the
- * legacy sqryKeyFormsMaxType.
- */
-export async function findLatestKeyFormType(childId: number): Promise<string | null> {
-  const pool = await getPool();
-  const r = await pool
-    .request()
-    .input("ChildID", sql.Int, childId)
-    .query(`
-      SELECT TOP 1 k.FormType
-      FROM ${KEY_FORMS_VIEW} k
-      LEFT JOIN ${FORM_NAMES_LOOKUP} fn
-        ON fn.FormName = k.FormType
-      WHERE k.ChildID = @ChildID
-        AND k.FormDate IS NOT NULL
-      ORDER BY
-        k.FormDate DESC,
-        fn.Sort DESC;
-    `);
-  return (r.recordset[0]?.FormType as string | undefined) ?? null;
 }

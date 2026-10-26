@@ -1,14 +1,10 @@
 export const EXIT_FORM_TABLE = "dbo.stblExitForm";
 export const REFERRAL_FORM_TABLE = "dbo.stblReferralForm";
 export const ACTIVE_FORM_TABLE = "dbo.stblActiveForm";
-export const SU_LOOKUP = "dbo.slstSU";
-export const KEY_FORMS_VIEW = "dbo.sqryKeyFormsCombined";
-export const FORM_NAMES_LOOKUP = "dbo.slstFormNames";
 
 /**
  * Legacy value stored in FormType. slstFormNames, sqryFormListComplete
  * (loop errors) and the FITP extract all expect the literal 'Exit'.
- * CAPTA is stored separately in the CAPTA column.
  */
 export const EXIT_FORM_TYPE = "Exit";
 
@@ -69,6 +65,9 @@ export const WRITABLE_COLUMNS = Object.keys(COLUMNS) as WritableColumn[];
  * There are no lookup tables for these in dbCDD, so they live here.
  */
 export const EXIT_PRIOR_TO_AGE_3 = [
+  // 7 and 8 are new (not in the column's MS_Description); listed first, as on the form.
+  { code: 7, label: "Non-EI Client Exit" },
+  { code: 8, label: "Referral to CIS-EI" },
   { code: 1, label: "Development at appropriate level" },
   { code: 2, label: "Moved to other region" },
   { code: 3, label: "Moved out of state" },
@@ -86,8 +85,7 @@ export const EXIT_AT_AGE_3 = [
   },
   {
     code: 3,
-    label:
-      "Child is thought to be eligible, however, potential eligibility for EEE not determined",
+    label: "Child is thought to be eligible but potential eligibility not determined",
   },
   { code: 4, label: "Child is NOT eligible for Part B" },
 ] as const;
@@ -116,24 +114,3 @@ export const EXIT_AT_AGE_3_NOT_ELIGIBLE = 4;
 
 /** ExitPriorToAge3 code that uses MovedOtherRegion. */
 export const EXIT_PRIOR_MOVED_OTHER_REGION = 2;
-
-export const NO_PART_B_REASONS = [
-  { column: "EXFNoPartB1", label: "Child's development is at appropriate level" },
-  {
-    column: "EXFNoPartB2",
-    label: "Child did not meet Part C's criteria for potential eligibility",
-  },
-  {
-    column: "EXFNoPartB3",
-    label: "Child did not meet Part B's eligibility at Transition Conference",
-  },
-] as const;
-
-/**
- * UI status values (Client Information step) and how they map to the
- * legacy FormType + CAPTA columns.
- */
-export const STATUS_OPTIONS = [
-  { value: "exit", label: "Exit CIS-EI", capta: false },
-  { value: "exit-capta", label: "Exit CIS-EI - CAPTA", capta: true },
-] as const;

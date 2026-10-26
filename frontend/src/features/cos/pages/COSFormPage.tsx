@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+
+import { useEffect, useState, useId } from 'react';
 import toast from 'react-hot-toast';
 import inputFormService from '../../../services/input-form.service';
-import { Field } from '../../active-form/components/FormField';
+import { Field } from '../../common-info/components/FormField';
 import type { RegionLookup } from '../../../types/common';
 import { RegionSelect } from '../../common-info';
+import FieldGroup from '../../common-info/components/FieldGroup';
 
 interface COSFormPageProps {
   childId: number;
@@ -126,6 +128,11 @@ export default function COSFormPage({
 
   const [error, setError] = useState('');
 
+  const regionId = useId();
+  const onePlanId = useId();
+  const exitDateId = useId();
+  const cosScoreId = useId();
+
   /*
    * Load existing COS form
    */
@@ -141,11 +148,7 @@ export default function COSFormPage({
         setLoading(true);
         setError('');
 
-        const data = await inputFormService.getOne(
-          'cos-cover',
-          childId,
-          formId,
-        );
+        const data = await inputFormService.getOne('cos-cover', childId, formId);
 
         if (cancelled) {
           return;
@@ -286,20 +289,11 @@ export default function COSFormPage({
       };
 
       if (formId) {
-        await inputFormService.update(
-          'cos-cover',
-          childId,
-          formId,
-          payload,
-        );
+        await inputFormService.update('cos-cover', childId, formId, payload);
 
         toast.success('COS Form updated successfully.');
       } else {
-        await inputFormService.create(
-          'cos-cover',
-          childId,
-          payload,
-        );
+        await inputFormService.create('cos-cover', childId, payload);
 
         toast.success('COS Form added successfully.');
       }
@@ -329,9 +323,7 @@ export default function COSFormPage({
           PAGE TITLE
       ====================================================== */}
       <div className="px-5 pt-5">
-        <h1 className="text-2xl font-bold text-[#101b4c]">
-          Child Outcome Summary (COS)
-        </h1>
+        <h1 className="text-2xl font-bold text-[#101b4c]">Child Outcome Summary (COS)</h1>
       </div>
 
       <div className="space-y-6 p-5">
@@ -340,15 +332,14 @@ export default function COSFormPage({
         ====================================================== */}
         <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
           <div className="mb-5">
-            <h2 className="text-base font-semibold text-gray-900">
-              General Information
-            </h2>
+            <h2 className="text-base font-semibold text-gray-900">General Information</h2>
           </div>
 
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
             {/* REGION */}
-            <Field label="Region" required error={errors.Region}>
+            <Field id={regionId} label="Region" required error={errors.Region}>
               <RegionSelect
+                id={regionId}
                 regions={regions}
                 value={form.Region}
                 onChange={(event) =>
@@ -361,12 +352,9 @@ export default function COSFormPage({
             </Field>
 
             {/* ONE PLAN DATE */}
-            <Field
-              label="One Plan Date"
-              required
-              error={errors.OnePlanDate}
-            >
+            <Field id={onePlanId} label="One Plan Date" required error={errors.OnePlanDate}>
               <input
+                id={onePlanId}
                 type="date"
                 value={form.OnePlanDate}
                 onChange={(event) =>
@@ -379,7 +367,7 @@ export default function COSFormPage({
             </Field>
 
             {/* COS TYPE */}
-            <Field label="COS Type" required>
+            <FieldGroup label="COS Type" required>
               <div className="flex h-10 items-center gap-8">
                 <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-800">
                   <input
@@ -407,10 +395,10 @@ export default function COSFormPage({
                   <span>Exit</span>
                 </label>
               </div>
-            </Field>
+            </FieldGroup>
 
             {/* EXIT DATE */}
-            <Field label="Exit Date" error={errors.ExitDate}>
+            <Field id={exitDateId} label="Exit Date" error={errors.ExitDate}>
               <input
                 type="date"
                 value={form.ExitDate}
@@ -439,13 +427,12 @@ export default function COSFormPage({
         ====================================================== */}
         <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
           <div className="mb-5">
-            <h2 className="text-base font-semibold text-gray-900">
-              Outcomes
-            </h2>
+            <h2 className="text-base font-semibold text-gray-900">Outcomes</h2>
           </div>
 
           {/* OUTCOME 1 */}
           <OutcomeSection
+            id={cosScoreId + '1'}
             outcomeNumber={1}
             title={OUTCOME_TITLES[0]}
             score={form.Outcome1}
@@ -466,6 +453,7 @@ export default function COSFormPage({
 
           {/* OUTCOME 2 */}
           <OutcomeSection
+            id={cosScoreId + '2'}
             outcomeNumber={2}
             title={OUTCOME_TITLES[1]}
             score={form.Outcome2}
@@ -486,6 +474,7 @@ export default function COSFormPage({
 
           {/* OUTCOME 3 */}
           <OutcomeSection
+            id={cosScoreId + '3'}
             outcomeNumber={3}
             title={OUTCOME_TITLES[2]}
             score={form.Outcome3}
@@ -544,6 +533,7 @@ export default function COSFormPage({
 ============================================================= */
 
 interface OutcomeSectionProps {
+  id: string;
   outcomeNumber: number;
   title: string;
   score: number | null;
@@ -555,6 +545,7 @@ interface OutcomeSectionProps {
 }
 
 function OutcomeSection({
+  id,
   outcomeNumber,
   title,
   score,
@@ -565,11 +556,7 @@ function OutcomeSection({
   onProgressChange,
 }: OutcomeSectionProps) {
   return (
-    <div
-      className={`rounded-lg border border-gray-200 p-4 ${
-        outcomeNumber > 1 ? 'mt-5' : ''
-      }`}
-    >
+    <div className={`rounded-lg border border-gray-200 p-4 ${outcomeNumber > 1 ? 'mt-5' : ''}`}>
       <h3 className="mb-6 text-base font-semibold text-gray-900">
         Outcome {outcomeNumber}: {title}
       </h3>
@@ -577,11 +564,7 @@ function OutcomeSection({
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* COS SCORE */}
         <div className="lg:col-span-7">
-          <Field
-            label="COS Score"
-            required
-            error={scoreError}
-          >
+          <Field id={id} label="COS Score" required error={scoreError}>
             <div className="flex flex-wrap items-center gap-6 pt-1">
               {[1, 2, 3, 4, 5, 6, 7].map((value) => (
                 <label
@@ -605,11 +588,7 @@ function OutcomeSection({
 
         {/* PROGRESS MET */}
         <div className="lg:col-span-5">
-          <Field
-            label="Progress Met"
-            required
-            error={progressError}
-          >
+          <Field id={id + 'prog'} label="Progress Met" required error={progressError}>
             <div className="flex items-center gap-8 pt-1">
               <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-800">
                 <input

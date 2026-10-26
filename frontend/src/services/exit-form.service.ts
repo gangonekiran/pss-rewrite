@@ -16,12 +16,7 @@ class ExitFormService {
     return response.data;
   }
 
-  async getOne(childId: number, id: number): Promise<ExitFormRecord> {
-    const response = await api.get<ExitFormRecord>(`${BASE_URL}/${childId}/${id}`);
-    return response.data;
-  }
-
-  /** Prefill values for a new Exit form, plus loop-order warnings. */
+  /** Prefill values (Region, Date of Referral) for a new Exit form. */
   async defaults(childId: number): Promise<ExitFormDefaults> {
     const response = await api.get<ExitFormDefaults>(`${BASE_URL}/${childId}/defaults`);
     return response.data;
@@ -38,11 +33,6 @@ class ExitFormService {
     payload: Record<string, unknown>,
   ): Promise<ExitFormRecord> {
     const response = await api.put<ExitFormRecord>(`${BASE_URL}/${childId}/${id}`, payload);
-    return response.data;
-  }
-
-  async delete(childId: number, id: number): Promise<{ success: boolean }> {
-    const response = await api.delete<{ success: boolean }>(`${BASE_URL}/${childId}/${id}`);
     return response.data;
   }
 

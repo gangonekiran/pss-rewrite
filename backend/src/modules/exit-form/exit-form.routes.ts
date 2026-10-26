@@ -15,15 +15,11 @@ const router = Router();
  *         or -1/0 and are stored as -1 (Yes) / 0 (No). FormType is always
  *         saved as 'Exit'. FormDate defaults to ExitDate.
  *       properties:
- *         status:
- *           type: string
- *           enum: [exit, exit-capta]
- *           description: Sets CAPTA (exit-capta = Yes).
  *         FormDate: { type: string, format: date }
  *         Region: { type: integer, example: 1 }
  *         MonthReporting: { type: integer, nullable: true }
- *         SU_id: { type: integer, nullable: true, description: SUName is looked up from slstSU }
- *         Town: { type: string, maxLength: 3, nullable: true, description: Also sets CountyCode (and SU_id if not given) }
+ *         SU_id: { type: integer, nullable: true }
+ *         Town: { type: string, maxLength: 3, nullable: true }
  *         SvcCordFirstName: { type: string, maxLength: 50, nullable: true }
  *         SvcCordLastName: { type: string, maxLength: 50, nullable: true }
  *         SvcCordType: { type: integer, nullable: true }
@@ -32,9 +28,9 @@ const router = Router();
  *         ReferralDate: { type: string, format: date, nullable: true }
  *         ReReferralDate: { type: string, format: date, nullable: true }
  *         ExitDate: { type: string, format: date, description: Required on create }
- *         TransitionPlanCompleted: { type: string, format: date, nullable: true }
- *         TransitionPlanReason: { type: string, nullable: true }
- *         CLLEANotificationDate: { type: string, format: date, nullable: true }
+ *         TransitionPlanCompleted: { type: string, format: date, nullable: true, description: Cannot be before ReferralDate }
+ *         TransitionPlanReason: { type: string, nullable: true, description: Transition plan delay reason (family or provider circumstance) }
+ *         CLLEANotificationDate: { type: string, format: date, nullable: true, description: LEA Notification Date. Cannot be before ReferralDate }
  *         Notified90Days: { type: boolean, nullable: true }
  *         NotifiedReason: { type: string, nullable: true }
  *         NotifyStatePartC: { type: boolean, nullable: true }
@@ -47,25 +43,13 @@ const router = Router();
  *         COSFGot6MonthsSvcs: { type: boolean, nullable: true }
  *         COSFExitForm: { type: boolean, nullable: true }
  *         COSFExitFormReason: { type: string, nullable: true }
- *         ExitPriorToAge3: { type: integer, enum: [0, 1, 2, 3, 4, 5, 6], nullable: true, description: 0 = exited at age 3 instead (set automatically) }
+ *         ExitPriorToAge3: { type: integer, enum: [0, 1, 2, 3, 4, 5, 6, 7, 8], nullable: true, description: 7 = Non-EI Client Exit, 8 = Referral to CIS-EI, 0 = exited at age 3 instead (set automatically) }
  *         MovedOtherRegion: { type: string, maxLength: 255, nullable: true, description: Only kept when ExitPriorToAge3 = 2 }
  *         ExitAtAge3: { type: integer, enum: [0, 1, 2, 3, 4], nullable: true, description: 0 = exited prior to age 3 instead (set automatically). Cannot be combined with a non-zero ExitPriorToAge3 }
  *         EXFNoPartB1: { type: boolean, description: Only kept when ExitAtAge3 = 4 }
  *         EXFNoPartB2: { type: boolean }
  *         EXFNoPartB3: { type: boolean }
  *         ReferredTo: { type: integer, enum: [1, 2, 3, 4, 5, 99], nullable: true, description: 5 = Other, 99 = Exited with no referral. Required when ExitAtAge3 = 4 }
- *     ExitFormCalculated:
- *       type: object
- *       description: Derived from the dates and the child's DOB. Never saved.
- *       properties:
- *         thirdBirthday: { type: string, format: date, nullable: true }
- *         daysLEANotificationBeforeExit: { type: integer, nullable: true }
- *         daysTransitionConferenceBeforeExit: { type: integer, nullable: true }
- *         daysTransitionPlanBeforeExit: { type: integer, nullable: true }
- *         daysExitBeforeThirdBirthday: { type: integer, nullable: true }
- *         leaNotificationWindowMet: { type: boolean, nullable: true, description: LEA notified 6 months to 90 days before the 3rd birthday }
- *         transitionConferenceWindowMet: { type: boolean, nullable: true, description: Conference 90-180 days before exit }
- *         transitionPlanWindowMet: { type: boolean, nullable: true, description: Plan 90-180 days before exit }
  *     ExitForm:
  *       allOf:
  *         - $ref: "#/components/schemas/ExitFormInput"
@@ -75,7 +59,6 @@ const router = Router();
  *             ChildID: { type: integer }
  *             FormType: { type: string, example: Exit }
  *             CAPTA: { type: integer, nullable: true, example: -1 }
- *             Calculated: { $ref: "#/components/schemas/ExitFormCalculated" }
  */
 
 /**
@@ -84,7 +67,7 @@ const router = Router();
  *   get:
  *     tags: [Exit Forms]
  *     summary: Code lists for the Exit form
- *     description: Status, exit reasons prior to age 3, exit at age 3 outcomes, referred-to and no-Part-B reasons.
+ *     description: Exit reasons prior to age 3, exit at age 3 outcomes and referred-to options.
  *     responses:
  *       200:
  *         description: Option lists
@@ -144,8 +127,8 @@ router.post("/:childId", controller.create);
  *     tags: [Exit Forms]
  *     summary: Prefill values for a new Exit form
  *     description: >
- *       Copied from the latest Active form, falling back to the latest Referral form.
- *       `warnings` flags an Exit that would not follow an Active form (legacy loop error).
+ *       Region and Date of Referral, copied from the latest Active form,
+ *       falling back to the latest Referral form.
  *     parameters:
  *       - { in: path, name: childId, required: true, schema: { type: integer } }
  *     responses:

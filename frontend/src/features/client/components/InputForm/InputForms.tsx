@@ -6,7 +6,7 @@ import type { InputFormHistoryItem, InputFormName } from '../../../../types/inpu
 import { INPUT_FORM_OPTIONS } from '../../../../types/input-form';
 import ActiveFormPage from '../../../active-form/pages/ActiveFormPage';
 import { COSFormPage } from '../../../cos';
-import ExitFormPage from '../../../exit/pages/ExitFormPage';
+import ExitFormPage from '../../../exit-form/pages/ExitFormPage';
 import type { RegionLookup } from '../../../../types/common';
 
 interface InputFormsProps {
