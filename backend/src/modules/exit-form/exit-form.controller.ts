@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import * as service from "./exit-form.service";
+import * as service from "./exit-form.service.js";
 
 export const get = async (r: Request, s: Response) =>
   s.json(await service.get(r.params.childId));

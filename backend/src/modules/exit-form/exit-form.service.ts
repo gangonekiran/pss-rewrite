@@ -1,5 +1,5 @@
-import { EXIT_AT_AGE_3, EXIT_PRIOR_TO_AGE_3, REFERRED_TO } from "./exit-form.config";
-import * as repository from "./exit-form.repository";
+import { EXIT_AT_AGE_3, EXIT_PRIOR_TO_AGE_3, REFERRED_TO } from "./exit-form.config.js";
+import * as repository from "./exit-form.repository.js";
 import {
   applyExitPath,
   clearDependentFields,
@@ -7,8 +7,8 @@ import {
   normalizePayload,
   toIsoDate,
   validateRecord,
-} from "./exit-form.rules";
-import type { ExitFormClient, ExitFormDefaults, ExitFormRecord } from "./exit-form.types";
+} from "./exit-form.rules.js";
+import type { ExitFormClient, ExitFormDefaults, ExitFormRecord } from "./exit-form.types.js";
 
 function int(value: unknown, name: string) {
   const n = Number(value);

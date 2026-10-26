@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRequest, createResponse } from 'node-mocks-http';
 
-import * as service from './exit-form.service';
-import { create, defaults, get, getOne, options, remove, update } from './exit-form.controller';
+import * as service from './exit-form.service.js';
+import { create, defaults, get, getOne, options, remove, update } from './exit-form.controller.js';
 
-vi.mock('./exit-form.service', () => ({
+vi.mock('./exit-form.service.js', () => ({
   get: vi.fn(),
   getOne: vi.fn(),
   defaults: vi.fn(),

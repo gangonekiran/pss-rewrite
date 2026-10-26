@@ -11,8 +11,8 @@ import {
   NOT_THIS_EXIT_PATH,
   REFERRED_TO,
   type WritableColumn,
-} from "./exit-form.config";
-import type { ExitFormRecord } from "./exit-form.types";
+} from "./exit-form.config.js";
+import type { ExitFormRecord } from "./exit-form.types.js";
 
 export function error(message: string, status = 400): never {
   throw Object.assign(new Error(message), { status });

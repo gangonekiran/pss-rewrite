@@ -1,5 +1,5 @@
 import type { Request } from "mssql";
-import { getPool, sql } from "../../config/database";
+import { getPool, sql } from "../../config/database.js";
 import {
   ACTIVE_FORM_TABLE,
   COLUMNS,
@@ -7,8 +7,8 @@ import {
   EXIT_FORM_TYPE,
   REFERRAL_FORM_TABLE,
   type WritableColumn,
-} from "./exit-form.config";
-import type { ExitFormClient, ExitFormRecord } from "./exit-form.types";
+} from "./exit-form.config.js";
+import type { ExitFormClient, ExitFormRecord } from "./exit-form.types.js";
 
 const columnNames = new Set<string>(Object.keys(COLUMNS));
 

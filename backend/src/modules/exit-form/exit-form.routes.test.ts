@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import router from './exit-form.routes';
-import * as controller from './exit-form.controller';
+import router from './exit-form.routes.js';
+import * as controller from './exit-form.controller.js';
 
-vi.mock('./exit-form.controller', () => ({
+vi.mock('./exit-form.controller.js', () => ({
   get: vi.fn(),
   getOne: vi.fn(),
   defaults: vi.fn(),

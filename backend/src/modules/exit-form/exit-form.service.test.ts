@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import * as repository from './exit-form.repository';
-import { create, defaults, get, getOne, lookups, remove, update } from './exit-form.service';
-import type { ExitFormClient, ExitFormRecord } from './exit-form.types';
+import * as repository from './exit-form.repository.js';
+import { create, defaults, get, getOne, lookups, remove, update } from './exit-form.service.js';
+import type { ExitFormClient, ExitFormRecord } from './exit-form.types.js';
 
-vi.mock('./exit-form.repository', () => ({
+vi.mock('./exit-form.repository.js', () => ({
   getClient: vi.fn(),
   findByChildId: vi.fn(),
   findOne: vi.fn(),

@@ -7,8 +7,8 @@ import {
   normalizePayload,
   toIsoDate,
   validateRecord,
-} from './exit-form.rules';
-import type { ExitFormRecord } from './exit-form.types';
+} from './exit-form.rules.js';
+import type { ExitFormRecord } from './exit-form.types.js';
 
 describe('Exit Form Rules - error', () => {
   it('should throw an error with a 400 status by default', () => {
