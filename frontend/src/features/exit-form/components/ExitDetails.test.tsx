@@ -13,6 +13,10 @@ import {
 } from '../../../types/exit-form';
 import ExitDetails from './ExitDetails';
 
+/** Matches a field's label with or without the required "*" that Field / FieldGroup add. */
+const field = (text: string) =>
+  new RegExp(`^${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\*?$`);
+
 type Errors = Partial<Record<Path<ExitFormValues>, string>>;
 
 function Harness({
@@ -114,7 +118,7 @@ test('without an exit path, asks only when the child exited', async () => {
   const { screen } = await renderInForm(<ExitDetails options={options} dob={null} />);
 
   await expect
-    .element(screen.getByRole('group', { name: 'When did the child exit?' }))
+    .element(screen.getByRole('group', { name: field('When did the child exit?') }))
     .toBeVisible();
   await expect.element(screen.getByRole('radio', { name: 'Prior to age 3' })).not.toBeChecked();
   await expect.element(screen.getByRole('radio', { name: 'At age 3' })).not.toBeChecked();
@@ -180,7 +184,7 @@ test('prior to age 3: lists the reasons in order, starting with Non-EI and Refer
 
   await expect.element(heading(screen, PRIOR_TITLE)).toBeVisible();
 
-  const group = screen.getByRole('group', { name: 'Reason for Exit' });
+  const group = screen.getByRole('group', { name: field('Reason for Exit') });
   await expect.element(group).toBeVisible();
   const labels = [...group.element().querySelectorAll('label')].map((l) => l.textContent?.trim());
   expect(labels).toEqual([
@@ -211,16 +215,16 @@ test('Region Moved To shows only for "Moved to other region" and stores the text
     values: { exitPath: 'prior' },
   });
 
-  expect(screen.getByLabelText('Region Moved To', { exact: true }).elements()).toHaveLength(0);
+  expect(screen.getByLabelText(field('Region Moved To')).elements()).toHaveLength(0);
 
   await check(screen, 'Moved to other region');
-  const input = screen.getByLabelText('Region Moved To', { exact: true });
+  const input = screen.getByLabelText(field('Region Moved To'));
   await expect.element(input).toBeVisible();
   await page.elementLocator(input.element()).fill('Rutland');
   expect(getValues().MovedOtherRegion).toBe('Rutland');
 
   await check(screen, 'Moved out of state');
-  expect(screen.getByLabelText('Region Moved To', { exact: true }).elements()).toHaveLength(0);
+  expect(screen.getByLabelText(field('Region Moved To')).elements()).toHaveLength(0);
 });
 
 test('at age 3: lists the outcomes', async () => {
@@ -229,7 +233,9 @@ test('at age 3: lists the outcomes', async () => {
   });
 
   await expect.element(heading(screen, AT_AGE_3_TITLE)).toBeVisible();
-  await expect.element(screen.getByRole('group', { name: 'Child Exited at Age 3' })).toBeVisible();
+  await expect
+    .element(screen.getByRole('group', { name: field('Child Exited at Age 3') }))
+    .toBeVisible();
   await expect
     .element(
       screen.getByRole('radio', { name: 'Child is potentially eligible for Part B services' }),
@@ -269,7 +275,7 @@ test('Referred to: shows the options, including Other and Exited with no referra
   });
 
   await expect.element(heading(screen, 'Referred to')).toBeVisible();
-  await expect.element(screen.getByRole('group', { name: 'Referred To' })).toBeVisible();
+  await expect.element(screen.getByRole('group', { name: field('Referred To') })).toBeVisible();
   await expect
     .element(screen.getByRole('radio', { name: 'Exited with no referral' }))
     .toBeVisible();

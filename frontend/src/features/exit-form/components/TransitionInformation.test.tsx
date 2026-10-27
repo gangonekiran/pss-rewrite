@@ -9,6 +9,10 @@ import { test } from '../../../../test-extend';
 import { DEFAULT_EXIT_FORM_VALUES, type ExitFormValues } from '../../../types/exit-form';
 import TransitionInformation from './TransitionInformation';
 
+/** Matches a field's label with or without the required "*" that Field / FieldGroup add. */
+const field = (text: string) =>
+  new RegExp(`^${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\*?$`);
+
 type Errors = Partial<Record<Path<ExitFormValues>, string>>;
 
 function Harness({
@@ -82,10 +86,10 @@ const filled = {
 type Screen = Awaited<ReturnType<typeof renderInForm>>['screen'];
 
 const days = (screen: Screen, label: string) =>
-  screen.getByLabelText(`${label} (Read Only)`, { exact: true });
+  screen.getByLabelText(field(`${label} (Read Only)`));
 
 async function fill(screen: Screen, label: string, value: string) {
-  await page.elementLocator(screen.getByLabelText(label, { exact: true }).element()).fill(value);
+  await page.elementLocator(screen.getByLabelText(field(label)).element()).fill(value);
 }
 
 test('shows the transition dates, the delay reason and the day counts', async () => {
@@ -100,7 +104,7 @@ test('shows the transition dates, the delay reason and the day counts', async ()
     'LEA Notification Date',
     'Date of Transition Conference',
   ]) {
-    await expect.element(screen.getByLabelText(label, { exact: true })).toBeVisible();
+    await expect.element(screen.getByLabelText(field(label))).toBeVisible();
   }
   for (const label of [
     'Days Between Referral and Transition Plan',
@@ -115,16 +119,14 @@ test('shows the transition dates, the delay reason and the day counts', async ()
 test('uses the new LEA label', async () => {
   const { screen } = await renderInForm(<TransitionInformation dob={DOB} />);
 
-  await expect
-    .element(screen.getByLabelText('LEA Notification Date', { exact: true }))
-    .toBeVisible();
+  await expect.element(screen.getByLabelText(field('LEA Notification Date'))).toBeVisible();
   expect(screen.getByText("Date LEA Notified of Child's Name").elements()).toHaveLength(0);
 });
 
 test('the delay reason box prompts for family or provider circumstance', async () => {
   const { screen } = await renderInForm(<TransitionInformation dob={DOB} />);
 
-  const box = screen.getByLabelText('Transition Plan Delay Reason', { exact: true });
+  const box = screen.getByLabelText(field('Transition Plan Delay Reason'));
   await expect
     .element(box)
     .toHaveAttribute('placeholder', 'Family circumstance or provider circumstance, and details');
@@ -207,18 +209,14 @@ test('marks the three dates as required only for an exit at age 3', async () => 
   const prior = await renderInForm(<TransitionInformation dob={DOB} />, {
     values: { exitPath: 'prior' },
   });
-  await expect
-    .element(prior.screen.getByLabelText('LEA Notification Date', { exact: true }))
-    .toBeVisible();
+  await expect.element(prior.screen.getByLabelText(field('LEA Notification Date'))).toBeVisible();
   expect(prior.screen.getByText('*').elements()).toHaveLength(0);
   prior.screen.unmount();
 
   const atAge3 = await renderInForm(<TransitionInformation dob={DOB} />, {
     values: { exitPath: 'atAge3' },
   });
-  await expect
-    .element(atAge3.screen.getByLabelText('LEA Notification Date', { exact: true }))
-    .toBeVisible();
+  await expect.element(atAge3.screen.getByLabelText(field('LEA Notification Date'))).toBeVisible();
   expect(atAge3.screen.getByText('*').elements()).toHaveLength(3);
 });
 

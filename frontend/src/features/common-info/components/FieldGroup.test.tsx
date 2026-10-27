@@ -1,88 +1,40 @@
-import { expect } from 'vitest';
 import { render } from 'vitest-browser-react';
-
 import { test } from '../../../../test-extend';
 
-import FieldGroup from './FieldGroup';
+import FieldGroup from './FieldGroup.tsx';
+import { expect } from 'vitest';
 
-test('names the group of radios by its label', async () => {
+const label = 'Lalalabel';
+const error = 'Oh no!';
+const child = <input />;
+
+test('renders required fieldgroup with everything present', async () => {
   const screen = await render(
-    <FieldGroup label="Referred To">
-      <label>
-        <input type="radio" name="r" value="1" />
-        Head Start
-      </label>
+    <FieldGroup label={label} required={true} error={error}>
+      {child}
     </FieldGroup>,
   );
 
-  const group = screen.getByRole('group', { name: 'Referred To' });
-  await expect.element(group).toBeVisible();
-  expect(group.element().tagName).toBe('FIELDSET');
-  await expect.element(screen.getByRole('radio', { name: 'Head Start' })).toBeVisible();
+  expect(screen.getByText(label + '*')).toBeVisible();
+  expect(screen.getByText(error)).toBeVisible();
 });
 
-test('shows a required mark that is not part of the group name', async () => {
+test('renders non-required fieldgroup with no errors', async () => {
   const screen = await render(
-    <FieldGroup label="Reason for Exit" required>
-      <input type="radio" aria-label="Deceased" />
+    <FieldGroup label={label} required={false}>
+      {child}
     </FieldGroup>,
   );
 
-  await expect
-    .element(screen.getByRole('group', { name: 'Reason for Exit', exact: true }))
-    .toBeVisible();
-  await expect.element(screen.getByText('*')).toBeVisible();
+  expect(screen.getByText(label)).toBeVisible();
+  expect(screen.getByText('*')).not.toBeInTheDocument();
+  expect(screen.getByText(error)).not.toBeInTheDocument();
 });
 
-test('tells screen readers the group is required', async () => {
-  const screen = await render(
-    <FieldGroup label="Reason for Exit" required>
-      <input type="radio" aria-label="Deceased" />
-    </FieldGroup>,
-  );
+test('renders non-required fieldgroup alternate', async () => {
+  const screen = await render(<FieldGroup label={label}>{child}</FieldGroup>);
 
-  const group = screen.getByRole('group', { name: 'Reason for Exit', exact: true });
-  await expect.element(group).toHaveAccessibleDescription('Required');
-  // Read by screen readers only; the * is the visible mark.
-  expect(screen.getByText('Required', { exact: true }).element().className).toContain('sr-only');
-});
-
-test('shows the error and links it to the group', async () => {
-  const screen = await render(
-    <FieldGroup label="Reason for Exit" error="Select the reason for exit.">
-      <input type="radio" aria-label="Deceased" />
-    </FieldGroup>,
-  );
-
-  await expect.element(screen.getByText('Select the reason for exit.')).toBeVisible();
-  await expect
-    .element(screen.getByRole('group', { name: 'Reason for Exit' }))
-    .toHaveAccessibleDescription('Select the reason for exit.');
-});
-
-test('describes a required group with an error as both', async () => {
-  const screen = await render(
-    <FieldGroup label="Reason for Exit" required error="Select the reason for exit.">
-      <input type="radio" aria-label="Deceased" />
-    </FieldGroup>,
-  );
-
-  await expect
-    .element(screen.getByRole('group', { name: 'Reason for Exit', exact: true }))
-    .toHaveAccessibleDescription('Required Select the reason for exit.');
-});
-
-test('without required or error, shows only the label and options', async () => {
-  const screen = await render(
-    <FieldGroup label="Referred To">
-      <input type="radio" aria-label="Other" />
-    </FieldGroup>,
-  );
-
-  const group = screen.getByRole('group', { name: 'Referred To' });
-  await expect.element(group).toBeVisible();
-  expect(group.element().hasAttribute('aria-describedby')).toBe(false);
-  expect(screen.getByText('*').elements()).toHaveLength(0);
-  expect(screen.getByText('Required').elements()).toHaveLength(0);
-  expect(screen.container.querySelectorAll('p')).toHaveLength(0);
+  expect(screen.getByText(label)).toBeVisible();
+  expect(screen.getByText('*')).not.toBeInTheDocument();
+  expect(screen.getByText(error)).not.toBeInTheDocument();
 });

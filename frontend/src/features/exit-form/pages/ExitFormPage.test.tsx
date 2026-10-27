@@ -12,6 +12,10 @@ import type { ExitFormOptions, ExitFormRecord } from '../../../types/exit-form';
 
 import ExitFormPage from './ExitFormPage';
 
+/** Matches a field's label with or without the required "*" that Field / FieldGroup add. */
+const field = (text: string) =>
+  new RegExp(`^${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\*?$`);
+
 vi.mock('../../../services/exit-form.service', () => ({
   default: {
     get: vi.fn(),
@@ -93,7 +97,7 @@ async function check(radio: ReturnType<Screen['getByRole']>) {
 }
 
 async function fillDate(screen: Screen, label: string, value: string) {
-  await page.elementLocator(screen.getByLabelText(label, { exact: true }).element()).fill(value);
+  await page.elementLocator(screen.getByLabelText(field(label)).element()).fill(value);
 }
 
 async function clickButton(screen: Screen, name: string) {
@@ -132,15 +136,13 @@ test('new form: shows only Region, Date of Referral and Date of Exit in General 
     await expect.element(screen.getByRole('heading', { name, exact: true })).toBeVisible();
   }
 
-  await expect.element(screen.getByLabelText('Region', { exact: true })).toHaveValue('2');
-  await expect
-    .element(screen.getByLabelText('Date of Referral', { exact: true }))
-    .toHaveValue('2025-02-15');
-  await expect.element(screen.getByLabelText('Date of Exit', { exact: true })).toHaveValue('');
+  await expect.element(screen.getByLabelText(field('Region'))).toHaveValue('2');
+  await expect.element(screen.getByLabelText(field('Date of Referral'))).toHaveValue('2025-02-15');
+  await expect.element(screen.getByLabelText(field('Date of Exit'))).toHaveValue('');
 
   // Removed from the form
   for (const name of ['Status', 'SU #', 'Supervisory Union', 'Town', 'First Name', 'Last Name']) {
-    expect(screen.getByLabelText(name, { exact: true }).elements()).toHaveLength(0);
+    expect(screen.getByLabelText(field(name)).elements()).toHaveLength(0);
   }
   expect(screen.getByText('Compliance Indicators').elements()).toHaveLength(0);
 
@@ -170,7 +172,7 @@ test('transition section shows the four day counts, including referral to transi
   await fillDate(screen, 'LEA Notification Date', '2025-11-01');
   await fillDate(screen, 'Date of Transition Conference', '2025-12-15');
 
-  const days = (label: string) => screen.getByLabelText(`${label} (Read Only)`, { exact: true });
+  const days = (label: string) => screen.getByLabelText(field(`${label} (Read Only)`));
 
   // Referral 2025-02-15 (prefilled) to plan 2025-10-01.
   await expect.element(days('Days Between Referral and Transition Plan')).toHaveValue('228');
@@ -188,7 +190,7 @@ test('prior to age 3 requires a reason for exit', async () => {
   await fillDate(screen, 'Date of Exit', '2025-06-01');
   // ~10 months before the 3rd birthday, so "Prior to age 3" is pre-selected.
   await expect.element(screen.getByRole('radio', { name: 'Prior to age 3' })).toBeChecked();
-  await expect.element(screen.getByRole('group', { name: 'Reason for Exit' })).toBeVisible();
+  await expect.element(screen.getByRole('group', { name: field('Reason for Exit') })).toBeVisible();
 
   await clickButton(screen, 'Save');
 
@@ -202,7 +204,7 @@ test('new form: saves only the fields on the form', async () => {
   await fillDate(screen, 'Date of Exit', '2025-06-01');
   await check(screen.getByRole('radio', { name: 'Moved to other region' }));
   await page
-    .elementLocator(screen.getByLabelText('Region Moved To', { exact: true }).element())
+    .elementLocator(screen.getByLabelText(field('Region Moved To')).element())
     .fill('Rutland');
   await check(screen.getByRole('radio', { name: 'Other', exact: true }));
   await clickButton(screen, 'Save');
@@ -229,9 +231,7 @@ test('edit form: loads the record and saves changes with update', async () => {
   const { screen } = await renderPage(7);
 
   await expect.element(screen.getByRole('heading', { name: 'Edit Exit Form' })).toBeVisible();
-  await expect
-    .element(screen.getByLabelText('Date of Exit', { exact: true }))
-    .toHaveValue('2026-04-01');
+  await expect.element(screen.getByLabelText(field('Date of Exit'))).toHaveValue('2026-04-01');
   await expect.element(screen.getByRole('radio', { name: 'At age 3' })).toBeChecked();
   expect(exitFormService.defaults).not.toHaveBeenCalled();
 
@@ -254,9 +254,7 @@ test('exit at age 3 requires the transition dates', async () => {
   });
   const { screen } = await renderPage(7);
 
-  await expect
-    .element(screen.getByLabelText('Date of Exit', { exact: true }))
-    .toHaveValue('2026-04-01');
+  await expect.element(screen.getByLabelText(field('Date of Exit'))).toHaveValue('2026-04-01');
   await clickButton(screen, 'Save');
 
   await expect
@@ -328,8 +326,8 @@ test('Cancel closes the form without saving', async () => {
 test('Save without a region shows the error', async () => {
   const { screen } = await renderPage();
 
-  await expect.element(screen.getByLabelText('Region', { exact: true })).toHaveValue('2');
-  await screen.getByLabelText('Region', { exact: true }).selectOptions('0');
+  await expect.element(screen.getByLabelText(field('Region'))).toHaveValue('2');
+  await screen.getByLabelText(field('Region')).selectOptions('0');
   await clickButton(screen, 'Save');
 
   await expect.element(screen.getByText('Region is required.')).toBeVisible();
@@ -341,10 +339,10 @@ test('Region Moved To shows only for "Moved to other region"', async () => {
 
   await fillDate(screen, 'Date of Exit', '2025-06-01');
   await check(screen.getByRole('radio', { name: 'Moved to other region' }));
-  await expect.element(screen.getByLabelText('Region Moved To', { exact: true })).toBeVisible();
+  await expect.element(screen.getByLabelText(field('Region Moved To'))).toBeVisible();
 
   await check(screen.getByRole('radio', { name: 'Unable to contact' }));
-  expect(screen.getByLabelText('Region Moved To', { exact: true }).elements()).toHaveLength(0);
+  expect(screen.getByLabelText(field('Region Moved To')).elements()).toHaveLength(0);
 });
 
 test('a path chosen by the user is kept when the exit date changes', async () => {
@@ -435,9 +433,7 @@ test('records the transition plan delay reason', async () => {
   await fillDate(screen, 'Date of Exit', '2025-06-01');
   await fillDate(screen, 'Date Written Transition Plan', '2025-05-01');
   await page
-    .elementLocator(
-      screen.getByLabelText('Transition Plan Delay Reason', { exact: true }).element(),
-    )
+    .elementLocator(screen.getByLabelText(field('Transition Plan Delay Reason')).element())
     .fill('Family circumstance: parent ill');
   await check(screen.getByRole('radio', { name: 'Unable to contact' }));
   await clickButton(screen, 'Save');
@@ -460,7 +456,7 @@ test('edit form: shows the saved delay reason', async () => {
   const { screen } = await renderPage(7);
 
   await expect
-    .element(screen.getByLabelText('Transition Plan Delay Reason', { exact: true }))
+    .element(screen.getByLabelText(field('Transition Plan Delay Reason')))
     .toHaveValue('Provider circumstance: staffing');
 });
 

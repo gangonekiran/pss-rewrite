@@ -13,9 +13,10 @@ const regions: RegionLookup[] = [
   { ID: 1, RName: 'North' },
   { ID: 2, RName: 'South' },
 ];
+const id = 'abc';
 
 test('renders the placeholder followed by one option per region', async () => {
-  const screen = await render(<RegionSelect id="region" regions={regions} />);
+  const screen = await render(<RegionSelect id={id} regions={regions} />);
 
   const options = screen.getByRole('option');
 
@@ -31,7 +32,7 @@ test('renders the placeholder followed by one option per region', async () => {
 
 test('uses a custom placeholder text and value', async () => {
   const screen = await render(
-    <RegionSelect id="region" regions={regions} placeholder="Choose" placeholderValue="0" />,
+    <RegionSelect id={id} regions={regions} placeholder="Choose" placeholderValue="0" />,
   );
 
   const placeholder = screen.getByRole('option', { name: 'Choose' });
@@ -41,7 +42,7 @@ test('uses a custom placeholder text and value', async () => {
 });
 
 test('renders only the placeholder when there are no regions', async () => {
-  const screen = await render(<RegionSelect id="region" regions={[]} />);
+  const screen = await render(<RegionSelect id={id} regions={[]} />);
 
   expect(screen.getByRole('option').elements()).toHaveLength(1);
 });
@@ -52,7 +53,7 @@ test('works as a controlled select', async () => {
   const onChange = vi.fn((event: React.ChangeEvent<HTMLSelectElement>) => event.target.value);
 
   const screen = await render(
-    <RegionSelect id="region" regions={regions} value="2" onChange={onChange} />,
+    <RegionSelect id={id} regions={regions} value="2" onChange={onChange} />,
   );
 
   const select = screen.getByRole('combobox');
@@ -70,7 +71,7 @@ test('passes select attributes through and passes the ref to the select', async 
 
   const screen = await render(
     <RegionSelect
-      id="region"
+      id={id}
       ref={ref}
       regions={regions}
       name="Region"
@@ -93,7 +94,7 @@ test('works with a callback ref, like react-hook-form register()', async () => {
 
   const screen = await render(
     <RegionSelect
-      id="region"
+      id={id}
       ref={(el) => {
         node = el;
       }}

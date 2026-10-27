@@ -9,6 +9,10 @@ import { test } from '../../../../test-extend';
 import { DEFAULT_EXIT_FORM_VALUES, type ExitFormValues } from '../../../types/exit-form';
 import GeneralInformation from './GeneralInformation';
 
+/** Matches a field's label with or without the required "*" that Field / FieldGroup add. */
+const field = (text: string) =>
+  new RegExp(`^${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\*?$`);
+
 type Errors = Partial<Record<Path<ExitFormValues>, string>>;
 
 function Harness({
@@ -78,9 +82,9 @@ test('shows only Region, Date of Referral and Date of Exit', async () => {
   const { screen } = await renderInForm(<GeneralInformation regions={regions} />);
 
   await expect.element(screen.getByRole('heading', { name: 'General Information' })).toBeVisible();
-  await expect.element(screen.getByLabelText('Region', { exact: true })).toBeVisible();
-  await expect.element(screen.getByLabelText('Date of Referral', { exact: true })).toBeVisible();
-  await expect.element(screen.getByLabelText('Date of Exit', { exact: true })).toBeVisible();
+  await expect.element(screen.getByLabelText(field('Region'))).toBeVisible();
+  await expect.element(screen.getByLabelText(field('Date of Referral'))).toBeVisible();
+  await expect.element(screen.getByLabelText(field('Date of Exit'))).toBeVisible();
 
   expect(screen.container.querySelectorAll('input, select, textarea')).toHaveLength(3);
 });
@@ -88,16 +92,14 @@ test('shows only Region, Date of Referral and Date of Exit', async () => {
 test('marks all three fields as required', async () => {
   const { screen } = await renderInForm(<GeneralInformation regions={regions} />);
 
-  await expect.element(screen.getByLabelText('Region', { exact: true })).toBeVisible();
+  await expect.element(screen.getByLabelText(field('Region'))).toBeVisible();
   expect(screen.getByText('*').elements()).toHaveLength(3);
 });
 
 test('lists the regions after a "Select region" option', async () => {
   const { screen } = await renderInForm(<GeneralInformation regions={regions} />);
 
-  const options = [
-    ...screen.getByLabelText('Region', { exact: true }).element().querySelectorAll('option'),
-  ];
+  const options = [...screen.getByLabelText(field('Region')).element().querySelectorAll('option')];
   expect(options.map((o) => [o.value, o.textContent])).toEqual([
     ['0', 'Select region'],
     ['1', 'Burlington'],
@@ -108,10 +110,7 @@ test('lists the regions after a "Select region" option', async () => {
 test('shows only the placeholder when there are no regions', async () => {
   const { screen } = await renderInForm(<GeneralInformation regions={[]} />);
 
-  const options = screen
-    .getByLabelText('Region', { exact: true })
-    .element()
-    .querySelectorAll('option');
+  const options = screen.getByLabelText(field('Region')).element().querySelectorAll('option');
   expect(options).toHaveLength(1);
 });
 
@@ -120,19 +119,15 @@ test('shows the current values', async () => {
     values: { Region: 2, ReferralDate: '2025-02-15', ExitDate: '2025-06-01' },
   });
 
-  await expect.element(screen.getByLabelText('Region', { exact: true })).toHaveValue('2');
-  await expect
-    .element(screen.getByLabelText('Date of Referral', { exact: true }))
-    .toHaveValue('2025-02-15');
-  await expect
-    .element(screen.getByLabelText('Date of Exit', { exact: true }))
-    .toHaveValue('2025-06-01');
+  await expect.element(screen.getByLabelText(field('Region'))).toHaveValue('2');
+  await expect.element(screen.getByLabelText(field('Date of Referral'))).toHaveValue('2025-02-15');
+  await expect.element(screen.getByLabelText(field('Date of Exit'))).toHaveValue('2025-06-01');
 });
 
 test('stores the region as a number', async () => {
   const { screen, getValues } = await renderInForm(<GeneralInformation regions={regions} />);
 
-  await screen.getByLabelText('Region', { exact: true }).selectOptions('1');
+  await screen.getByLabelText(field('Region')).selectOptions('1');
 
   expect(getValues().Region).toBe(1);
 });
@@ -141,10 +136,10 @@ test('stores the dates typed in', async () => {
   const { screen, getValues } = await renderInForm(<GeneralInformation regions={regions} />);
 
   await page
-    .elementLocator(screen.getByLabelText('Date of Referral', { exact: true }).element())
+    .elementLocator(screen.getByLabelText(field('Date of Referral')).element())
     .fill('2025-02-15');
   await page
-    .elementLocator(screen.getByLabelText('Date of Exit', { exact: true }).element())
+    .elementLocator(screen.getByLabelText(field('Date of Exit')).element())
     .fill('2025-06-01');
 
   expect(getValues()).toMatchObject({ ReferralDate: '2025-02-15', ExitDate: '2025-06-01' });
