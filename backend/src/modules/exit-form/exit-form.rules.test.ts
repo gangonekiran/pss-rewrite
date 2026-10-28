@@ -288,12 +288,10 @@ describe('Exit Form Rules - clearDependentFields', () => {
     expect(p.MovedOtherRegion).toBe('Rutland');
   });
 
-  it('should clear MovedOtherRegion for any other ExitPriorToAge3', () => {
-    for (const code of [0, 1, 3, null]) {
-      const p: ExitFormRecord = { ExitPriorToAge3: code, MovedOtherRegion: 'Rutland' };
-      clearDependentFields(p);
-      expect(p.MovedOtherRegion).toBeNull();
-    }
+  it.each([0, 1, 3, null])('should clear MovedOtherRegion when ExitPriorToAge3 is %s', (code) => {
+    const p: ExitFormRecord = { ExitPriorToAge3: code, MovedOtherRegion: 'Rutland' };
+    clearDependentFields(p);
+    expect(p.MovedOtherRegion).toBeNull();
   });
 
   it('should keep the no-Part-B reasons for "NOT eligible for Part B"', () => {
@@ -302,17 +300,15 @@ describe('Exit Form Rules - clearDependentFields', () => {
     expect(p).toEqual({ ExitAtAge3: 4, EXFNoPartB1: true, EXFNoPartB3: true });
   });
 
-  it('should clear the no-Part-B reasons for any other ExitAtAge3', () => {
-    for (const code of [0, 1, 2, 3, null]) {
-      const p: ExitFormRecord = { ExitAtAge3: code, EXFNoPartB1: true };
-      clearDependentFields(p);
-      expect(p).toEqual({
-        ExitAtAge3: code,
-        EXFNoPartB1: false,
-        EXFNoPartB2: false,
-        EXFNoPartB3: false,
-      });
-    }
+  it.each([0, 1, 2, 3, null])('should clear the no-Part-B reasons when ExitAtAge3 is %s', (code) => {
+    const p: ExitFormRecord = { ExitAtAge3: code, EXFNoPartB1: true };
+    clearDependentFields(p);
+    expect(p).toEqual({
+      ExitAtAge3: code,
+      EXFNoPartB1: false,
+      EXFNoPartB2: false,
+      EXFNoPartB3: false,
+    });
   });
 
   it('should leave the fields alone when the answers are not part of the save', () => {

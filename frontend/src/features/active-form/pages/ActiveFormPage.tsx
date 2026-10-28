@@ -8,7 +8,7 @@ import axios from 'axios';
 import PageContainer from '../../../layouts/PageContainer';
 import activeFormService from '../../../services/active-form.service';
 
-import ClientInformation from '../components/ClientInformation';
+import { ClientInformation } from '../../common-info';
 import GeneralInformation from '../components/GeneralInformation';
 import InitialEvaluation from '../components/InitialEvaluation';
 import OnePlan from '../components/OnePlan';
@@ -481,7 +481,7 @@ export default function ActiveFormPage({ childId, onClose, onSaved, formId }: Ac
         <div className="flex-1 px-5 py-5">
           <div className="space-y-6">
             {/* 1. Client Information */}
-            <ClientInformation client={client} />
+            <ClientInformation client={client} county={null} status={null} />
 
             {/* 2. General Information */}
             <GeneralInformation regions={regions} />

@@ -1,7 +1,3 @@
-/**
- * Pure Exit Form rules: payload normalisation and validation.
- * No database access here.
- */
 import {
   COLUMNS,
   EXIT_AT_AGE_3,

@@ -210,9 +210,8 @@ describe('Exit Form Service - create', () => {
     expect(inserted()).not.toHaveProperty('CAPTA');
   });
 
-  it('should require a region', async () => {
-    await expectError(create('123', { ...validCreate, Region: undefined }), 'Region must be selected', 400);
-    await expectError(create('123', { ...validCreate, Region: '' }), 'Region must be selected', 400);
+  it.each([undefined, ''])('should require a region (Region: %j)', async (Region) => {
+    await expectError(create('123', { ...validCreate, Region }), 'Region must be selected', 400);
     expect(repository.insert).not.toHaveBeenCalled();
   });
 
@@ -305,15 +304,17 @@ describe('Exit Form Service - update', () => {
     });
   });
 
-  it('should validate the merged record', async () => {
-    // Existing referral is 2025-02-15; moving the exit before it is rejected.
+  it('should reject an exit date before the saved referral date', async () => {
+    // Existing referral is 2025-02-15.
     await expectError(
       update('123', '10', { ExitDate: '2025-01-01' }),
       'Date of Exit cannot be before Date of Referral',
       400,
     );
+    expect(repository.update).not.toHaveBeenCalled();
+  });
 
-    // Existing form exits at age 3; adding a prior-to-age-3 reason as well is rejected.
+  it('should reject a prior-to-age-3 reason on a form that already exits at age 3', async () => {
     await expectError(
       update('123', '10', { ExitPriorToAge3: 2, ExitAtAge3: 1 }),
       'Choose either an exit reason prior to age 3 or an exit at age 3 outcome, not both',
@@ -333,14 +334,21 @@ describe('Exit Form Service - update', () => {
     );
   });
 
-  it('should not allow clearing the region or the exit date', async () => {
+  it('should not allow clearing the region', async () => {
     await expectError(update('123', '10', { Region: '' }), 'Region must be selected', 400);
+    expect(repository.update).not.toHaveBeenCalled();
+  });
+
+  it('should not allow clearing the exit date', async () => {
     await expectError(update('123', '10', { ExitDate: '' }), 'Date of Exit is required', 400);
     expect(repository.update).not.toHaveBeenCalled();
   });
 
-  it('should reject invalid IDs', async () => {
+  it('should reject an invalid ChildID', async () => {
     await expectError(update('abc', '10', {}), 'ChildID must be a positive integer', 400);
+  });
+
+  it('should reject an invalid form ID', async () => {
     await expectError(update('123', '0', {}), 'ID must be a positive integer', 400);
   });
 

@@ -1,6 +1,5 @@
 export const EXIT_FORM_TABLE = "dbo.stblExitForm";
 export const REFERRAL_FORM_TABLE = "dbo.stblReferralForm";
-export const ACTIVE_FORM_TABLE = "dbo.stblActiveForm";
 
 /**
  * Legacy value stored in FormType. slstFormNames, sqryFormListComplete
