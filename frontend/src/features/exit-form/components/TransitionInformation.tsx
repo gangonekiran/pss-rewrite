@@ -3,7 +3,8 @@ import { useFormContext, useWatch } from 'react-hook-form';
 
 import { Field, inputClass } from '../../common-info';
 import type { ExitFormValues } from '../../../types/exit-form';
-import { calculateExit, formatDate } from '../utils/exit-form.calculations';
+import { formatDate } from '../../../utils/date';
+import { calculateExit } from '../utils/exit-form.calculations';
 import { Section } from './ExitFormControls';
 
 interface Props {

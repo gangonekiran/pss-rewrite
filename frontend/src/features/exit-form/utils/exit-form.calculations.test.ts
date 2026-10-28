@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  calculateExit,
-  formatDate,
-  suggestExitPath,
-  thirdBirthday,
-  toDateInput,
-} from './exit-form.calculations';
+import { calculateExit, suggestExitPath, thirdBirthday } from './exit-form.calculations';
 
 const noDates = {
   ReferralDate: '',
@@ -15,20 +9,6 @@ const noDates = {
   TransitionMeeting: '',
   TransitionPlanCompleted: '',
 };
-
-describe('toDateInput', () => {
-  it('reads YYYY-MM-DD strings and ISO timestamps', () => {
-    expect(toDateInput('2025-06-01')).toBe('2025-06-01');
-    expect(toDateInput('2025-06-01T00:00:00.000Z')).toBe('2025-06-01');
-  });
-
-  it('returns an empty string for blank or unreadable values', () => {
-    expect(toDateInput(null)).toBe('');
-    expect(toDateInput(undefined)).toBe('');
-    expect(toDateInput('')).toBe('');
-    expect(toDateInput('06/01/2025')).toBe('');
-  });
-});
 
 describe('thirdBirthday', () => {
   it('adds three years to the DOB', () => {
@@ -144,16 +124,3 @@ describe('suggestExitPath - edge cases', () => {
   });
 });
 
-describe('formatDate - edge cases', () => {
-  it('formats plain dates and ISO timestamps', () => {
-    expect(formatDate('2025-06-01')).toBe('06/01/2025');
-    expect(formatDate('2026-04-01T00:00:00.000Z')).toBe('04/01/2026');
-  });
-
-  it('shows a dash for blank or unreadable values', () => {
-    expect(formatDate('')).toBe('—');
-    expect(formatDate(null)).toBe('—');
-    expect(formatDate(undefined)).toBe('—');
-    expect(formatDate('not a date')).toBe('—');
-  });
-});

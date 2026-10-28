@@ -4,7 +4,7 @@ import {
   type ExitFormRecord,
   type ExitFormValues,
 } from '../../../types/exit-form';
-import { toDateInput } from './exit-form.calculations';
+import { toDateInput } from '../../../utils/date';
 
 /** Legacy rows store 0 in the unused exit-path column; treat 0 / null as "not chosen". */
 function codeString(value: unknown): string {

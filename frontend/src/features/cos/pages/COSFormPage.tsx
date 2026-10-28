@@ -2,6 +2,7 @@
 import { useEffect, useState, useId } from 'react';
 import toast from 'react-hot-toast';
 import inputFormService from '../../../services/input-form.service';
+import { toDateInput } from '../../../utils/date';
 import { Field } from '../../common-info/components/FormField';
 import type { RegionLookup } from '../../../types/common';
 import { RegionSelect } from '../../common-info';
@@ -59,18 +60,6 @@ function getToday(): string {
     String(today.getMonth() + 1).padStart(2, '0'),
     String(today.getDate()).padStart(2, '0'),
   ].join('-');
-}
-
-function toDateInput(value: unknown): string {
-  if (!value) {
-    return '';
-  }
-
-  const stringValue = String(value).trim();
-
-  const match = stringValue.match(/^(\d{4}-\d{2}-\d{2})/);
-
-  return match?.[1] ?? '';
 }
 
 function getString(value: unknown, fallback = ''): string {

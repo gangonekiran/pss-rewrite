@@ -7,6 +7,7 @@ import axios from 'axios';
 
 import PageContainer from '../../../layouts/PageContainer';
 import activeFormService from '../../../services/active-form.service';
+import { toDateInput } from '../../../utils/date';
 
 import { ClientInformation } from '../../common-info';
 import GeneralInformation from '../components/GeneralInformation';
@@ -33,15 +34,6 @@ interface ActiveFormPageProps {
   onClose: () => void;
   onSaved?: () => Promise<void>;
   formId?: number;
-}
-
-function toDateInput(value?: string | null): string {
-  if (!value) return '';
-
-  const stringValue = String(value);
-  const match = stringValue.match(/^(\d{4}-\d{2}-\d{2})/);
-
-  return match?.[1] ?? '';
 }
 
 function toValues(form: ActiveFormRecord): ActiveFormValues {

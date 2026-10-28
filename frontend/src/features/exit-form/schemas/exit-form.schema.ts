@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import type { ExitFormValues } from '../../../types/exit-form';
-import { toDateInput } from '../utils/exit-form.calculations';
+import { toDateInput } from '../../../utils/date';
 
 const date = z
   .string()

@@ -1,3 +1,5 @@
+import { formatDate } from '../../../utils/date';
+
 export interface ClientInformationProps {
   client: {
     LastName: string | null;
@@ -11,12 +13,6 @@ export interface ClientInformationProps {
   county?: string | null;
   /** Shown only when passed; forms that do not record Status leave it out. */
   status?: string | null;
-}
-
-function formatDate(value: string | null | undefined) {
-  if (!value) return '—';
-  const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
-  return match ? `${match[2]}/${match[3]}/${match[1]}` : value;
 }
 
 function Item({ label, value }: { label: string; value: unknown }) {

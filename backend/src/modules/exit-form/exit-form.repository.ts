@@ -1,7 +1,7 @@
 import type { Request } from "mssql";
 import { getPool, sql } from "../../config/database.js";
-import { ACTIVE_FORM_TABLE } from "../active-form/active-form.config.js";
 import {
+  ACTIVE_FORM_TABLE,
   COLUMNS,
   EXIT_FORM_TABLE,
   EXIT_FORM_TYPE,

@@ -1,5 +1,6 @@
 import { useFormContext, useWatch } from 'react-hook-form';
 import dayjs from 'dayjs';
+import { daysBetween } from '../../../utils/date';
 import { Field } from './FormField';
 import DelayReasons from './DelayReasons';
 import type {
@@ -30,10 +31,7 @@ export default function OnePlan({
     name: 'onePlanDate',
   });
 
-  const days =
-    referralDate && onePlanDate
-      ? dayjs(onePlanDate).diff(dayjs(referralDate), 'day')
-      : '';
+  const days = daysBetween(referralDate, onePlanDate) ?? '';
 
   /*
    * Date of One Plan cannot be before:
