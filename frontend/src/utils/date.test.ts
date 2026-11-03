@@ -38,6 +38,13 @@ describe('daysBetween', () => {
   ])('returns null when a date is blank (%j, %j)', (from, to) => {
     expect(daysBetween(from, to)).toBeNull();
   });
+
+  it.each([
+    ['01/01/2026', '2026-01-02'],
+    ['2026-01-01', 'not a date'],
+  ])('returns null when a date is unreadable (%j, %j)', (from, to) => {
+    expect(daysBetween(from, to)).toBeNull();
+  });
 });
 
 describe('addToDate', () => {
@@ -55,6 +62,10 @@ describe('addToDate', () => {
 
   it('subtracts days across a month end', () => {
     expect(addToDate('2026-04-10', { days: -31 })).toBe('2026-03-10');
+  });
+
+  it('adds years, months and days together', () => {
+    expect(addToDate('2023-01-15', { years: 1, months: 2, days: 3 })).toBe('2024-03-18');
   });
 });
 
