@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Insurance Form Mock</title>
+<!-- Styles copy the Tailwind classes used by the Exit Form screen (frontend/src/features/exit-form). -->
+<style>
+  :root {
+    --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb; --gray-300: #d1d5db;
+    --gray-500: #6b7280; --gray-700: #374151; --gray-800: #1f2937; --gray-900: #111827;
+    --blue-50: #eff6ff; --green-50: #f0fdf4; --green-100: #dcfce7; --green-600: #16a34a;
+    --green-700: #15803d; --red-600: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #fff; color: var(--gray-900); font-family: system-ui, "Segoe UI", Roboto, sans-serif; font-size: 14px; line-height: 1.43; -webkit-font-smoothing: antialiased; }
+  .topbar { background: #fff; border-bottom: 1px solid var(--gray-200); padding: 12px 20px; }
+  .topbar h1 { margin: 0; font-size: 18px; font-weight: 600; color: var(--gray-800); }
+  .content { padding: 20px; display: flex; flex-direction: column; gap: 24px; }
+  .card { background: #fff; border: 1px solid var(--gray-200); border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+  .section { padding: 20px; }
+  .section > .head { margin-bottom: 20px; }
+  h2 { margin: 0; font-size: 16px; font-weight: 600; color: var(--gray-900); }
+  .desc { margin: 2px 0 0; font-size: 14px; color: var(--gray-500); }
+  .subsection { margin-top: 24px; border-top: 1px solid var(--gray-100); padding-top: 20px; }
+  h3 { margin: 0 0 16px; font-size: 14px; font-weight: 600; color: var(--gray-800); }
+
+  /* Client Information (common-info ClientInformation) */
+  .client-head { background: var(--blue-50); border-radius: 8px 8px 0 0; padding: 8px 16px; display: flex; align-items: center; gap: 8px; }
+  .client-head small { font-size: 12px; font-weight: 500; color: var(--gray-500); }
+  .client-body { padding: 16px; display: grid; grid-template-columns: repeat(8, 1fr); gap: 16px 24px; }
+  .item .k { font-size: 12px; font-weight: 500; color: var(--gray-500); }
+  .item .v { margin-top: 4px; min-height: 20px; font-size: 14px; font-weight: 600; color: var(--gray-900); }
+
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .span2 { grid-column: span 2; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label, .label { font-size: 14px; font-weight: 500; color: var(--gray-700); }
+  .req { margin-left: 4px; color: var(--red-600); }
+  .hint { font-size: 12px; color: var(--gray-500); }
+  input[type=text], input[type=date] { height: 40px; width: 100%; border: 1px solid var(--gray-300); border-radius: 6px; background: #fff; padding: 0 12px; font: inherit; font-size: 14px; color: var(--gray-900); outline: none; }
+  input:focus { border-color: var(--green-600); box-shadow: 0 0 0 2px var(--green-100); }
+  input:disabled { background: var(--gray-100); cursor: not-allowed; }
+
+  /* Option cards (ExitDetails optionClass) */
+  .options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .option { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; border: 1px solid var(--gray-200); border-radius: 6px; padding: 8px 12px; font-size: 14px; color: var(--gray-800); }
+  .option:hover { background: var(--gray-50); }
+  .option:has(:checked) { border-color: var(--green-600); background: var(--green-50); }
+  .option input { margin: 2px 0 0; width: 16px; height: 16px; flex: none; accent-color: var(--green-600); }
+  .option:has(:disabled) { opacity: .5; cursor: not-allowed; }
+  .options-label { margin-bottom: 8px; }
+  .gap-top { margin-top: 20px; }
+
+  .footer { background: #fff; border-top: 1px solid var(--gray-200); padding: 16px 20px; display: flex; justify-content: flex-end; gap: 12px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 6px; padding: 8px 16px; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; }
+  .btn-cancel { background: #fff; border: 1px solid var(--gray-300); color: var(--gray-700); }
+  .btn-save { background: var(--green-700); border: 1px solid var(--green-700); color: #fff; }
+  .btn svg { width: 16px; height: 16px; }
+</style>
+</head>
+<body>
+<div class="topbar"><h1>New Insurance Form</h1></div>
+
+<div class="content">
+  <!-- 1. Client Information (read only) -->
+  <section class="card">
+    <div class="client-head"><h2>Client Information</h2><small>(Read Only)</small></div>
+    <div class="client-body">
+      <div class="item"><div class="k">Child Last Name</div><div class="v">Austin</div></div>
+      <div class="item"><div class="k">Child First Name</div><div class="v">Jane</div></div>
+      <div class="item"><div class="k">SSN</div><div class="v">123-45-6789</div></div>
+      <div class="item"><div class="k">DOB</div><div class="v">01/11/1996</div></div>
+    </div>
+  </section>
+
+  <!-- 2. Insurance Information -->
+  <section class="card section">
+    <div class="head">
+      <h2>Insurance Information</h2>
+      <p class="desc">Primary insurance details from the family's insurance card.</p>
+    </div>
+    <div class="grid3">
+      <div class="field"><label>Date Completed<span class="req">*</span></label><input type="date"></div>
+      <div class="field span2">
+        <label>Insurance Company Name<span class="req" id="coReq" hidden>*</span></label>
+        <input type="text">
+        <span class="hint">Required when private insurance billing is allowed.</span>
+      </div>
+      <div class="field"><label>Policy #</label><input type="text"></div>
+      <div class="field"><label>Group # (Contract #)</label><input type="text"></div>
+      <div class="field"><label>Group/Employer Name</label><input type="text"></div>
+      <div class="field"><label>Effective Date of Policy</label><input type="date"></div>
+      <div class="field"><label>End Date of Policy</label><input type="date"></div>
+      <div class="field"><label>Individual Policy Holder</label><input type="text"></div>
+    </div>
+  </section>
+
+  <!-- 3. Consent to Bill Insurance -->
+  <section class="card section">
+    <div class="head">
+      <h2>Consent to Bill Insurance</h2>
+      <p class="desc">I certify that the information provided on this form is correct and agree that I will notify DCF/CDD at the address above of any changes in this information.</p>
+    </div>
+
+    <h3>Permission to Bill</h3>
+    <div class="label options-label">I give permission for Children’s Integrated Services – Part C Early Intervention to bill:</div>
+    <div class="options">
+      <label class="option"><input type="checkbox" id="private"><span>My private insurance for services provided to my child for Part C Early Intervention. I understand that information about my child’s early intervention services may be shared in that process.</span></label>
+      <label class="option"><input type="checkbox" id="medicaid"><span>For services billed to Medicaid, I understand that information about my child’s early intervention services may be shared in that process.</span></label>
+    </div>
+    <div class="grid3 gap-top">
+      <div class="field">
+        <label>Parent or Guardian Signature Date<span class="req" id="consentReq" hidden>*</span></label>
+        <input type="date" id="consentDate" disabled>
+        <span class="hint">Required when private or Medicaid billing is allowed.</span>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3>Decline</h3>
+      <div class="options">
+        <label class="option"><input type="checkbox" id="decline"><span>I decline permission for Children’s Integrated Services – Part C Early Intervention to bill my private insurance for services provided to my child for Part C Early Intervention.</span></label>
+      </div>
+
+      <div class="label options-label gap-top">I choose to deny permission for my private insurance to be billed because:<span class="req" id="reasonReq" hidden>*</span></div>
+      <div class="options">
+        <label class="option"><input type="radio" name="reason" disabled><span>My available life-time cap would be affected</span></label>
+        <label class="option"><input type="radio" name="reason" disabled><span>My other health insurance benefits would decrease</span></label>
+        <label class="option"><input type="radio" name="reason" disabled><span>My health insurance premiums would increase</span></label>
+        <label class="option"><input type="radio" name="reason" disabled><span>I risk loss of eligibility for me/my child for home and community waivers</span></label>
+      </div>
+
+      <div class="grid3 gap-top">
+        <div class="field">
+          <label>Parent or Guardian Signature Date<span class="req" id="declineReq" hidden>*</span></label>
+          <input type="date" id="declineDate" disabled>
+          <span class="hint">Required when billing is declined.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="footer">
+  <button class="btn btn-cancel" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    Cancel
+  </button>
+  <button class="btn btn-save" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg>
+    Save
+  </button>
+</div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const radios = [...document.querySelectorAll('input[name=reason]')];
+
+  function sync() {
+    const consent = $('private').checked || $('medicaid').checked;
+    const decline = $('decline').checked;
+    $('coReq').hidden = !$('private').checked;
+    $('consentReq').hidden = !consent;
+    $('consentDate').disabled = !consent;
+    if (!consent) $('consentDate').value = '';
+    $('reasonReq').hidden = !decline;
+    $('declineReq').hidden = !decline;
+    $('declineDate').disabled = !decline;
+    if (!decline) $('declineDate').value = '';
+    radios.forEach((r) => { r.disabled = !decline; if (!decline) r.checked = false; });
+  }
+
+  // Allowing and declining private billing can't both be ticked.
+  $('private').addEventListener('change', () => { if ($('private').checked) $('decline').checked = false; sync(); });
+  $('decline').addEventListener('change', () => { if ($('decline').checked) $('private').checked = false; sync(); });
+  $('medicaid').addEventListener('change', sync);
+
+  sync();
+</script>
+</body>
+</html>

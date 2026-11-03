@@ -52,13 +52,24 @@ export default function OnePlan({ reasons, dob }: OnePlanProps) {
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         {/* Date of One Plan */}
         <Field id={dateOnePlanId} label="Date of One Plan" error={errors.onePlanDate?.message}>
-          <input type="date" {...register('onePlanDate')} min={minDate} className={inputClass} />
+          <input
+            type="date"
+            id={dateOnePlanId}
+            {...register('onePlanDate')}
+            min={minDate}
+            className={inputClass}
+          />
         </Field>
 
         {/* Automatic Day Calculator */}
         <Field id={daysBetweenId} label="Days Between Referral and One Plan (Read Only)">
           <div className="flex items-center gap-2">
-            <input value={days} readOnly className={`${inputClass} bg-gray-100`} />
+            <input
+              id={daysBetweenId}
+              value={days}
+              readOnly
+              className={`${inputClass} bg-gray-100`}
+            />
             <span className="text-sm text-gray-600">days</span>
           </div>
         </Field>
