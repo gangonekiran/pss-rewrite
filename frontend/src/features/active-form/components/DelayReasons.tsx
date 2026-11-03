@@ -1,10 +1,8 @@
+import { useId } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { Field } from './FormField';
-import type {
-  ActiveFormValues,
-  DelayReasonsResponse,
-} from '../../../types/active-form';
-import { inputClass } from './formStyles';
+import { Field } from '../../common-info/components/FormField';
+import type { ActiveFormValues, DelayReasonsResponse } from '../../../types/active-form';
+import { inputClass } from '../../common-info'; 
 
 interface Props {
   reasons: DelayReasonsResponse;
@@ -12,24 +10,27 @@ interface Props {
 }
 
 export default function DelayReasons({ reasons, prefix }: Props) {
+  const delayId = useId();
+  const otherId = useId();
+
   const { register, watch } = useFormContext<ActiveFormValues>();
 
   const isInitial = prefix === 'initial';
 
-  const reasonField: 'DelayReason' | 'MeetingDelayReason' =
-    isInitial ? 'DelayReason' : 'MeetingDelayReason';
+  const reasonField: 'DelayReason' | 'MeetingDelayReason' = isInitial
+    ? 'DelayReason'
+    : 'MeetingDelayReason';
 
-  const detailsField: 'DelayDetails' | 'MeetingDelayDetails' =
-    isInitial ? 'DelayDetails' : 'MeetingDelayDetails';
+  const detailsField: 'DelayDetails' | 'MeetingDelayDetails' = isInitial
+    ? 'DelayDetails'
+    : 'MeetingDelayDetails';
 
   const selectedReason = watch(reasonField) || '';
 
   /*
    * Family / Child circumstances
    */
-  const familyReasons = reasons.family
-    .map((item) => item.Reason)
-    .filter(Boolean);
+  const familyReasons = reasons.family.map((item) => item.Reason).filter(Boolean);
 
   /*
    * Auto Eligible is required for Initial Evaluation only.
@@ -41,9 +42,7 @@ export default function DelayReasons({ reasons, prefix }: Props) {
   /*
    * Provider / non-family circumstances
    */
-  const providerReasons = reasons.provider
-    .map((item) => item.Reason)
-    .filter(Boolean);
+  const providerReasons = reasons.provider.map((item) => item.Reason).filter(Boolean);
 
   const selectedFamilyReason = selectedReason.startsWith('family::')
     ? selectedReason.replace(/^family::/, '')
@@ -54,26 +53,17 @@ export default function DelayReasons({ reasons, prefix }: Props) {
     : '';
 
   const selectedOther =
-    selectedFamilyReason === 'Other reasons' ||
-    selectedProviderReason === 'Other reasons';
+    selectedFamilyReason === 'Other reasons' || selectedProviderReason === 'Other reasons';
 
   return (
     <div className="mt-6">
-      <Field label="Reason for Delay">
-        <select
-          {...register(reasonField)}
-          className={inputClass}
-        >
-          <option value="">
-            Select one reason (optional)
-          </option>
+      <Field id={delayId} label="Reason for Delay">
+        <select {...register(reasonField)} className={inputClass} id={delayId}>
+          <option value="">Select one reason (optional)</option>
 
           <optgroup label="1. Due to family and/or child circumstances">
             {familyReasons.map((reason) => (
-              <option
-                key={`family-${reason}`}
-                value={`family::${reason}`}
-              >
+              <option key={`family-${reason}`} value={`family::${reason}`}>
                 {reason}
               </option>
             ))}
@@ -81,10 +71,7 @@ export default function DelayReasons({ reasons, prefix }: Props) {
 
           <optgroup label="2. NOT due to family and/or child circumstances (non-compliant)">
             {providerReasons.map((reason) => (
-              <option
-                key={`provider-${reason}`}
-                value={`provider::${reason}`}
-              >
+              <option key={`provider-${reason}`} value={`provider::${reason}`}>
                 {reason}
               </option>
             ))}
@@ -93,21 +80,18 @@ export default function DelayReasons({ reasons, prefix }: Props) {
       </Field>
 
       <div className="mt-4">
-        <Field label="Other reasons - details">
+        <Field id={otherId} label="Other reasons - details">
           <textarea
+            id={otherId}
             {...register(detailsField)}
             rows={3}
             className={inputClass}
             placeholder={
-              selectedOther
-                ? 'Enter details...'
-                : 'Select Other reasons to enter details'
+              selectedOther ? 'Enter details...' : 'Select Other reasons to enter details'
             }
           />
 
-          <p className="mt-1 text-xs text-gray-500">
-            No character limit.
-          </p>
+          <p className="mt-1 text-xs text-gray-500">No character limit.</p>
         </Field>
       </div>
     </div>

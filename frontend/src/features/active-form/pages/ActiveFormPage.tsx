@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,7 +15,6 @@ import GeneralInformation from '../components/GeneralInformation';
 import InitialEvaluation from '../components/InitialEvaluation';
 import OnePlan from '../components/OnePlan';
 import Eligibility from '../components/Eligibility';
-
 import { activeFormSchema } from '../schemas/active-form.schema';
 
 import {
@@ -24,10 +24,8 @@ import {
   type ActiveFormClient,
   type DelayReasonsResponse,
 } from '../../../types/active-form';
-
-import type { RegionLookup } from '../../../types/common';
-
 import commonInfoService from '../../../services/common-info.service';
+import type { RegionLookup } from '../../../types';
 
 interface ActiveFormPageProps {
   childId: number;
@@ -83,7 +81,6 @@ function toValues(form: ActiveFormRecord): ActiveFormValues {
     DCBlind: Boolean(form.DCBlind),
     DCDeaf: Boolean(form.DCDeaf),
     DCDown: Boolean(form.DCDown),
-
     DCCerebral: Boolean(form.DCCerebral),
     DCCraniofacial: Boolean(form.DCCraniofacial),
     DCFragile: Boolean(form.DCFragile),
@@ -473,7 +470,7 @@ export default function ActiveFormPage({ childId, onClose, onSaved, formId }: Ac
         <div className="flex-1 px-5 py-5">
           <div className="space-y-6">
             {/* 1. Client Information */}
-            <ClientInformation client={client} county={null} status={null} />
+            <ClientInformation client={client} county={null} status={null}/>
 
             {/* 2. General Information */}
             <GeneralInformation regions={regions} />

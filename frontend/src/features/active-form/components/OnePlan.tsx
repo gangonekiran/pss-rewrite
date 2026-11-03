@@ -1,23 +1,18 @@
+import { useId } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import dayjs from 'dayjs';
 import { daysBetween } from '../../../utils/date';
-import { Field } from './FormField';
+import { Field } from '../../common-info/components/FormField';
 import DelayReasons from './DelayReasons';
-import type {
-  ActiveFormValues,
-  DelayReasonsResponse,
-} from '../../../types/active-form';
-import { inputClass } from './formStyles';
+import type { ActiveFormValues, DelayReasonsResponse } from '../../../types/active-form';
+import { inputClass } from '../../common-info';
 
 interface OnePlanProps {
   reasons: DelayReasonsResponse;
   dob: string | null;
 }
 
-export default function OnePlan({
-  reasons,
-  dob,
-}: OnePlanProps) {
+export default function OnePlan({ reasons, dob }: OnePlanProps) {
   const {
     register,
     formState: { errors },
@@ -45,48 +40,32 @@ export default function OnePlan({
         : dob
       : referralDate || dob || undefined;
 
+  const dateOnePlanId = useId();
+  const daysBetweenId = useId();
+
   return (
     <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
       <div className="mb-5">
-        <h2 className="text-base font-semibold text-gray-900">
-          One Plan
-        </h2>
+        <h2 className="text-base font-semibold text-gray-900">One Plan</h2>
       </div>
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         {/* Date of One Plan */}
-        <Field
-          label="Date of One Plan"
-          error={errors.onePlanDate?.message}
-        >
-          <input
-            type="date"
-            {...register('onePlanDate')}
-            min={minDate}
-            className={inputClass}
-          />
+        <Field id={dateOnePlanId} label="Date of One Plan" error={errors.onePlanDate?.message}>
+          <input type="date" {...register('onePlanDate')} min={minDate} className={inputClass} />
         </Field>
 
         {/* Automatic Day Calculator */}
-        <Field label="Days Between Referral and One Plan (Read Only)">
+        <Field id={daysBetweenId} label="Days Between Referral and One Plan (Read Only)">
           <div className="flex items-center gap-2">
-            <input
-              value={days}
-              readOnly
-              className={`${inputClass} bg-gray-100`}
-            />
-            <span className="text-sm text-gray-600">
-              days
-            </span>
+            <input value={days} readOnly className={`${inputClass} bg-gray-100`} />
+            <span className="text-sm text-gray-600">days</span>
           </div>
         </Field>
       </div>
 
       {/* One Plan Delay Reason */}
-      <DelayReasons
-        reasons={reasons}
-        prefix="onePlan"
-      />
+      <DelayReasons reasons={reasons} prefix="onePlan" />
     </section>
   );
 }

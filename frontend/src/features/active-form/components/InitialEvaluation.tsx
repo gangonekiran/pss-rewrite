@@ -1,23 +1,21 @@
+import { useId } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import dayjs from 'dayjs';
 import { daysBetween } from '../../../utils/date';
-import { Field } from './FormField';
+import { Field } from '../../common-info/components/FormField';
 import DelayReasons from './DelayReasons';
-import type {
-  ActiveFormValues,
-  DelayReasonsResponse,
-} from '../../../types/active-form';
-import { inputClass } from './formStyles';
+import type { ActiveFormValues, DelayReasonsResponse } from '../../../types/active-form';
+import { inputClass } from '../../common-info'; 
 
 interface InitialEvaluationProps {
   reasons: DelayReasonsResponse;
   dob: string | null;
 }
 
-export default function InitialEvaluation({
-  reasons,
-  dob,
-}: InitialEvaluationProps) {
+export default function InitialEvaluation({ reasons, dob }: InitialEvaluationProps) {
+  const evalId = useId();
+  const referralDaysId = useId();
+
   const {
     register,
     formState: { errors },
@@ -48,18 +46,18 @@ export default function InitialEvaluation({
   return (
     <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
       <div className="mb-5">
-        <h2 className="text-base font-semibold text-gray-900">
-          Initial Evaluation / Assessment
-        </h2>
+        <h2 className="text-base font-semibold text-gray-900">Initial Evaluation / Assessment</h2>
       </div>
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         {/* Date of Initial Evaluation / Assessment */}
         <Field
+          id={evalId}
           label="Date of Initial Evaluation / Assessment"
           error={errors.InitialEvalDate?.message}
         >
           <input
+            id={evalId}
             type="date"
             {...register('InitialEvalDate')}
             min={minDate}
@@ -68,9 +66,10 @@ export default function InitialEvaluation({
         </Field>
 
         {/* Automatic Day Calculator */}
-        <Field label="Days Between Referral and Initial Evaluation (Read Only)">
+        <Field id={referralDaysId} label="Days Between Referral and Initial Evaluation (Read Only)">
           <div className="flex items-center gap-2">
             <input
+              id={referralDaysId}
               value={days}
               readOnly
               className={`${inputClass} bg-gray-100`}
@@ -81,10 +80,7 @@ export default function InitialEvaluation({
       </div>
 
       {/* Initial Evaluation Delay Reason */}
-      <DelayReasons
-        reasons={reasons}
-        prefix="initial"
-      />
+      <DelayReasons reasons={reasons} prefix="initial" />
     </section>
   );
 }

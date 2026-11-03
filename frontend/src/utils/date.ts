@@ -17,10 +17,11 @@ function utc(date: string) {
   return new Date(`${date}T00:00:00Z`);
 }
 
-/** Whole days from `from` to `to` (negative when `to` is earlier), null when either is blank. */
+/** Whole days from `from` to `to` (negative when `to` is earlier), null when either is blank or unreadable. */
 export function daysBetween(from: string, to: string): number | null {
   if (!from || !to) return null;
-  return Math.round((utc(to).getTime() - utc(from).getTime()) / DAY_MS);
+  const days = Math.round((utc(to).getTime() - utc(from).getTime()) / DAY_MS);
+  return Number.isNaN(days) ? null : days;
 }
 
 /** Adds years, months and days to a YYYY-MM-DD date. */

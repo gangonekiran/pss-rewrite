@@ -1,10 +1,9 @@
 import { useId } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { Field } from './FormField';
+import { Field } from '../../common-info/components/FormField';
 import type { ActiveFormValues } from '../../../types/active-form';
-import { inputClass } from './formStyles';
+import { inputClass, RegionSelect } from '../../common-info';
 import type { RegionLookup } from '../../../types';
-import { RegionSelect } from '../../common-info';
 
 interface Props {
   regions: RegionLookup[];
@@ -16,6 +15,8 @@ export default function GeneralInformation({ regions }: Props) {
     formState: { errors },
   } = useFormContext<ActiveFormValues>();
   const regionId = useId();
+  const referralId = useId();
+  const statusId = useId();
 
   return (
     <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
@@ -26,7 +27,7 @@ export default function GeneralInformation({ regions }: Props) {
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
         {/* Region */}
-        <Field label="Region" required error={errors.Region?.message}>
+        <Field id={regionId} label="Region" required error={errors.Region?.message}>
           <RegionSelect
             id={regionId}
             {...register('Region', {
@@ -41,8 +42,14 @@ export default function GeneralInformation({ regions }: Props) {
         </Field>
 
         {/* Date of Referral */}
-        <Field label="Date of Referral" required error={errors.ReferralDate?.message}>
+        <Field
+          id={referralId}
+          label="Date of Referral"
+          required
+          error={errors.ReferralDate?.message}
+        >
           <input
+            id={referralId}
             type="date"
             {...register('ReferralDate', {
               required: 'Date of Referral is required',
@@ -52,8 +59,9 @@ export default function GeneralInformation({ regions }: Props) {
         </Field>
 
         {/* Status */}
-        <Field label="Status" required error={errors.status?.message}>
+        <Field id={statusId} label="Status" required error={errors.status?.message}>
           <select
+            id={statusId}
             {...register('status', {
               required: 'Status is required',
             })}

@@ -1,0 +1,446 @@
+openapi: 3.0.3
+
+info:
+  title: PSS Rewrite – Exit Form API
+  version: 1.0.0
+  description: |
+    OpenAPI contract entries for the **Exit Form** module (`backend/src/modules/exit-form`),
+    mounted at `/api/exit-forms`. Writes to `dbo.stblExitForm`.
+
+    Describes the API **as implemented** at commit `a7916f6` (2026-11-02). Known gaps are
+    flagged with `x-known-issues` and refer to `docs/exit-form/03-business-rules.md` (EF-GAP-xx).
+
+    - Bodies and responses use the **PascalCase database column names**.
+    - Only the 38 whitelisted columns are written; other keys, `ID`, `ChildID` and `FormType`
+      are ignored silently. `FormType` is always saved as `Exit`.
+    - `FormDate` is set to `ExitDate` on create when not sent, and follows `ExitDate` on update
+      while the two were equal.
+    - Sending a real code for one exit path stores **0** in the other path's column.
+    - Every error returns HTTP **500** `{ "success": false, "message": "..." }`, including the
+      400/404 conditions listed per operation (EF-GAP-08).
+  contact:
+    name: PSS Rewrite team
+
+servers:
+  - url: http://localhost:5000
+    description: Local development server
+
+tags:
+  - name: Exit Form
+    description: Exit Form (exit date, transition milestones, exit reason, referral)
+  - name: Exit Form Lookups
+    description: Code lists for the Exit Form
+
+# Not protected today (EF-GAP-03). Other modules use `cookieAuth`.
+security: []
+
+paths:
+  /api/exit-forms/lookups/options:
+    get:
+      tags: [Exit Form Lookups]
+      operationId: getExitFormOptions
+      summary: Code lists for the three radio groups
+      description: |
+        Served from `exit-form.config.ts` (there are no lookup tables in dbCDD).
+        Codes 7, 8 (prior to age 3) and 5 (referred to) are new.
+      responses:
+        "200":
+          description: Option lists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExitFormOptions"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /api/exit-forms/{childId}:
+    parameters:
+      - $ref: "#/components/parameters/ChildId"
+    get:
+      tags: [Exit Form]
+      operationId: getExitForms
+      summary: Client header and all of their Exit Forms
+      description: Forms are ordered newest exit first (`ExitDate` nulls last, then `ID DESC`).
+      responses:
+        "200":
+          description: Client and forms
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [client, forms]
+                properties:
+                  client:
+                    $ref: "#/components/schemas/ExitFormClient"
+                  forms:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ExitForm"
+        "500":
+          description: |
+            Includes `ChildID must be a positive integer` (intended 400) and
+            `Client not found` (intended 404).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-known-issues: [EF-GAP-03, EF-GAP-08]
+    post:
+      tags: [Exit Form]
+      operationId: createExitForm
+      summary: Create an Exit Form
+      description: |
+        Requires `Region` and `ExitDate`. Validates codes, dates against the child's DOB and
+        the cross-field rules (BR-EF-22, 23, 31–33, 45, 47).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExitFormInput"
+            examples:
+              priorToAge3:
+                summary: Exit prior to age 3 (as sent by the UI)
+                value:
+                  Region: 2
+                  ReferralDate: "2025-02-15"
+                  ExitDate: "2025-06-01"
+                  TransitionPlanCompleted: "2025-04-20"
+                  TransitionPlanReason: "Family circumstance: parent unavailable until April"
+                  CLLEANotificationDate: null
+                  TransitionMeeting: null
+                  ExitPriorToAge3: 2
+                  MovedOtherRegion: Rutland
+                  ExitAtAge3: null
+                  ReferredTo: 5
+              atAge3:
+                summary: Exit at age 3
+                value:
+                  Region: 2
+                  ReferralDate: "2025-02-15"
+                  ExitDate: "2026-04-01"
+                  TransitionPlanCompleted: "2025-10-01"
+                  CLLEANotificationDate: "2025-11-01"
+                  TransitionMeeting: "2025-12-15"
+                  ExitPriorToAge3: null
+                  ExitAtAge3: 1
+                  ReferredTo: 3
+      responses:
+        "201":
+          description: The saved row
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExitForm"
+        "500":
+          $ref: "#/components/responses/ValidationError"
+      x-known-issues: [EF-GAP-03, EF-GAP-06, EF-GAP-08]
+
+  /api/exit-forms/{childId}/defaults:
+    parameters:
+      - $ref: "#/components/parameters/ChildId"
+    get:
+      tags: [Exit Form]
+      operationId: getExitFormDefaults
+      summary: Prefill values for a new Exit Form
+      description: |
+        `Region` and `ReferralDate` from the latest Active form (by FormDate); otherwise from
+        the latest Referral form (by re-referral, referral or form date). A missing Region
+        falls back to the Referral form's, then the client's.
+      responses:
+        "200":
+          description: Prefill values
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExitFormDefaults"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /api/exit-forms/{childId}/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ChildId"
+      - $ref: "#/components/parameters/FormId"
+    get:
+      tags: [Exit Form]
+      operationId: getExitForm
+      summary: One Exit Form
+      description: Not used by the UI.
+      responses:
+        "200":
+          description: The row
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExitForm"
+        "500":
+          description: Includes `Client not found` and `Exit Form not found` (intended 404).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      tags: [Exit Form]
+      operationId: updateExitForm
+      summary: Partial update
+      description: |
+        Only the keys sent are changed. Validation runs on the saved row merged with the body.
+        `Region` and `ExitDate` can't be cleared. Sets `LastUpdateDate` and `LastUpdateUser`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExitFormInput"
+            examples:
+              switchToNotEligible:
+                summary: Change to "NOT eligible for Part B" with no referral
+                value:
+                  ExitPriorToAge3: null
+                  MovedOtherRegion: null
+                  ExitAtAge3: 4
+                  ReferredTo: 99
+      responses:
+        "200":
+          description: The updated row
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExitForm"
+        "500":
+          $ref: "#/components/responses/ValidationError"
+    delete:
+      tags: [Exit Form]
+      operationId: deleteExitForm
+      summary: Delete an Exit Form
+      description: Not used by the UI (the grid uses `DELETE /api/input-forms/exit/{childId}/{id}`).
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        "500":
+          description: Includes `Exit Form not found` (intended 404).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  parameters:
+    ChildId:
+      name: childId
+      in: path
+      required: true
+      description: Client ID (`stblPeople.ChildID`); positive integer
+      schema:
+        type: integer
+        minimum: 1
+        example: 1042
+    FormId:
+      name: id
+      in: path
+      required: true
+      description: Exit Form ID (`stblExitForm.ID`); positive integer
+      schema:
+        type: integer
+        minimum: 1
+        example: 55
+
+  responses:
+    Error:
+      description: Any error (always HTTP 500 today)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    ValidationError:
+      description: |
+        Validation and not-found errors (intended 400/404, sent as 500). Messages include:
+        `Region must be selected`, `Date of Exit is required`,
+        `{Field} must use YYYY-MM-DD format`, `{Field} has an unknown value: {x}`,
+        `{Label} cannot be before Date of Birth`, `Date of Exit cannot be before Date of Referral`,
+        `{Label} cannot be after Date of Exit`,
+        `Choose either an exit reason prior to age 3 or an exit at age 3 outcome, not both`,
+        `Referred To is required when the child is NOT eligible for Part B (choose "Exited with no referral" if there was no referral)`.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Date of Exit cannot be before Date of Referral
+
+    CodeOption:
+      type: object
+      required: [code, label]
+      properties:
+        code:
+          type: integer
+        label:
+          type: string
+
+    ExitFormOptions:
+      type: object
+      required: [exitPriorToAge3, exitAtAge3, referredTo]
+      properties:
+        exitPriorToAge3:
+          type: array
+          items:
+            $ref: "#/components/schemas/CodeOption"
+          example:
+            - { code: 7, label: Non-EI Client Exit }
+            - { code: 8, label: Referral to CIS-EI }
+            - { code: 1, label: Development at appropriate level }
+            - { code: 2, label: Moved to other region }
+            - { code: 3, label: Moved out of state }
+            - { code: 4, label: Withdrawn by parent or guardian }
+            - { code: 5, label: Unable to contact }
+            - { code: 6, label: Deceased }
+        exitAtAge3:
+          type: array
+          items:
+            $ref: "#/components/schemas/CodeOption"
+          example:
+            - { code: 1, label: Child is potentially eligible for Part B services }
+            - { code: 2, label: "Child is potentially eligible for Part B services - child's family declined further service" }
+            - { code: 3, label: Child is thought to be eligible but potential eligibility not determined }
+            - { code: 4, label: Child is NOT eligible for Part B }
+        referredTo:
+          type: array
+          items:
+            $ref: "#/components/schemas/CodeOption"
+          example:
+            - { code: 1, label: Head Start }
+            - { code: 2, label: Community-based Child Care Program or Preschool }
+            - { code: 3, label: School based Pre-School Classroom }
+            - { code: 4, label: "Children's Integrated Services Coordinator" }
+            - { code: 5, label: Other }
+            - { code: 99, label: Exited with no referral }
+
+    ExitFormDefaults:
+      type: object
+      properties:
+        Region:
+          type: integer
+          nullable: true
+          example: 2
+        ReferralDate:
+          type: string
+          format: date
+          nullable: true
+          example: "2025-02-15"
+
+    ExitFormClient:
+      type: object
+      description: Read-only header from `stblPeople`.
+      properties:
+        ChildID: { type: integer, example: 1042 }
+        Region: { type: integer, nullable: true, example: 2 }
+        LastName: { type: string, nullable: true, example: Austin }
+        FirstName: { type: string, nullable: true, example: Jane }
+        SS: { type: string, nullable: true, example: 123-45-6789 }
+        SSTemp: { type: boolean, nullable: true }
+        DOB: { type: string, format: date-time, nullable: true, example: "2023-04-10T00:00:00.000Z" }
+        Gender: { type: string, nullable: true, example: F }
+        Notes: { type: string, nullable: true }
+        NonEarlyIntervention: { type: boolean }
+
+    YesNo:
+      description: Accepted as true/false, "yes"/"no" or -1/0/1; stored as -1 (Yes) / 0 (No).
+      nullable: true
+      oneOf:
+        - type: boolean
+        - type: integer
+          enum: [-1, 0, 1]
+        - type: string
+          enum: ["yes", "no", "y", "n", "true", "false", "-1", "0", "1"]
+
+    ExitFormInput:
+      type: object
+      description: |
+        Writable `stblExitForm` columns. Every field is optional on update. Dates use
+        YYYY-MM-DD. Text is trimmed; blank becomes null. Fields marked "API only" are not on
+        the screen.
+      properties:
+        FormDate: { type: string, format: date, nullable: true, description: Defaults to ExitDate }
+        Region: { type: integer, minimum: 1, description: Required on create }
+        MonthReporting: { type: integer, nullable: true, description: API only }
+        SU_id: { type: integer, nullable: true, description: API only }
+        SUName: { type: string, maxLength: 50, nullable: true, description: API only }
+        CountyCode: { type: string, maxLength: 12, nullable: true, description: API only }
+        Town: { type: string, maxLength: 3, nullable: true, description: API only }
+        SvcCordFirstName: { type: string, maxLength: 50, nullable: true, description: API only }
+        SvcCordLastName: { type: string, maxLength: 50, nullable: true, description: API only }
+        SvcCordType: { type: integer, nullable: true, description: API only }
+        SvcCordOtherDesc: { type: string, maxLength: 255, nullable: true, description: API only }
+        CAPTA: { $ref: "#/components/schemas/YesNo" }
+        ReferralDate: { type: string, format: date, nullable: true }
+        ReReferralDate: { type: string, format: date, nullable: true, description: API only }
+        COSFEnter30Months: { $ref: "#/components/schemas/YesNo" }
+        COSFEntryForm: { $ref: "#/components/schemas/YesNo" }
+        COSFEntryFormReason: { type: string, nullable: true, description: API only }
+        COSFGot6MonthsSvcs: { $ref: "#/components/schemas/YesNo" }
+        COSFExitForm: { $ref: "#/components/schemas/YesNo" }
+        COSFExitFormReason: { type: string, nullable: true, description: API only }
+        ExitDate: { type: string, format: date, description: Required on create; not before ReferralDate or DOB }
+        TransitionPlanCompleted: { type: string, format: date, nullable: true, description: Not before ReferralDate; not after ExitDate }
+        TransitionPlanReason: { type: string, nullable: true, description: "Delay reason; legacy reports read the first word (family / provider)" }
+        CLLEANotificationDate: { type: string, format: date, nullable: true, description: LEA Notification Date. Not before ReferralDate; not after ExitDate }
+        Notified90Days: { $ref: "#/components/schemas/YesNo" }
+        NotifiedReason: { type: string, nullable: true, description: API only }
+        NotifyStatePartC: { $ref: "#/components/schemas/YesNo" }
+        TransitionMeeting: { type: string, format: date, nullable: true, description: Date of Transition Conference. Not after ExitDate }
+        TransitionMeeting90day: { $ref: "#/components/schemas/YesNo" }
+        NoTransitionMtgReason: { type: string, nullable: true, description: API only }
+        ExitPriorToAge3:
+          type: integer
+          nullable: true
+          enum: [0, 1, 2, 3, 4, 5, 6, 7, 8]
+          description: 7 Non-EI Client Exit, 8 Referral to CIS-EI, 1–6 legacy reasons; 0 = exited at age 3 (set automatically)
+        MovedOtherRegion: { type: string, maxLength: 255, nullable: true, description: Kept only when ExitPriorToAge3 = 2 }
+        ExitAtAge3:
+          type: integer
+          nullable: true
+          enum: [0, 1, 2, 3, 4]
+          description: 0 = exited prior to age 3 (set automatically). Can't be combined with a non-zero ExitPriorToAge3
+        EXFNoPartB1: { type: boolean, description: Kept only when ExitAtAge3 = 4 }
+        EXFNoPartB2: { type: boolean, description: Kept only when ExitAtAge3 = 4 }
+        EXFNoPartB3: { type: boolean, description: Kept only when ExitAtAge3 = 4 }
+        ReferredTo:
+          type: integer
+          nullable: true
+          enum: [1, 2, 3, 4, 5, 99]
+          description: 5 = Other, 99 = Exited with no referral. Required when ExitAtAge3 = 4
+
+    ExitForm:
+      description: A `stblExitForm` row as returned by the API (all columns).
+      allOf:
+        - $ref: "#/components/schemas/ExitFormInput"
+        - type: object
+          properties:
+            ID: { type: integer, example: 55 }
+            ChildID: { type: integer, example: 1042 }
+            FormType: { type: string, example: Exit }
+            FormDate: { type: string, format: date-time, nullable: true }
+            ExitDate: { type: string, format: date-time, nullable: true }
+            ReferralDate: { type: string, format: date-time, nullable: true }
+            CAPTA: { type: integer, nullable: true, example: -1, description: Stored -1 / 0 }
+            InsertDate: { type: string, format: date-time }
+            InsertUser: { type: string }
+            LastUpdateDate: { type: string, format: date-time }
+            LastUpdateUser: { type: string }

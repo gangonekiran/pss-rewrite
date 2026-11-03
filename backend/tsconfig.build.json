@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  // Tests are type-checked by tsconfig.json (editor, `tsc --noEmit`) but not emitted to dist/.
+  "exclude": ["node_modules", "dist", "src/**/*.test.ts", "src/**/test/**"]
+}
