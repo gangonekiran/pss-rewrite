@@ -59,4 +59,4 @@ What each one depends on is in [03-business-rules.md §8](03-business-rules.md#8
 | ------ | -------- | ----- |
 | `dbCDD` DDL script, 9/9/2026 | Column types, defaults, constraints, `MS_Description`, legacy views and procedures | The script behind [database/stblExitForm.sql](database/stblExitForm.sql) |
 | Local `dbCDD` database (2026-11-02) | Cross-check of columns, FK, check constraints, referencing objects | Matches the 9/9 script |
-| `CIS_Database_Schema.sql` in `Docs.zip` (8/30/2026) | — | **Not used.** A draft that types `ExitPriorToAge3`, `ExitAtAge3`, `TransitionPlanCompleted` as `bit` and `Region`, `ReferredTo` as `varchar`; it doesn't match the real table |
+| `CIS_Database_Schema.sql` draft (8/30/2026) | — | **Not used.** A draft that types `ExitPriorToAge3`, `ExitAtAge3`, `TransitionPlanCompleted` as `bit` and `Region`, `ReferredTo` as `varchar`; it doesn't match the real table |

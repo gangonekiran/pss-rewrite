@@ -1,6 +1,6 @@
 # 03 — Business Rules: Exit Form
 
-Rules as **implemented** at commit `a7916f6`, with the **legacy** rule (from `dbCDD` column descriptions, views and stored procedures) wherever the two differ. Enforced by: FE = frontend, BE = backend, DB = database constraint.
+Rules as **implemented**, with the **legacy** rule (from `dbCDD` column descriptions, views and stored procedures) wherever the two differ. Enforced by: FE = frontend, BE = backend, DB = database constraint.
 
 The Exit Form records that a child left Early Intervention (Part C): **when** they left (before age 3, or at age 3 at transition to Part B), **why**, **where they were referred**, and the **transition** milestones (written transition plan, LEA notification, transition conference). One row in `stblExitForm` per Exit Form.
 

@@ -7,7 +7,7 @@ info:
     OpenAPI contract entries for the **Exit Form** module (`backend/src/modules/exit-form`),
     mounted at `/api/exit-forms`. Writes to `dbo.stblExitForm`.
 
-    Describes the API **as implemented** at commit `a7916f6` (2026-11-02). Known gaps are
+    Describes the API **as implemented**. Known gaps are
     flagged with `x-known-issues` and refer to `docs/exit-form/03-business-rules.md` (EF-GAP-xx).
 
     - Bodies and responses use the **PascalCase database column names**.

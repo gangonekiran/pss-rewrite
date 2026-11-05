@@ -1,6 +1,6 @@
 # 06 — Field Specification Table: Exit Form
 
-Every field on the Exit Form screen. "Current" columns describe the code at commit `a7916f6`; **Recommended** lists changes suggested by this review (not implemented).
+Every field on the Exit Form screen. "Current" columns describe the form as built; **Recommended** lists changes suggested by this review (not implemented).
 
 Legend — **Req**: Y required · A required only when the child exits **at age 3** · P required for its exit path · N optional · — n/a. **Edit**: A always editable · R read-only.
 

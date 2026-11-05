@@ -1,6 +1,6 @@
 # 00 — Annotated Wireframe: Exit Form
 
-Screenshots of the Exit Form as built today (commit `a7916f6`), taken from the running React components with sample data. The form opens as a full-screen modal from the Client screen → **Input Forms** tab → **Exit** (new form) or **View/Edit** on an Exit row (edit). Numbered red markers match the tables below. Sample data is fictional.
+Screenshots of the Exit Form as built today, taken from the running React components with sample data. The form opens as a full-screen modal from the Client screen → **Input Forms** tab → **Exit** (new form) or **View/Edit** on an Exit row (edit). Numbered red markers match the tables below. Sample data is fictional.
 
 Rules referenced as `BR-EF-…` / `EF-GAP-…` are in [03-business-rules.md](03-business-rules.md); fields are specified in [06-field-spec.md](06-field-spec.md).
 

@@ -3,7 +3,7 @@
   Extracted from the dbCDD DDL script dated 9/9/2026 (Access → SQL Server migration by SSMA).
   Checked against the local dbCDD database on 2026-11-02: same 45 columns, types, defaults,
   check constraints and FK.
-  Note: the draft schema in Docs.zip (CIS_Database_Schema.sql, 8/30/2026) is NOT the real table:
+  Note: the draft schema (CIS_Database_Schema.sql, 8/30/2026) is NOT the real table:
   it types most code and date columns as bit / varchar.
   Code lists (not in the database): see docs/exit-form/04-data-dictionary.md §2.
 */

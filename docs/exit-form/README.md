@@ -35,7 +35,7 @@ Out of scope: the Input Forms grid and the client screen (see [client docs](../c
 
 | Source | Used for |
 | ------ | -------- |
-| Code at commit `a7916f6` (branch `feature/exit-form`, 2026-11-02) | Current behaviour; screenshots were taken from the running components |
+| Exit Form frontend and backend code | Current behaviour; screenshots were taken from the running components |
 | Product-owner decisions (Beth) during development | Fields removed, counter direction, code lists, wording — marked **[Decision]** |
 | `dbCDD` DDL (9/9/2026) and the local `dbCDD` database | Types, defaults, constraints, `MS_Description`, referencing objects |
 | Legacy views/procedures — `GetExitForms_rpt`, `GetIndicator8_rpt`, `BaseResults0801`, `DCInd8*`, `DCNotPEReferred`, `GetAnnualExit*`, `Get_FITP_Extract_rpt`, `sqryFormListA` | Legacy business rules the form must keep feeding |

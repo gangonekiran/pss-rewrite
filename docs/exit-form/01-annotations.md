@@ -1,6 +1,6 @@
 # 01 — Code Annotations: Exit Form
 
-File-by-file walkthrough of the Exit Form feature at commit `a7916f6` (branch `feature/exit-form`, 2026-11-02). Line references are to that commit.
+File-by-file walkthrough of the Exit Form feature. Line references are to the current code.
 
 ---
 
