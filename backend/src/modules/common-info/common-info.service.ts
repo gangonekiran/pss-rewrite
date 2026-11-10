@@ -1,4 +1,4 @@
-import * as repository from './common-info.repository';
+import * as repository from './common-info.repository.js';
 
 export const lookups = {
   regions: () => repository.getAllRegions(),

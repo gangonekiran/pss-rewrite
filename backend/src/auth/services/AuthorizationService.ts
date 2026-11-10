@@ -1,5 +1,5 @@
-import { AuthUser } from "../models/AuthUser";
-import { Role } from "../enums/Role";
+import { AuthUser } from "../models/AuthUser.js";
+import { Role } from "../enums/Role.js";
 
 export class AuthorizationService {
 

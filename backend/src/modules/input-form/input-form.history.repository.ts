@@ -1,5 +1,5 @@
-import { getPool, sql } from "../../config/database";
-import type { InputFormHistoryRow } from "./input-form.types";
+import { getPool, sql } from "../../config/database.js";
+import type { InputFormHistoryRow } from "./input-form.types.js";
 
 /**
  * Builds the Input Form History grid for a single client.

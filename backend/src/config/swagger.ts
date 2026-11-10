@@ -43,6 +43,10 @@ const swaggerOptions: swaggerJSDoc.Options = {
         name: "Exit Forms",
         description: "Exit form (stblExitForm) APIs",
       },
+      {
+        name: "Insurance Forms",
+        description: "Insurance form (stblInsuranceForm) APIs",
+      },
     ],
 
     components: {

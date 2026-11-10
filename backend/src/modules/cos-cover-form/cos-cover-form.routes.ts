@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import * as controller from './cos-cover-form.controller';
+import * as controller from './cos-cover-form.controller.js';
 
 const router = Router();
 

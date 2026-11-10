@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRequest, createResponse } from 'node-mocks-http';
 
-import * as service from './common-info.service';
-import { regions, towns } from './common-info.controller';
+import * as service from './common-info.service.js';
+import { regions, towns } from './common-info.controller.js';
 
-vi.mock('./common-info.service', () => ({
+vi.mock('./common-info.service.js', () => ({
   lookups: {
     regions: vi.fn(),
     towns: vi.fn(),

@@ -7,6 +7,7 @@ import { INPUT_FORM_OPTIONS } from '../../../../types/input-form';
 import ActiveFormPage from '../../../active-form/pages/ActiveFormPage';
 import { COSFormPage } from '../../../cos';
 import ExitFormPage from '../../../exit-form/pages/ExitFormPage';
+import InsuranceFormPage from '../../../insurance-form/pages/InsuranceFormPage';
 import type { RegionLookup } from '../../../../types/common';
 
 interface InputFormsProps {
@@ -202,6 +203,20 @@ export default function InputForms({ childId, regions }: InputFormsProps) {
         />
       ) : selectedForm === 'exit' ? (
         <ExitFormModal
+          childId={childId}
+          existing={editing}
+          onClose={() => {
+            setSelectedForm(null);
+            setEditing(null);
+          }}
+          onSaved={async () => {
+            setSelectedForm(null);
+            setEditing(null);
+            await loadForms();
+          }}
+        />
+      ) : selectedForm === 'insurance' ? (
+        <InsuranceFormModal
           childId={childId}
           existing={editing}
           onClose={() => {
@@ -541,6 +556,53 @@ function ExitFormModal({ childId, existing, onClose, onSaved }: ExitFormModalPro
 
         <div className="min-h-0 flex-1 overflow-y-auto">
           <ExitFormPage
+            childId={childId}
+            formId={existing?.id}
+            onClose={onClose}
+            onSaved={onSaved}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* =============================================================
+   INSURANCE FORM MODAL
+============================================================= */
+
+interface InsuranceFormModalProps {
+  childId: number;
+  existing?: InputFormHistoryItem | null;
+  onClose: () => void;
+  onSaved: () => Promise<void>;
+}
+
+function InsuranceFormModal({ childId, existing, onClose, onSaved }: InsuranceFormModalProps) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+      <div className="flex h-[95vh] w-full max-w-7xl flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl">
+        <div className="flex shrink-0 items-center justify-between border-b border-gray-200 bg-gray-50 px-5 py-3">
+          <div>
+            <h2 className="text-base font-semibold text-gray-800">
+              {existing ? 'Edit Insurance Form' : 'New Insurance Form'}
+            </h2>
+
+            <p className="mt-0.5 text-xs text-gray-500">Client ID: {childId}</p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="rounded-md p-1 text-gray-500 hover:bg-gray-200"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <InsuranceFormPage
             childId={childId}
             formId={existing?.id}
             onClose={onClose}

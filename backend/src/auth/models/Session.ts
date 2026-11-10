@@ -1,4 +1,4 @@
-import { AuthUser } from "./AuthUser";
+import { AuthUser } from "./AuthUser.js";
 
 export interface Session {
   accessToken: string;

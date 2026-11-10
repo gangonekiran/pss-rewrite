@@ -1,6 +1,6 @@
-import { getPool, sql } from "../../config/database";
-import { COMMON_INFO_TABLES } from "./common-info.config";
-import type { RegionLookup, TownLookup } from "./common-info.types";
+import { getPool, sql } from "../../config/database.js";
+import { COMMON_INFO_TABLES } from "./common-info.config.js";
+import type { RegionLookup, TownLookup } from "./common-info.types.js";
 
 const { regions, towns, counties } = COMMON_INFO_TABLES;
 

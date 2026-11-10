@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { IRecordSet } from 'mssql';
 
-import * as repository from './cos-cover-form.repository';
-import { create, get, getOne, remove, update } from './cos-cover-form.service';
+import * as repository from './cos-cover-form.repository.js';
+import { create, get, getOne, remove, update } from './cos-cover-form.service.js';
 
-vi.mock('./cos-cover-form.repository', () => ({
+vi.mock('./cos-cover-form.repository.js', () => ({
   getClient: vi.fn(),
   findByChildId: vi.fn(),
   findOne: vi.fn(),

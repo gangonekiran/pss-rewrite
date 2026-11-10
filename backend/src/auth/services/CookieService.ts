@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { AuthConfig } from "../../config/auth";
+import { AuthConfig } from "../../config/auth.js";
 
 export class CookieService {
 

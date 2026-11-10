@@ -1,9 +1,9 @@
-import * as repo from "./input-form.repository";
+import * as repo from "./input-form.repository.js";
 
 import type {
   FormName,
   InputFormRecord,
-} from "./input-form.types";
+} from "./input-form.types.js";
 
 /**
  * Validates the ChildID and, when supplied, the form record ID.

@@ -1,12 +1,12 @@
-import { getPool, sql } from "../../config/database";
+import { getPool, sql } from "../../config/database.js";
 import type { ConnectionPool, Request } from "mssql";
 
-import { FORM_CONFIGS } from "./input-form.config";
+import { FORM_CONFIGS } from "./input-form.config.js";
 import type {
   FormConfig,
   FormName,
   InputFormRecord,
-} from "./input-form.types";
+} from "./input-form.types.js";
 
 /**
  * Returns the configuration for the requested input form.

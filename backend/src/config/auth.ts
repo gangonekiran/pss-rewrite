@@ -1,4 +1,4 @@
-import { AuthProviderType } from "../auth/enums/AuthProviderType";
+import { AuthProviderType } from "../auth/enums/AuthProviderType.js";
 
 export interface IAuthConfig {
 

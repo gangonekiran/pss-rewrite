@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { ServiceContainer } from "../container/ServiceContainer";
-import { MockUsers } from "../auth/providers/mock-users";
+import { ServiceContainer } from "../container/ServiceContainer.js";
+import { MockUsers } from "../auth/providers/mock-users.js";
 
 export class AuthController {
 

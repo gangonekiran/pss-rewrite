@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import * as service from './cos-cover-form.service';
+import * as service from './cos-cover-form.service.js';
 
 export const get = async (req: Request, res: Response) =>
   res.json(await service.get(req.params.childId));

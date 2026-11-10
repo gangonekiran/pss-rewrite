@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import * as service from './common-info.service';
+import * as service from './common-info.service.js';
 
 export const regions = async (_r: Request, s: Response) =>
   s.json(await service.lookups.regions());

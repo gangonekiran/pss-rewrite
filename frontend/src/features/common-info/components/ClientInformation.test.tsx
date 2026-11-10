@@ -51,3 +51,16 @@ test('shows a dash for missing values', async () => {
   // Last name, first name, SSN, DOB, region and referral date.
   expect(screen.getByText('—', { exact: true }).elements()).toHaveLength(6);
 });
+
+test('shows only the child details when childOnly is set', async () => {
+  const screen = await render(
+    <ClientInformation client={client} regionName="St Albans" referralDate="2025-02-15" childOnly />,
+  );
+
+  for (const text of ['Austin', 'Jane', '123-45-6789', '04/10/2023']) {
+    await expect.element(screen.getByText(text, { exact: true })).toBeVisible();
+  }
+  expect(screen.getByText('Region', { exact: true }).elements()).toHaveLength(0);
+  expect(screen.getByText('Referral Date (From Referral Form)').elements()).toHaveLength(0);
+  expect(screen.getByText('St Albans', { exact: true }).elements()).toHaveLength(0);
+});

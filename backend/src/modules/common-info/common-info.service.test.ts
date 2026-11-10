@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import * as repository from './common-info.repository';
-import { lookups } from './common-info.service';
+import * as repository from './common-info.repository.js';
+import { lookups } from './common-info.service.js';
 
-vi.mock('./common-info.repository', () => ({
+vi.mock('./common-info.repository.js', () => ({
   getAllRegions: vi.fn(),
   getTowns: vi.fn(),
   getTown: vi.fn(),

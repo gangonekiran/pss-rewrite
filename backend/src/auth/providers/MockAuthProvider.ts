@@ -1,9 +1,9 @@
-import { IAuthProvider } from "../interfaces/IAuthProvider";
-import { LoginRequest } from "../models/LoginRequest";
-import { LoginResponse } from "../models/LoginResponse";
-import { Session } from "../models/Session";
-import { SessionService } from "../services/SessionService";
-import { MockUsers } from "./mock-users";
+import { IAuthProvider } from "../interfaces/IAuthProvider.js";
+import { LoginRequest } from "../models/LoginRequest.js";
+import { LoginResponse } from "../models/LoginResponse.js";
+import { Session } from "../models/Session.js";
+import { SessionService } from "../services/SessionService.js";
+import { MockUsers } from "./mock-users.js";
 
 export class MockAuthProvider implements IAuthProvider {
 

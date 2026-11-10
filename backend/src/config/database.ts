@@ -43,7 +43,7 @@ export async function getPool() {
 
 export { sql };*/
 
-import sql from "mssql/msnodesqlv8";
+import sql from "mssql/msnodesqlv8.js";
 import dotenv from "dotenv";
 
 dotenv.config();

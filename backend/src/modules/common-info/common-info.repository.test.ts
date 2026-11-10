@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getPool } from '../../config/database';
-import { getAllRegions, getTown, getTowns } from './common-info.repository';
+import { getPool } from '../../config/database.js';
+import { getAllRegions, getTown, getTowns } from './common-info.repository.js';
 
-vi.mock('../../config/database', () => ({
+vi.mock('../../config/database.js', () => ({
   getPool: vi.fn(),
   sql: {
     VarChar: (length: number) => `VarChar(${length})`,

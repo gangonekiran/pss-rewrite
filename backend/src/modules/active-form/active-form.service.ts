@@ -1,6 +1,6 @@
-import { lookups as commonInfoLookups } from "../common-info/common-info.service";
-import * as repository from "./active-form.repository";
-import type { ActiveFormRecord } from "./active-form.types";
+import { lookups as commonInfoLookups } from "../common-info/common-info.service.js";
+import * as repository from "./active-form.repository.js";
+import type { ActiveFormRecord } from "./active-form.types.js";
 
 function error(message: string, status = 400): never {
   throw Object.assign(new Error(message), { status });

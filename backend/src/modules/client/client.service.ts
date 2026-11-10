@@ -1,4 +1,4 @@
-import * as repo from "./client.repository";
+import * as repo from "./client.repository.js";
 export const getAllClients=repo.getAllClients;
 export const getClient=repo.getClientById;
 export const createClient=repo.createClient;

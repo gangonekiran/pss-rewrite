@@ -11,7 +11,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "cd ../.. && husky cis-rewrite/frontend/.husky",
+    "prepare": "cd .. && husky frontend/.husky",
     "test": "vitest",
     "test:browser": "vitest --config=vitest.browser.config.ts",
     "test:ci": "vitest --run --browser.headless"
@@ -31,7 +31,7 @@
     "react-router-dom": "^7.18.2",
     "react-select": "^5.10.2",
     "tailwindcss": "^4.3.3",
-    "zod": "^3.25.76",
+    "zod": "^4.6.7",
     "zustand": "^5.0.14"
   },
   "devDependencies": {

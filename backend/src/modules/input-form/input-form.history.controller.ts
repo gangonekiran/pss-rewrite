@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 
-import { getHistory } from './input-form.history.repository';
+import { getHistory } from './input-form.history.repository.js';
 
 /**
  * Retrieves the input-form history for a specific client.

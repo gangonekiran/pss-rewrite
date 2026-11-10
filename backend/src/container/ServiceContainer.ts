@@ -1,9 +1,9 @@
-import { AuthService } from "../auth/services/AuthService";
-import { TokenService } from "../auth/services/TokenService";
-import { CookieService } from "../auth/services/CookieService";
-import { SessionService } from "../auth/services/SessionService";
-import { AuthorizationService } from "../auth/services/AuthorizationService";
-import { AuthProviderFactory } from "../auth/factory/AuthProviderFactory";
+import { AuthService } from "../auth/services/AuthService.js";
+import { TokenService } from "../auth/services/TokenService.js";
+import { CookieService } from "../auth/services/CookieService.js";
+import { SessionService } from "../auth/services/SessionService.js";
+import { AuthorizationService } from "../auth/services/AuthorizationService.js";
+import { AuthProviderFactory } from "../auth/factory/AuthProviderFactory.js";
 
 export class ServiceContainer {
 

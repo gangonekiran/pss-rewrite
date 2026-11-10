@@ -1,7 +1,7 @@
 import { Request } from 'mssql';
-import { getPool, sql } from '../../config/database';
-import { COS_COVER_TABLE, WRITABLE_COLUMNS } from './cos-cover-form.config';
-import type { COSCoverClient, COSCoverRecord } from './cos-cover-form.types';
+import { getPool, sql } from '../../config/database.js';
+import { COS_COVER_TABLE, WRITABLE_COLUMNS } from './cos-cover-form.config.js';
+import type { COSCoverClient, COSCoverRecord } from './cos-cover-form.types.js';
 
 const allowed = new Set<string>(WRITABLE_COLUMNS);
 

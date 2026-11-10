@@ -1,4 +1,4 @@
-import { Session } from "../models/Session";
+import { Session } from "../models/Session.js";
 
 export interface ITokenService {
   createToken(session: Session): Promise<string>;

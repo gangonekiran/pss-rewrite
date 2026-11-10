@@ -1,7 +1,7 @@
-import { AuthUser } from "../models/AuthUser";
-import { Session } from "../models/Session";
-import { TokenService } from "./TokenService";
-import { AuthConfig } from "../../config/auth";
+import { AuthUser } from "../models/AuthUser.js";
+import { Session } from "../models/Session.js";
+import { TokenService } from "./TokenService.js";
+import { AuthConfig } from "../../config/auth.js";
 
 export class SessionService {
 

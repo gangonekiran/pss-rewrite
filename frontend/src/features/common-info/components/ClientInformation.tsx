@@ -13,6 +13,8 @@ export interface ClientInformationProps {
   county?: string | null;
   /** Shown only when passed; forms that do not record Status leave it out. */
   status?: string | null;
+  /** Only the child's name, SSN and DOB, for forms that record no region or referral date. */
+  childOnly?: boolean;
 }
 
 function Item({ label, value }: { label: string; value: unknown }) {
@@ -33,6 +35,7 @@ export default function ClientInformation({
   referralDate,
   county,
   status,
+  childOnly = false,
 }: ClientInformationProps) {
   return (
     <section className="rounded-lg border border-gray-200 bg-white shadow-sm">
@@ -50,8 +53,10 @@ export default function ClientInformation({
           <Item label="SSN" value={client.SS} />
           <Item label="DOB" value={formatDate(client.DOB)} />
           {county !== undefined && <Item label="County" value={county} />}
-          <Item label="Region" value={regionName} />
-          <Item label="Referral Date (From Referral Form)" value={formatDate(referralDate)} />
+          {!childOnly && <Item label="Region" value={regionName} />}
+          {!childOnly && (
+            <Item label="Referral Date (From Referral Form)" value={formatDate(referralDate)} />
+          )}
           {status !== undefined && <Item label="Status" value={status} />}
         </div>
       </div>

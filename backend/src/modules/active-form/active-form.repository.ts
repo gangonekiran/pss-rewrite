@@ -1,5 +1,5 @@
 import { Request } from "mssql";
-import { getPool, sql } from "../../config/database";
+import { getPool, sql } from "../../config/database.js";
 import {
   ACTIVE_FORM_TABLE,
   DELAY_FAMILY_LOOKUP,
@@ -7,11 +7,11 @@ import {
   SERVICE_COORDINATOR_LOOKUP,
   SU_LOOKUP,
   WRITABLE_COLUMNS,
-} from "./active-form.config";
+} from "./active-form.config.js";
 import type {
   ActiveFormClient,
   ActiveFormRecord,
-} from "./active-form.types";
+} from "./active-form.types.js";
 
 const allowed = new Set<string>(WRITABLE_COLUMNS);
 

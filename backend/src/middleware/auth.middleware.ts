@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { ServiceContainer } from "../container/ServiceContainer";
+import { ServiceContainer } from "../container/ServiceContainer.js";
 
 const tokenService = ServiceContainer.getTokenService();
 const cookieService = ServiceContainer.getCookieService();

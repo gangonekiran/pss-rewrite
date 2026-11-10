@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import router from './cos-cover-form.routes';
-import * as controller from './cos-cover-form.controller';
+import router from './cos-cover-form.routes.js';
+import * as controller from './cos-cover-form.controller.js';
 
-vi.mock('./cos-cover-form.controller', () => ({
+vi.mock('./cos-cover-form.controller.js', () => ({
   get: vi.fn(),
   getOne: vi.fn(),
   create: vi.fn(),

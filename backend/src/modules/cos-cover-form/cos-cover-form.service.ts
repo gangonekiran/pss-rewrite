@@ -1,5 +1,5 @@
-import * as repository from './cos-cover-form.repository';
-import type { COSCoverRecord } from './cos-cover-form.types';
+import * as repository from './cos-cover-form.repository.js';
+import type { COSCoverRecord } from './cos-cover-form.types.js';
 
 function error(message: string, status = 400): never {
   throw Object.assign(new Error(message), { status });

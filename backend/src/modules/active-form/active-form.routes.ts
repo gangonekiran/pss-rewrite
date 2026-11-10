@@ -1,5 +1,5 @@
 import {Router} from "express";
-import * as controller from "./active-form.controller";
+import * as controller from "./active-form.controller.js";
 
 const router=Router();
 

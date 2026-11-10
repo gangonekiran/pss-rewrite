@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import * as s from "./client.service";
+import * as s from "./client.service.js";
 export const getAllClients = async (_: Request, res: Response) =>
   res.json(await s.getAllClients());
 export const getClient = async (req: Request, res: Response) =>

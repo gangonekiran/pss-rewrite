@@ -1,6 +1,6 @@
 import { SignJWT, jwtVerify, JWTPayload } from "jose";
-import { AuthConfig } from "../../config/auth";
-import { AuthUser } from "../models/AuthUser";
+import { AuthConfig } from "../../config/auth.js";
+import { AuthUser } from "../models/AuthUser.js";
 
 const secret = new TextEncoder().encode(AuthConfig.jwt.secret);
 

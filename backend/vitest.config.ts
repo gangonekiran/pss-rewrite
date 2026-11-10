@@ -1,10 +1,24 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig, configDefaults } from "vitest/config";
 
 export default defineConfig({
   test: {
-    // Only run the TypeScript sources. dist/ holds compiled CommonJS copies,
-    // which Vitest cannot import ("cannot be imported in a CommonJS module").
-    include: ['src/**/*.test.ts'],
-    exclude: ['dist/**', 'node_modules/**'],
+    restoreMocks: true,
+    exclude: [...configDefaults.exclude, "dist/**/*.*"],
+    coverage: {
+      enabled: true,
+      include: ["src/**/*.ts"],
+      exclude: [
+        "dist/**/*.*",
+        "src/**/*.config.ts",
+        "src/**/*.types.ts",
+        "src/auth/interfaces/*.ts",
+        "src/auth/models/*.ts",
+        "src/types/express.d.ts",
+        "src/config/database.ts",
+        "src/config/swagger.ts",
+        "src/app.ts",
+        "src/server.ts",
+      ],
+    },
   },
 });

@@ -1,4 +1,4 @@
-import type { FormConfig, FormName } from "./input-form.types";
+import type { FormConfig, FormName } from "./input-form.types.js";
 
 /**
  * Central configuration for all client input forms.

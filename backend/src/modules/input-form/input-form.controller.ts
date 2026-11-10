@@ -1,8 +1,8 @@
 import type { Request, Response } from "express";
 
-import * as service from "./input-form.service";
+import * as service from "./input-form.service.js";
 
-import type { FormName } from "./input-form.types";
+import type { FormName } from "./input-form.types.js";
 
 /**
  * Extracts and casts the form name from the route parameters.

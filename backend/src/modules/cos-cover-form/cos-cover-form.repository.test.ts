@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getPool } from '../../config/database';
+import { getPool } from '../../config/database.js';
 import {
   findByChildId,
   findOne,
@@ -8,9 +8,9 @@ import {
   insert,
   remove,
   update,
-} from './cos-cover-form.repository';
+} from './cos-cover-form.repository.js';
 
-vi.mock('../../config/database', () => ({
+vi.mock('../../config/database.js', () => ({
   getPool: vi.fn(),
   sql: {
     Int: 'Int',

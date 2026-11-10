@@ -2,19 +2,20 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
-import authRoutes from "./routes/auth.routes";
-import dashboardRoutes from "./routes/dashboard.routes";
+import authRoutes from "./routes/auth.routes.js";
+import dashboardRoutes from "./routes/dashboard.routes.js";
 
-import clientRoutes from "./modules/client/client.routes";
-import inputFormRoutes from "./modules/input-form/input-form.routes";
+import clientRoutes from "./modules/client/client.routes.js";
+import inputFormRoutes from "./modules/input-form/input-form.routes.js";
 
-import { errorHandler } from "./middleware/error.middleware";
+import { errorHandler } from "./middleware/error.middleware.js";
 
 import swaggerUi from "swagger-ui-express";
-import { swaggerSpec } from "./config/swagger";
-import { activeFormRoutes } from "./modules/active-form";
-import { commonInfoRoutes } from "./modules/common-info";
-import { exitFormRoutes } from "./modules/exit-form";
+import { swaggerSpec } from "./config/swagger.js";
+import { activeFormRoutes } from "./modules/active-form/index.js";
+import { commonInfoRoutes } from "./modules/common-info/index.js";
+import { exitFormRoutes } from "./modules/exit-form/index.js";
+import { insuranceFormRoutes } from "./modules/insurance-form/index.js";
 
 const app = express();
 
@@ -59,6 +60,8 @@ app.use("/api/input-forms", inputFormRoutes);
 app.use('/api/active-forms', activeFormRoutes);
 
 app.use('/api/exit-forms', exitFormRoutes);
+
+app.use('/api/insurance-forms', insuranceFormRoutes);
 
 app.use('/api/common-info', commonInfoRoutes);
 

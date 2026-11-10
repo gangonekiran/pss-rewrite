@@ -1,5 +1,5 @@
-import { getPool, sql } from "../../config/database";
-import { Client } from "./client.types";
+import { getPool, sql } from "../../config/database.js";
+import { Client } from "./client.types.js";
 
 /**
  * Get All Clients

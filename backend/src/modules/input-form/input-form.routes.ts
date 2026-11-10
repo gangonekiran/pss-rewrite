@@ -1,7 +1,7 @@
 import { Router } from "express";
 
-import * as controller from "./input-form.controller";
-import { history } from "./input-form.history.controller";
+import * as controller from "./input-form.controller.js";
+import { history } from "./input-form.history.controller.js";
 
 const router = Router();
 

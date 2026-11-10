@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import router from './common-info.routes';
-import * as controller from './common-info.controller';
+import router from './common-info.routes.js';
+import * as controller from './common-info.controller.js';
 
-vi.mock('./common-info.controller', () => ({
+vi.mock('./common-info.controller.js', () => ({
   regions: vi.fn(),
   towns: vi.fn(),
 }));
