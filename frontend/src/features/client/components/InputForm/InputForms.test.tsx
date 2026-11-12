@@ -29,6 +29,7 @@ vi.mock('../../../../types/input-form', () => ({
     { name: 'active', label: 'Active Entry' },
     { name: 'cos-cover', label: 'COS Entry' },
     { name: 'exit', label: 'Exit Entry' },
+    { name: 'insurance', label: 'Insurance Entry' },
   ],
 }));
 
@@ -52,6 +53,56 @@ vi.mock('../../../active-form/pages/ActiveFormPage', () => ({
       </button>
       <button type="button" onClick={() => void onSaved()}>
         Save active page
+      </button>
+    </div>
+  ),
+}));
+
+vi.mock('../../../exit-form/pages/ExitFormPage', () => ({
+  default: ({
+    childId,
+    formId,
+    onClose,
+    onSaved,
+  }: {
+    childId: number;
+    formId?: number;
+    onClose: () => void;
+    onSaved: () => Promise<void>;
+  }) => (
+    <div data-testid="exit-form-page">
+      <p>Exit page child: {childId}</p>
+      <p>Exit page form: {String(formId)}</p>
+      <button type="button" onClick={onClose}>
+        Close exit page
+      </button>
+      <button type="button" onClick={() => void onSaved()}>
+        Save exit page
+      </button>
+    </div>
+  ),
+}));
+
+vi.mock('../../../insurance-form/pages/InsuranceFormPage', () => ({
+  default: ({
+    childId,
+    formId,
+    onClose,
+    onSaved,
+  }: {
+    childId: number;
+    formId?: number;
+    onClose: () => void;
+    onSaved: () => Promise<void>;
+  }) => (
+    <div data-testid="insurance-form-page">
+      <p>Insurance page child: {childId}</p>
+      <p>Insurance page form: {String(formId)}</p>
+      <button type="button" onClick={onClose}>
+        Close insurance page
+      </button>
+      <button type="button" onClick={() => void onSaved()}>
+        Save insurance page
       </button>
     </div>
   ),
@@ -383,7 +434,7 @@ test('all form type checkboxes are checked by default', async () => {
   const checkboxes = screen.getByRole('checkbox');
 
   await vi.waitFor(() => {
-    expect(checkboxes.elements()).toHaveLength(5);
+    expect(checkboxes.elements()).toHaveLength(6);
   });
 
   for (let index = 0; index < 5; index++) {
@@ -666,6 +717,130 @@ test('closes the Active form modal and reloads history when saved', async () => 
   await screen.getByRole('button', { name: 'Save active page', exact: true }).click();
 
   await expect.element(screen.getByTestId('active-form-page')).not.toBeInTheDocument();
+
+  await vi.waitFor(() => {
+    expect(inputFormService.getHistory).toHaveBeenCalledTimes(2);
+  });
+});
+
+/* =========================================================
+   EXIT FORM MODAL
+========================================================= */
+
+test('opens the Exit form modal for a new Exit form', async () => {
+  const { screen } = await renderInputForms();
+
+  await screen.getByRole('button', { name: 'Exit Entry', exact: true }).click();
+
+  await expect.element(screen.getByRole('heading', { name: 'New Exit Form' })).toBeVisible();
+  await expect.element(screen.getByText('Exit page child: 123')).toBeVisible();
+  await expect.element(screen.getByText('Exit page form: undefined')).toBeVisible();
+});
+
+test('opens the Exit form modal with the form id when editing', async () => {
+  vi.mocked(inputFormService.getHistory).mockResolvedValue([
+    createItem({ id: 88, formName: 'exit', formType: 'Exit' }),
+  ]);
+
+  const { screen } = await renderInputForms();
+
+  await screen.getByRole('button', { name: 'View/Edit', exact: true }).click();
+
+  await expect.element(screen.getByRole('heading', { name: 'Edit Exit Form' })).toBeVisible();
+  await expect.element(screen.getByText('Exit page form: 88')).toBeVisible();
+});
+
+test('closes the Exit form modal from its close button', async () => {
+  const { screen } = await renderInputForms();
+
+  await screen.getByRole('button', { name: 'Exit Entry', exact: true }).click();
+  await screen.getByRole('button', { name: 'Close', exact: true }).click();
+
+  await expect.element(screen.getByTestId('exit-form-page')).not.toBeInTheDocument();
+});
+
+test('closes the Exit form modal when the form closes', async () => {
+  const { screen } = await renderInputForms();
+
+  await screen.getByRole('button', { name: 'Exit Entry', exact: true }).click();
+  await screen.getByRole('button', { name: 'Close exit page', exact: true }).click();
+
+  await expect.element(screen.getByTestId('exit-form-page')).not.toBeInTheDocument();
+});
+
+test('closes the Exit form modal and reloads history when saved', async () => {
+  const { screen } = await renderInputForms();
+
+  await vi.waitFor(() => {
+    expect(inputFormService.getHistory).toHaveBeenCalledTimes(1);
+  });
+
+  await screen.getByRole('button', { name: 'Exit Entry', exact: true }).click();
+  await screen.getByRole('button', { name: 'Save exit page', exact: true }).click();
+
+  await expect.element(screen.getByTestId('exit-form-page')).not.toBeInTheDocument();
+
+  await vi.waitFor(() => {
+    expect(inputFormService.getHistory).toHaveBeenCalledTimes(2);
+  });
+});
+
+/* =========================================================
+   INSURANCE FORM MODAL
+========================================================= */
+
+test('opens the Insurance form modal for a new Insurance form', async () => {
+  const { screen } = await renderInputForms();
+
+  await screen.getByRole('button', { name: 'Insurance Entry', exact: true }).click();
+
+  await expect.element(screen.getByRole('heading', { name: 'New Insurance Form' })).toBeVisible();
+  await expect.element(screen.getByText('Insurance page child: 123')).toBeVisible();
+  await expect.element(screen.getByText('Insurance page form: undefined')).toBeVisible();
+});
+
+test('opens the Insurance form modal with the form id when editing', async () => {
+  vi.mocked(inputFormService.getHistory).mockResolvedValue([
+    createItem({ id: 88, formName: 'insurance', formType: 'Insurance' }),
+  ]);
+
+  const { screen } = await renderInputForms();
+
+  await screen.getByRole('button', { name: 'View/Edit', exact: true }).click();
+
+  await expect.element(screen.getByRole('heading', { name: 'Edit Insurance Form' })).toBeVisible();
+  await expect.element(screen.getByText('Insurance page form: 88')).toBeVisible();
+});
+
+test('closes the Insurance form modal from its close button', async () => {
+  const { screen } = await renderInputForms();
+
+  await screen.getByRole('button', { name: 'Insurance Entry', exact: true }).click();
+  await screen.getByRole('button', { name: 'Close', exact: true }).click();
+
+  await expect.element(screen.getByTestId('insurance-form-page')).not.toBeInTheDocument();
+});
+
+test('closes the Insurance form modal when the form closes', async () => {
+  const { screen } = await renderInputForms();
+
+  await screen.getByRole('button', { name: 'Insurance Entry', exact: true }).click();
+  await screen.getByRole('button', { name: 'Close insurance page', exact: true }).click();
+
+  await expect.element(screen.getByTestId('insurance-form-page')).not.toBeInTheDocument();
+});
+
+test('closes the Insurance form modal and reloads history when saved', async () => {
+  const { screen } = await renderInputForms();
+
+  await vi.waitFor(() => {
+    expect(inputFormService.getHistory).toHaveBeenCalledTimes(1);
+  });
+
+  await screen.getByRole('button', { name: 'Insurance Entry', exact: true }).click();
+  await screen.getByRole('button', { name: 'Save insurance page', exact: true }).click();
+
+  await expect.element(screen.getByTestId('insurance-form-page')).not.toBeInTheDocument();
 
   await vi.waitFor(() => {
     expect(inputFormService.getHistory).toHaveBeenCalledTimes(2);

@@ -1,12 +1,9 @@
 import { useId } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
-import { Field, inputClass } from '../../common-info';
-import { Section } from '../../exit-form/components/ExitFormControls';
-import {
-  BILLING_CONSENT_PRIVATE,
-  type InsuranceFormValues,
-} from '../../../types/insurance-form';
+import { Field, inputClass, Section } from '../../common-info';
+import { BILLING_CONSENT_PRIVATE, type InsuranceFormValues } from '../../../types/insurance-form';
+import { toDateInput } from '../../../utils/date';
 
 type TextField = 'PolicyNumber' | 'GroupNumber' | 'GroupName' | 'PolicyHolder';
 type DateField = 'EffectiveDate' | 'EndDate';
@@ -22,7 +19,14 @@ const DATE_FIELDS: Array<[DateField, string]> = [
   ['EndDate', 'End Date of Policy'],
 ];
 
-export default function InsuranceInformation() {
+interface Props {
+  dob: string | null;
+}
+
+/** Text columns are nvarchar(255). */
+const MAX_TEXT = 255;
+
+export default function InsuranceInformation({ dob }: Props) {
   const {
     register,
     control,
@@ -30,7 +34,8 @@ export default function InsuranceInformation() {
   } = useFormContext<InsuranceFormValues>();
   const id = useId();
 
-  const consent = useWatch({ control, name: 'BillingConsent' });
+  const [consent, effectiveDate] = useWatch({ control, name: ['BillingConsent', 'EffectiveDate'] });
+  const dobDate = toDateInput(dob) || undefined;
 
   return (
     <Section
@@ -47,6 +52,7 @@ export default function InsuranceInformation() {
           <input
             id={`${id}-FormDate`}
             type="date"
+            min={dobDate}
             {...register('FormDate')}
             className={inputClass}
           />
@@ -63,6 +69,7 @@ export default function InsuranceInformation() {
             <input
               id={`${id}-BranchAddress`}
               type="text"
+              maxLength={MAX_TEXT}
               {...register('BranchAddress')}
               className={inputClass}
             />
@@ -74,6 +81,7 @@ export default function InsuranceInformation() {
             <input
               id={`${id}-${name}`}
               type="text"
+              maxLength={MAX_TEXT}
               {...register(name)}
               className={inputClass}
             />
@@ -82,7 +90,13 @@ export default function InsuranceInformation() {
 
         {DATE_FIELDS.map(([name, label]) => (
           <Field key={name} id={`${id}-${name}`} label={label} error={errors[name]?.message}>
-            <input id={`${id}-${name}`} type="date" {...register(name)} className={inputClass} />
+            <input
+              id={`${id}-${name}`}
+              type="date"
+              min={name === 'EndDate' ? effectiveDate || undefined : undefined}
+              {...register(name)}
+              className={inputClass}
+            />
           </Field>
         ))}
 
@@ -94,6 +108,7 @@ export default function InsuranceInformation() {
           <input
             id={`${id}-PolicyHolder`}
             type="text"
+            maxLength={MAX_TEXT}
             {...register('PolicyHolder')}
             className={inputClass}
           />

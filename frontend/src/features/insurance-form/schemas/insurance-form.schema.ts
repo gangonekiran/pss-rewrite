@@ -59,7 +59,8 @@ export function createInsuranceFormSchema(dob: unknown) {
         if (field === 'ParentSignatureDate' && decline) continue;
         if (field === 'ParentSignatureDate2' && !decline) continue;
         const value = v[field] as string;
-        if (dobDate && value && value < dobDate) issue(field, `${label} cannot be before Date of Birth.`);
+        if (dobDate && value && value < dobDate)
+          issue(field, `${label} cannot be before Date of Birth.`);
       }
 
       if (v.EffectiveDate && v.EndDate && v.EndDate < v.EffectiveDate) {

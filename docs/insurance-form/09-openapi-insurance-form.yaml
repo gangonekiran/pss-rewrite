@@ -1,0 +1,419 @@
+openapi: 3.0.3
+
+info:
+  title: PSS Rewrite – Insurance Form API
+  version: 1.0.0
+  description: |
+    OpenAPI contract entries for the **Insurance Form** module (`backend/src/modules/insurance-form`),
+    mounted at `/api/insurance-forms`. Writes to `dbo.stblInsuranceForm`.
+
+    Describes the API **as implemented**. Known gaps are flagged with `x-known-issues`.
+
+    - Bodies and responses use the **PascalCase database column names**.
+    - Only the 15 whitelisted columns are written; other keys, `ID`, `ChildID` and `FormType`
+      are ignored silently. `FormType` is always saved as `Insurance`.
+    - `InsCoNumber`, `InsuranceName`, `CoverageCode` and `Phone` are never written, so values
+      already stored are kept. The Insurance Company Name is saved in `BranchAddress`, where
+      staff have always typed it.
+    - `BillingConsent` is one choice: **1** private insurance, **2** Medicaid, **3** decline.
+      Saving 1 or 2 clears the decline reasons and `ParentSignatureDate2`; saving 3 clears
+      `ParentSignatureDate`.
+    - The FITP billing extract (`Get_CIS_FITP_Output`) reads each child's latest form (highest
+      `FormDate`, then highest `ID`). `BillingConsent = 3` is sent as "Do Not Bill" with blank
+      insurance fields; any other value, including NULL, is sent as "Bill".
+    - Every error returns HTTP **500** `{ "success": false, "message": "..." }`, including the
+      400/404 conditions listed per operation.
+  contact:
+    name: PSS Rewrite team
+
+servers:
+  - url: http://localhost:5000
+    description: Local development server
+
+tags:
+  - name: Insurance Form
+    description: Insurance Form (policy details and consent to bill insurance)
+  - name: Insurance Form Lookups
+    description: Code lists for the Insurance Form
+
+# Not protected today, like the Exit Form. Other modules use `cookieAuth`.
+security: []
+
+x-known-issues:
+  STATUS-500: >
+    The shared error handler (`middleware/error.middleware.ts`) always answers HTTP 500. The
+    service sets 400 (validation) and 404 (not found) on its errors, but they are not used.
+  NO-AUTH: The routes are not protected by the authentication middleware.
+  GENERIC-ROUTES: >
+    `POST/PUT /api/input-forms/insurance/{childId}[/{id}]` still write `stblInsuranceForm`
+    directly, without the Insurance Form rules (consent, required dates, clearing). The screen
+    uses `/api/insurance-forms`; the Input Forms grid deletes through
+    `DELETE /api/input-forms/insurance/{childId}/{id}`.
+  CONSENT-CODES: >
+    Only `BillingConsent = 3` is named in dbCDD (FITP "Do Not Bill"). 1 = private insurance
+    and 2 = Medicaid follow the order of the options on the legacy form.
+
+paths:
+  /api/insurance-forms/lookups/options:
+    get:
+      tags: [Insurance Form Lookups]
+      operationId: getInsuranceFormOptions
+      summary: Billing consent choices and decline reasons
+      description: |
+        Served from `insurance-form.config.ts` (there are no lookup tables in dbCDD). The
+        consent labels are the full consent wording shown on the form.
+      responses:
+        "200":
+          description: Option lists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InsuranceFormOptions"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /api/insurance-forms/{childId}:
+    parameters:
+      - $ref: "#/components/parameters/ChildId"
+    get:
+      tags: [Insurance Form]
+      operationId: getInsuranceForms
+      summary: Client header and all of their Insurance Forms
+      description: |
+        Forms are ordered newest first (`FormDate` nulls last, then `ID DESC`), the same order
+        the FITP extract uses to pick the current form.
+      responses:
+        "200":
+          description: Client and forms
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [client, forms]
+                properties:
+                  client:
+                    $ref: "#/components/schemas/InsuranceFormClient"
+                  forms:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/InsuranceForm"
+        "500":
+          description: |
+            Includes `ChildID must be a positive integer` (intended 400) and
+            `Client not found` (intended 404).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-known-issues: [NO-AUTH, STATUS-500]
+    post:
+      tags: [Insurance Form]
+      operationId: createInsuranceForm
+      summary: Create an Insurance Form
+      description: |
+        Requires `FormDate` (Date Completed) and `BillingConsent`.
+        - 1 (private): needs `BranchAddress` and `ParentSignatureDate`.
+        - 2 (Medicaid): needs `ParentSignatureDate`.
+        - 3 (decline): needs exactly one `DeclineReason*` = true and `ParentSignatureDate2`.
+
+        `FormDate` and the signature dates can't be before the child's DOB; `EndDate` can't be
+        before `EffectiveDate`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InsuranceFormInput"
+            examples:
+              privateInsurance:
+                summary: Permission to bill private insurance (as sent by the UI)
+                value:
+                  FormDate: "2026-01-15"
+                  BranchAddress: Blue Cross Blue Shield of Vermont
+                  PolicyNumber: P-123456
+                  GroupNumber: G-7890
+                  GroupName: Acme Manufacturing
+                  EffectiveDate: "2026-01-01"
+                  EndDate: "2026-12-31"
+                  PolicyHolder: Jane Austin
+                  BillingConsent: 1
+                  ParentSignatureDate: "2026-01-15"
+                  DeclineReasonCap: false
+                  DeclineReasonPremium: false
+                  DeclineReasonBenefits: false
+                  DeclineReasonEligibility: false
+                  ParentSignatureDate2: null
+              medicaid:
+                summary: Permission to bill Medicaid
+                value:
+                  FormDate: "2026-01-15"
+                  BranchAddress: null
+                  BillingConsent: 2
+                  ParentSignatureDate: "2026-01-15"
+              decline:
+                summary: Decline billing private insurance
+                value:
+                  FormDate: "2026-01-15"
+                  BillingConsent: 3
+                  ParentSignatureDate: null
+                  DeclineReasonCap: false
+                  DeclineReasonPremium: true
+                  DeclineReasonBenefits: false
+                  DeclineReasonEligibility: false
+                  ParentSignatureDate2: "2026-01-15"
+      responses:
+        "201":
+          description: The saved row
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InsuranceForm"
+        "500":
+          $ref: "#/components/responses/ValidationError"
+      x-known-issues: [NO-AUTH, STATUS-500, CONSENT-CODES]
+
+  /api/insurance-forms/{childId}/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ChildId"
+      - $ref: "#/components/parameters/FormId"
+    get:
+      tags: [Insurance Form]
+      operationId: getInsuranceForm
+      summary: One Insurance Form
+      description: Not used by the UI (the form loads the list and picks the row).
+      responses:
+        "200":
+          description: The row
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InsuranceForm"
+        "500":
+          description: Includes `Client not found` and `Insurance Form not found` (intended 404).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      tags: [Insurance Form]
+      operationId: updateInsuranceForm
+      summary: Partial update
+      description: |
+        Only the keys sent are changed. Validation runs on the saved row merged with the body,
+        so the same rules as create apply to the result. Every update clears the fields of the
+        answer not chosen, using the saved `BillingConsent` when the body does not change it
+        (so a decline reason can't be stored on a form that allows billing). Sets
+        `LastUpdateDate` and `LastUpdateUser`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InsuranceFormInput"
+            examples:
+              switchToDecline:
+                summary: Change a private-insurance form to a decline
+                value:
+                  BillingConsent: 3
+                  DeclineReasonPremium: true
+                  ParentSignatureDate2: "2026-02-01"
+              policyNumber:
+                summary: Change one field
+                value:
+                  PolicyNumber: P-654321
+      responses:
+        "200":
+          description: The updated row
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InsuranceForm"
+        "500":
+          $ref: "#/components/responses/ValidationError"
+      x-known-issues: [NO-AUTH, STATUS-500]
+    delete:
+      tags: [Insurance Form]
+      operationId: deleteInsuranceForm
+      summary: Delete an Insurance Form
+      description: Not used by the UI (the grid uses `DELETE /api/input-forms/insurance/{childId}/{id}`).
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        "500":
+          description: Includes `Insurance Form not found` (intended 404).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-known-issues: [GENERIC-ROUTES]
+
+components:
+  parameters:
+    ChildId:
+      name: childId
+      in: path
+      required: true
+      description: Client ID (`stblPeople.ChildID`); positive integer
+      schema:
+        type: integer
+        minimum: 1
+        example: 1042
+    FormId:
+      name: id
+      in: path
+      required: true
+      description: Insurance Form ID (`stblInsuranceForm.ID`); positive integer
+      schema:
+        type: integer
+        minimum: 1
+        example: 12
+
+  responses:
+    Error:
+      description: Any error (always HTTP 500 today)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    ValidationError:
+      description: |
+        Validation and not-found errors (intended 400/404, sent as 500). Messages include:
+        `ChildID must be a positive integer`, `ID must be a positive integer`,
+        `Client not found`, `Insurance Form not found`,
+        `{Field} must use YYYY-MM-DD format`, `{Field} must be a valid date`,
+        `{Field} must be a whole number`, `{Field} must be true or false`,
+        `{Field} must be 255 characters or fewer`, `BillingConsent has an unknown value: {x}`,
+        `Date Completed is required`, `{Label} cannot be before Date of Birth`,
+        `End Date of Policy cannot be before Effective Date of Policy`,
+        `Choose whether Children's Integrated Services may bill insurance`,
+        `Parent or Guardian Signature Date is required when billing is allowed`,
+        `Insurance Company Name is required when private insurance billing is allowed`,
+        `Choose one reason for denying permission to bill private insurance`,
+        `Parent or Guardian Signature Date is required when billing is declined`.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Parent or Guardian Signature Date is required when billing is allowed
+
+    BillingConsentOption:
+      type: object
+      required: [code, label]
+      properties:
+        code:
+          type: integer
+          enum: [1, 2, 3]
+        label:
+          type: string
+
+    DeclineReasonOption:
+      type: object
+      required: [field, label]
+      properties:
+        field:
+          type: string
+          enum: [DeclineReasonCap, DeclineReasonBenefits, DeclineReasonPremium, DeclineReasonEligibility]
+        label:
+          type: string
+
+    InsuranceFormOptions:
+      type: object
+      required: [billingConsent, declineReasons]
+      properties:
+        billingConsent:
+          type: array
+          items:
+            $ref: "#/components/schemas/BillingConsentOption"
+          example:
+            - code: 1
+              label: "My private insurance for services provided to my child for Part C Early Intervention. I understand that information about my child's early intervention services may be shared in that process."
+            - code: 2
+              label: "For services billed to Medicaid, I understand that information about my child's early intervention services may be shared in that process."
+            - code: 3
+              label: "I decline permission for Children's Integrated Services – Part C Early Intervention to bill my private insurance for services provided to my child for Part C Early Intervention."
+        declineReasons:
+          type: array
+          items:
+            $ref: "#/components/schemas/DeclineReasonOption"
+          example:
+            - { field: DeclineReasonCap, label: My available life-time cap would be affected }
+            - { field: DeclineReasonBenefits, label: My other health insurance benefits would decrease }
+            - { field: DeclineReasonPremium, label: My health insurance premiums would increase }
+            - { field: DeclineReasonEligibility, label: I risk loss of eligibility for me/my child for home and community waivers }
+
+    InsuranceFormClient:
+      type: object
+      description: Read-only header from `stblPeople`.
+      properties:
+        ChildID: { type: integer, example: 1042 }
+        LastName: { type: string, nullable: true, example: Austin }
+        FirstName: { type: string, nullable: true, example: Jane }
+        SS: { type: string, nullable: true, example: 123-45-6789 }
+        DOB: { type: string, format: date-time, nullable: true, example: "2024-03-10T00:00:00.000Z" }
+
+    InsuranceFormInput:
+      type: object
+      description: |
+        Writable `stblInsuranceForm` columns. Every field is optional on update. Dates use
+        YYYY-MM-DD. Text is trimmed; blank becomes null. Bits accept true/false, 1/0/-1 or
+        "true"/"false"/"yes"/"no"; blank is false.
+      properties:
+        FormDate: { type: string, format: date, description: "Date Completed. Required; not before DOB. The FITP extract picks the form with the latest FormDate" }
+        BranchAddress: { type: string, maxLength: 255, nullable: true, description: Insurance Company Name. Required when BillingConsent = 1 }
+        PolicyNumber: { type: string, maxLength: 255, nullable: true, description: "Policy #. Sent to FITP" }
+        GroupNumber: { type: string, maxLength: 255, nullable: true, description: "Group # (Contract #). Sent to FITP" }
+        GroupName: { type: string, maxLength: 255, nullable: true, description: Group/Employer Name }
+        EffectiveDate: { type: string, format: date, nullable: true, description: Effective Date of Policy. Sent to FITP }
+        EndDate: { type: string, format: date, nullable: true, description: End Date of Policy. Not before EffectiveDate. Sent to FITP }
+        PolicyHolder: { type: string, maxLength: 255, nullable: true, description: Individual Policy Holder }
+        BillingConsent:
+          type: integer
+          enum: [1, 2, 3]
+          description: "Required. 1 = private insurance, 2 = Medicaid, 3 = decline (FITP: Do Not Bill)"
+        ParentSignatureDate: { type: string, format: date, nullable: true, description: Signature date for consent. Required when BillingConsent is 1 or 2; cleared when 3; not before DOB }
+        DeclineReasonCap: { type: boolean, description: "My available life-time cap would be affected. Exactly one DeclineReason* is true when BillingConsent = 3; all are cleared to false otherwise" }
+        DeclineReasonBenefits: { type: boolean, description: My other health insurance benefits would decrease }
+        DeclineReasonPremium: { type: boolean, description: My health insurance premiums would increase }
+        DeclineReasonEligibility: { type: boolean, description: I risk loss of eligibility for me/my child for home and community waivers }
+        ParentSignatureDate2: { type: string, format: date, nullable: true, description: Signature date for the decline. Required when BillingConsent = 3; cleared otherwise; not before DOB }
+
+    InsuranceForm:
+      description: A `stblInsuranceForm` row as returned by the API (all columns).
+      allOf:
+        - $ref: "#/components/schemas/InsuranceFormInput"
+        - type: object
+          properties:
+            ID: { type: integer, example: 12 }
+            ChildID: { type: integer, example: 1042 }
+            FormType: { type: string, example: Insurance }
+            FormDate: { type: string, nullable: true, example: "2026-01-15 00:00:00" }
+            EffectiveDate: { type: string, nullable: true, example: "2026-01-01 00:00:00" }
+            EndDate: { type: string, nullable: true, example: "2026-12-31 00:00:00" }
+            ParentSignatureDate: { type: string, nullable: true, example: "2026-01-15 00:00:00" }
+            ParentSignatureDate2: { type: string, nullable: true }
+            InsCoNumber: { type: string, nullable: true, description: "Legacy Ins. Co #, not on the form. Still sent to FITP (blank when empty)" }
+            InsuranceName: { type: string, nullable: true, description: "Legacy column, not on the form" }
+            CoverageCode: { type: string, nullable: true, description: "Legacy Coverage Code, not on the form. Still sent to FITP ('00' when empty)" }
+            Phone: { type: string, nullable: true, description: "Legacy column, not on the form" }
+            InsertDate: { type: string, format: date-time }
+            InsertUser: { type: string }
+            LastUpdateDate: { type: string, format: date-time }
+            LastUpdateUser: { type: string }

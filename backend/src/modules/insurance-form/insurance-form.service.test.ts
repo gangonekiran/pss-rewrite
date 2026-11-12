@@ -159,12 +159,46 @@ describe('Insurance Form Service - update', () => {
     vi.mocked(repository.findOne).mockResolvedValue(existingForm);
   });
 
-  it('saves only the changed fields', async () => {
+  it('saves the changed fields, keeping the decline fields cleared for the saved consent', async () => {
     vi.mocked(repository.update).mockResolvedValue({ ...existingForm, PolicyNumber: 'P-2' });
 
     await update('123', '10', { PolicyNumber: 'P-2' });
 
-    expect(repository.update).toHaveBeenCalledWith(123, 10, { PolicyNumber: 'P-2' });
+    expect(repository.update).toHaveBeenCalledWith(123, 10, {
+      PolicyNumber: 'P-2',
+      DeclineReasonCap: false,
+      DeclineReasonPremium: false,
+      DeclineReasonBenefits: false,
+      DeclineReasonEligibility: false,
+      ParentSignatureDate2: null,
+    });
+  });
+
+  it('does not store decline fields on a form that allows billing', async () => {
+    vi.mocked(repository.update).mockResolvedValue(existingForm);
+
+    await update('123', '10', { DeclineReasonCap: true, ParentSignatureDate2: '2026-02-01' });
+
+    expect(repository.update).toHaveBeenCalledWith(
+      123,
+      10,
+      expect.objectContaining({ DeclineReasonCap: false, ParentSignatureDate2: null }),
+    );
+  });
+
+  it('does not store the consent signature date on a declined form', async () => {
+    vi.mocked(repository.findOne).mockResolvedValue({
+      ...existingForm,
+      BillingConsent: 3,
+      ParentSignatureDate: null,
+      DeclineReasonPremium: true,
+      ParentSignatureDate2: '2026-01-16T00:00:00.000Z',
+    });
+    vi.mocked(repository.update).mockResolvedValue(existingForm);
+
+    await update('123', '10', { ParentSignatureDate: '2026-02-01' });
+
+    expect(repository.update).toHaveBeenCalledWith(123, 10, { ParentSignatureDate: null });
   });
 
   it('validates the merged record', async () => {

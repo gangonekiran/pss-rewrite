@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-/** Card for each Exit Form section. */
+/** Card for each input form section. */
 export function Section({
   title,
   description,

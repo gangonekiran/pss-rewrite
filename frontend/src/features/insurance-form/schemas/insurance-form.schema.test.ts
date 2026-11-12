@@ -88,7 +88,9 @@ describe('createInsuranceFormSchema', () => {
   });
 
   it('rejects an end date before the effective date', () => {
-    expect(errors({ ...privateBilling, EffectiveDate: '2026-02-01', EndDate: '2026-01-31' })).toEqual({
+    expect(
+      errors({ ...privateBilling, EffectiveDate: '2026-02-01', EndDate: '2026-01-31' }),
+    ).toEqual({
       EndDate: 'End Date of Policy cannot be before Effective Date of Policy.',
     });
   });

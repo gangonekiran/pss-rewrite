@@ -3,7 +3,7 @@ import { render } from 'vitest-browser-react';
 
 import { test } from '../../../../test-extend';
 
-import { Section, SubSection } from './ExitFormControls';
+import { Section, SubSection } from './FormSection';
 
 test('Section shows the title, the description and the content', async () => {
   const screen = await render(

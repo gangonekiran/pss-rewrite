@@ -54,7 +54,12 @@ test('shows a dash for missing values', async () => {
 
 test('shows only the child details when childOnly is set', async () => {
   const screen = await render(
-    <ClientInformation client={client} regionName="St Albans" referralDate="2025-02-15" childOnly />,
+    <ClientInformation
+      client={client}
+      regionName="St Albans"
+      referralDate="2025-02-15"
+      childOnly
+    />,
   );
 
   for (const text of ['Austin', 'Jane', '123-45-6789', '04/10/2023']) {

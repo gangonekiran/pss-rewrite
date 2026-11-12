@@ -1,10 +1,9 @@
 import { useId } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { Field, inputClass, RegionSelect } from '../../common-info';
+import { Field, inputClass, RegionSelect, Section } from '../../common-info';
 import type { RegionLookup } from '../../../types/common';
 import type { ExitFormValues } from '../../../types/exit-form';
-import { Section } from './ExitFormControls';
 
 interface Props {
   regions: RegionLookup[];

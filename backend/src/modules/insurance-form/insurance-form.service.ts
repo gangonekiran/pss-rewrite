@@ -20,12 +20,6 @@ async function child(childId: number): Promise<InsuranceFormClient> {
   return c;
 }
 
-function prepare(raw: InsuranceFormRecord) {
-  const p = normalizePayload(raw);
-  clearDependentFields(p);
-  return p;
-}
-
 export async function get(childIdRaw: unknown) {
   const childId = int(childIdRaw, "ChildID");
   const client = await child(childId);
@@ -45,7 +39,8 @@ export async function getOne(childIdRaw: unknown, idRaw: unknown) {
 export async function create(childIdRaw: unknown, raw: InsuranceFormRecord) {
   const childId = int(childIdRaw, "ChildID");
   const client = await child(childId);
-  const p = prepare(raw);
+  const p = normalizePayload(raw);
+  clearDependentFields(p);
 
   validateRecord(p, client.DOB);
 
@@ -62,7 +57,8 @@ export async function update(childIdRaw: unknown, idRaw: unknown, raw: Insurance
   const existing = await repository.findOne(childId, id);
   if (!existing) error("Insurance Form not found", 404);
 
-  const p = prepare(raw);
+  const p = normalizePayload(raw);
+  clearDependentFields(p, p.BillingConsent !== undefined ? p.BillingConsent : existing.BillingConsent);
 
   validateRecord({ ...existing, ...p }, client.DOB);
 

@@ -7,63 +7,19 @@ import {
   type WritableColumn,
 } from "./insurance-form.config.js";
 import type { InsuranceFormRecord } from "./insurance-form.types.js";
+import {
+  error,
+  isBlank,
+  parseBit,
+  parseDate,
+  parseInt32,
+  parseText,
+  toIsoDate,
+} from "../../utils/form-values.js";
 
-export function error(message: string, status = 400): never {
-  throw Object.assign(new Error(message), { status });
-}
+export { error, toIsoDate };
 
 const columnNames = new Set<string>(Object.keys(COLUMNS));
-
-function isBlank(value: unknown) {
-  return value === undefined || value === null || String(value).trim() === "";
-}
-
-/** Date, ISO timestamp or YYYY-MM-DD → YYYY-MM-DD (UTC), or null. */
-export function toIsoDate(value: unknown): string | null {
-  if (isBlank(value)) return null;
-  if (value instanceof Date) {
-    return Number.isNaN(value.getTime()) ? null : value.toISOString().slice(0, 10);
-  }
-  const match = String(value).trim().match(/^(\d{4}-\d{2}-\d{2})/);
-  return match ? match[1] : null;
-}
-
-function parseDate(value: unknown, field: string): string | null {
-  if (isBlank(value)) return null;
-  if (value instanceof Date) return toIsoDate(value);
-  const s = String(value).trim();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) error(`${field} must use YYYY-MM-DD format`);
-  const d = new Date(`${s}T00:00:00Z`);
-  if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== s) {
-    error(`${field} must be a valid date`);
-  }
-  return s;
-}
-
-function parseInt32(value: unknown, field: string): number | null {
-  if (isBlank(value)) return null;
-  const n = Number(value);
-  if (!Number.isInteger(n)) error(`${field} must be a whole number`);
-  return n;
-}
-
-function parseBit(value: unknown, field: string): boolean {
-  if (isBlank(value)) return false;
-  if (typeof value === "boolean") return value;
-  const s = String(value).trim().toLowerCase();
-  if (["1", "-1", "true", "yes"].includes(s)) return true;
-  if (["0", "false", "no"].includes(s)) return false;
-  error(`${field} must be true or false`);
-}
-
-function parseText(value: unknown, field: string, max?: number): string | null {
-  if (isBlank(value)) return null;
-  const s = String(value).trim();
-  if (max !== undefined && s.length > max) {
-    error(`${field} must be ${max} characters or fewer`);
-  }
-  return s;
-}
 
 /**
  * Turns a raw request body into column → typed value.
@@ -106,15 +62,17 @@ export function normalizePayload(raw: InsuranceFormRecord): InsuranceFormRecord 
 }
 
 /**
- * Clears what belongs to the other consent answer, when BillingConsent is
- * part of this save:
+ * Clears what belongs to the other consent answer:
  * - allow (1 or 2): no decline reasons, no decline signature date
  * - decline (3): no consent signature date
+ * `consent` is the answer the saved form will have; on update that is the
+ * saved value when the body does not change it, so a partial update cannot
+ * store fields of the answer that was not chosen.
  */
-export function clearDependentFields(p: InsuranceFormRecord) {
-  if (p.BillingConsent === undefined || p.BillingConsent === null) return;
+export function clearDependentFields(p: InsuranceFormRecord, consent: unknown = p.BillingConsent) {
+  if (consent === undefined || consent === null) return;
 
-  if (p.BillingConsent === BILLING_CONSENT_DECLINE) {
+  if (consent === BILLING_CONSENT_DECLINE) {
     p.ParentSignatureDate = null;
   } else {
     for (const { field } of DECLINE_REASONS) p[field] = false;

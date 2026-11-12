@@ -1,3 +1,5 @@
+import type { ColumnSpec } from "../../utils/sql-columns.js";
+
 export const INSURANCE_FORM_TABLE = "dbo.stblInsuranceForm";
 
 /** Legacy value stored in FormType (the column default and slstFormNames). */
@@ -14,8 +16,6 @@ export const INSURANCE_FORM_TYPE = "Insurance";
  * InsertDate/InsertUser/LastUpdateDate/LastUpdateUser are left to the
  * column defaults and are never written from the API.
  */
-export type ColumnKind = "int" | "bit" | "date" | "text";
-
 export const COLUMNS = {
   FormDate: { kind: "date" },
   BranchAddress: { kind: "text", max: 255 },
@@ -32,7 +32,7 @@ export const COLUMNS = {
   DeclineReasonBenefits: { kind: "bit" },
   DeclineReasonEligibility: { kind: "bit" },
   ParentSignatureDate2: { kind: "date" },
-} as const satisfies Record<string, { kind: ColumnKind; max?: number }>;
+} as const satisfies Record<string, ColumnSpec>;
 
 export type WritableColumn = keyof typeof COLUMNS;
 

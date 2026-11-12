@@ -1,23 +1,28 @@
 import { useId } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
-import { Field, FieldGroup, inputClass } from '../../common-info';
-import { Section, SubSection } from '../../exit-form/components/ExitFormControls';
+import {
+  Field,
+  FieldGroup,
+  inputClass,
+  optionClass,
+  radioClass,
+  Section,
+  SubSection,
+} from '../../common-info';
 import {
   BILLING_CONSENT_DECLINE,
   type InsuranceFormOptions,
   type InsuranceFormValues,
 } from '../../../types/insurance-form';
+import { toDateInput } from '../../../utils/date';
 
 interface Props {
   options: InsuranceFormOptions;
+  dob: string | null;
 }
 
-const radioClass = 'mt-0.5 h-4 w-4 border-gray-300 text-green-600 focus:ring-green-500';
-const optionClass =
-  'flex cursor-pointer items-start gap-2 rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-800 hover:bg-gray-50 has-[:checked]:border-green-600 has-[:checked]:bg-green-50';
-
-export default function ConsentToBill({ options }: Props) {
+export default function ConsentToBill({ options, dob }: Props) {
   const {
     register,
     control,
@@ -27,6 +32,7 @@ export default function ConsentToBill({ options }: Props) {
 
   const consent = useWatch({ control, name: 'BillingConsent' });
   const declined = consent === BILLING_CONSENT_DECLINE;
+  const dobDate = toDateInput(dob) || undefined;
 
   return (
     <Section
@@ -64,6 +70,7 @@ export default function ConsentToBill({ options }: Props) {
             <input
               id={`${id}-ParentSignatureDate`}
               type="date"
+              min={dobDate}
               {...register('ParentSignatureDate')}
               className={inputClass}
             />
@@ -103,6 +110,7 @@ export default function ConsentToBill({ options }: Props) {
               <input
                 id={`${id}-ParentSignatureDate2`}
                 type="date"
+                min={dobDate}
                 {...register('ParentSignatureDate2')}
                 className={inputClass}
               />

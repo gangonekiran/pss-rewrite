@@ -103,8 +103,8 @@ describe('valuesToPayload', () => {
   });
 
   it('sends null for an unanswered consent and empty dates', () => {
-    expect(
-      valuesToPayload({ ...DEFAULT_INSURANCE_FORM_VALUES, BillingConsent: '' }),
-    ).toMatchObject({ FormDate: null, BillingConsent: null, ParentSignatureDate: null });
+    expect(valuesToPayload({ ...DEFAULT_INSURANCE_FORM_VALUES, BillingConsent: '' })).toMatchObject(
+      { FormDate: null, BillingConsent: null, ParentSignatureDate: null },
+    );
   });
 });

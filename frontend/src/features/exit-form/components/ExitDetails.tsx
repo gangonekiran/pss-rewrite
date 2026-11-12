@@ -1,19 +1,22 @@
 import { useEffect, useId } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
-import { Field, FieldGroup, inputClass } from '../../common-info';
+import {
+  Field,
+  FieldGroup,
+  inputClass,
+  optionClass,
+  radioClass,
+  Section,
+  SubSection,
+} from '../../common-info';
 import type { ExitFormOptions, ExitFormValues } from '../../../types/exit-form';
 import { suggestExitPath } from '../utils/exit-form.calculations';
-import { Section, SubSection } from './ExitFormControls';
 
 interface Props {
   options: ExitFormOptions;
   dob: string | null;
 }
-
-const radioClass = 'mt-0.5 h-4 w-4 border-gray-300 text-green-600 focus:ring-green-500';
-const optionClass =
-  'flex cursor-pointer items-start gap-2 rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-800 hover:bg-gray-50 has-[:checked]:border-green-600 has-[:checked]:bg-green-50';
 
 export default function ExitDetails({ options, dob }: Props) {
   const {

@@ -36,7 +36,10 @@ describe('insuranceFormService', () => {
     const payload = { PolicyNumber: 'P-2' };
     vi.mocked(api.put).mockResolvedValue({ data: { ID: 7, ...payload } });
 
-    await expect(insuranceFormService.update(123, 7, payload)).resolves.toEqual({ ID: 7, ...payload });
+    await expect(insuranceFormService.update(123, 7, payload)).resolves.toEqual({
+      ID: 7,
+      ...payload,
+    });
     expect(api.put).toHaveBeenCalledWith('/insurance-forms/123/7', payload);
   });
 

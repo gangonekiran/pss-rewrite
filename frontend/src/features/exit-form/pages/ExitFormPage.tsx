@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm, useWatch, type Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import axios from 'axios';
 import toast from 'react-hot-toast';
 import { Save, X } from 'lucide-react';
 
 import PageContainer from '../../../layouts/PageContainer';
+import { apiMessage } from '../../../utils/api-message';
 import commonInfoService from '../../../services/common-info.service';
 import exitFormService from '../../../services/exit-form.service';
 import type { RegionLookup } from '../../../types/common';
@@ -35,13 +35,6 @@ interface Lookups {
   client: ExitFormClient;
   regions: RegionLookup[];
   options: ExitFormOptions;
-}
-
-function apiMessage(error: unknown, fallback: string) {
-  if (axios.isAxiosError(error)) {
-    return error.response?.data?.message ?? error.response?.data?.error ?? fallback;
-  }
-  return fallback;
 }
 
 /** Read-only client card + General Information, sharing the live region and referral date. */

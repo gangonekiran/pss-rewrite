@@ -1,3 +1,5 @@
+import type { ColumnSpec } from "../../utils/sql-columns.js";
+
 export const EXIT_FORM_TABLE = "dbo.stblExitForm";
 export const REFERRAL_FORM_TABLE = "dbo.stblReferralForm";
 export { ACTIVE_FORM_TABLE } from "../active-form/active-form.config.js";
@@ -13,8 +15,6 @@ export const EXIT_FORM_TYPE = "Exit";
  * InsertDate/InsertUser/LastUpdateDate/LastUpdateUser are left to the
  * column defaults and are never written from the API.
  */
-export type ColumnKind = "int" | "yesNo" | "bit" | "date" | "text";
-
 export const COLUMNS = {
   FormDate: { kind: "date" },
   FormType: { kind: "text", max: 12 },
@@ -54,7 +54,7 @@ export const COLUMNS = {
   EXFNoPartB2: { kind: "bit" },
   EXFNoPartB3: { kind: "bit" },
   ReferredTo: { kind: "int" },
-} as const satisfies Record<string, { kind: ColumnKind; max?: number }>;
+} as const satisfies Record<string, ColumnSpec>;
 
 export type WritableColumn = keyof typeof COLUMNS;
 

@@ -1,5 +1,5 @@
-import type { Request } from "mssql";
 import { getPool, sql } from "../../config/database.js";
+import { bindColumn, pickColumns, quoteColumn } from "../../utils/sql-columns.js";
 import {
   ACTIVE_FORM_TABLE,
   COLUMNS,
@@ -9,40 +9,6 @@ import {
   type WritableColumn,
 } from "./exit-form.config.js";
 import type { ExitFormClient, ExitFormRecord } from "./exit-form.types.js";
-
-const columnNames = new Set<string>(Object.keys(COLUMNS));
-
-/** Keeps only writable columns; ID and ChildID never come from the body. */
-function clean(payload: ExitFormRecord) {
-  const result: ExitFormRecord = {};
-  for (const [key, value] of Object.entries(payload ?? {})) {
-    if (columnNames.has(key) && value !== undefined) result[key] = value;
-  }
-  return result;
-}
-
-function bind(req: Request, key: string, value: unknown) {
-  const spec: { kind: string; max?: number } = COLUMNS[key as WritableColumn];
-
-  switch (spec.kind) {
-    case "date":
-      // The legacy "SQL Server" ODBC driver rejects Date/DateTime parameters
-      // (HY004). YYYY-MM-DD strings convert to the datetime2 columns safely
-      // regardless of the server's DATEFORMAT.
-      return req.input(key, sql.NVarChar(10), value);
-    case "int":
-    case "yesNo":
-      return req.input(key, sql.Int, value);
-    case "bit":
-      return req.input(key, sql.Bit, value);
-    default:
-      return req.input(key, spec.max ? sql.NVarChar(spec.max) : sql.NVarChar(sql.MAX), value);
-  }
-}
-
-function col(name: string) {
-  return `[${name.replace(/]/g, "]]")}]`;
-}
 
 export async function getClient(childId: number): Promise<ExitFormClient | null> {
   const pool = await getPool();
@@ -101,7 +67,7 @@ export async function findOne(childId: number, id: number): Promise<ExitFormReco
 
 export async function insert(childId: number, payload: ExitFormRecord) {
   const pool = await getPool();
-  const data = clean(payload);
+  const data = pickColumns(payload, COLUMNS);
   const keys = Object.keys(data);
 
   const req = pool
@@ -109,9 +75,9 @@ export async function insert(childId: number, payload: ExitFormRecord) {
     .input("ChildID", sql.Int, childId)
     .input("FormType", sql.NVarChar(12), EXIT_FORM_TYPE);
 
-  for (const k of keys) bind(req, k, data[k]);
+  for (const k of keys) bindColumn(req, k, data[k], COLUMNS[k as WritableColumn]);
 
-  const columns = ["[ChildID]", "[FormType]", ...keys.map(col)].join(",");
+  const columns = ["[ChildID]", "[FormType]", ...keys.map(quoteColumn)].join(",");
   const values = ["@ChildID", "@FormType", ...keys.map((k) => `@${k}`)].join(",");
 
   const result = await req.query(`
@@ -128,7 +94,7 @@ export async function insert(childId: number, payload: ExitFormRecord) {
 
 export async function update(childId: number, id: number, payload: ExitFormRecord) {
   const pool = await getPool();
-  const data = clean(payload);
+  const data = pickColumns(payload, COLUMNS);
   const keys = Object.keys(data);
 
   if (!keys.length) return findOne(childId, id);
@@ -138,9 +104,9 @@ export async function update(childId: number, id: number, payload: ExitFormRecor
     .input("ChildID", sql.Int, childId)
     .input("ID", sql.Int, id);
 
-  for (const k of keys) bind(req, k, data[k]);
+  for (const k of keys) bindColumn(req, k, data[k], COLUMNS[k as WritableColumn]);
 
-  const sets = keys.map((k) => `${col(k)}=@${k}`).join(",");
+  const sets = keys.map((k) => `${quoteColumn(k)}=@${k}`).join(",");
 
   await req.query(`
     UPDATE ${EXIT_FORM_TABLE}

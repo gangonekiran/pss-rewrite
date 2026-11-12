@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import axios from 'axios';
 import toast from 'react-hot-toast';
 import { Save, X } from 'lucide-react';
 
 import PageContainer from '../../../layouts/PageContainer';
+import { apiMessage } from '../../../utils/api-message';
 import insuranceFormService from '../../../services/insurance-form.service';
 import {
   DEFAULT_INSURANCE_FORM_VALUES,
@@ -31,13 +31,6 @@ export interface InsuranceFormPageProps {
 interface Lookups {
   client: InsuranceFormClient;
   options: InsuranceFormOptions;
-}
-
-function apiMessage(error: unknown, fallback: string) {
-  if (axios.isAxiosError(error)) {
-    return error.response?.data?.message ?? error.response?.data?.error ?? fallback;
-  }
-  return fallback;
 }
 
 export default function InsuranceFormPage({
@@ -166,10 +159,10 @@ export default function InsuranceFormPage({
             <ClientInformation client={lookups.client} childOnly />
 
             {/* 2. Insurance Information */}
-            <InsuranceInformation />
+            <InsuranceInformation dob={lookups.client.DOB} />
 
             {/* 3. Consent to Bill Insurance */}
-            <ConsentToBill options={lookups.options} />
+            <ConsentToBill options={lookups.options} dob={lookups.client.DOB} />
           </div>
         </div>
 

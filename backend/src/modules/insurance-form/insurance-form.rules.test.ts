@@ -142,6 +142,14 @@ describe('clearDependentFields', () => {
     expect(p).toEqual({ BillingConsent: 3, ParentSignatureDate: null });
   });
 
+  it('uses the consent passed in when the body does not include one', () => {
+    const p: Record<string, unknown> = { DeclineReasonCap: true };
+
+    clearDependentFields(p, 1);
+
+    expect(p).toMatchObject({ DeclineReasonCap: false, ParentSignatureDate2: null });
+  });
+
   it.each([undefined, null])('leaves the record alone when BillingConsent is %j', (consent) => {
     const p: Record<string, unknown> = { BillingConsent: consent, ParentSignatureDate: '2026-01-01' };
 

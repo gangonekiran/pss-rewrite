@@ -308,8 +308,12 @@ test('edit form: loads the record and saves changes with update', async () => {
 
   await expect.element(screen.getByRole('heading', { name: 'Edit Insurance Form' })).toBeVisible();
   await expect.element(screen.getByLabelText(field('Date Completed'))).toHaveValue('2026-01-15');
-  await expect.element(screen.getByLabelText(field('Insurance Company Name'))).toHaveValue('Blue Cross');
-  await expect.element(screen.getByLabelText(field('End Date of Policy'))).toHaveValue('2026-12-31');
+  await expect
+    .element(screen.getByLabelText(field('Insurance Company Name')))
+    .toHaveValue('Blue Cross');
+  await expect
+    .element(screen.getByLabelText(field('End Date of Policy')))
+    .toHaveValue('2026-12-31');
   await expect.element(screen.getByRole('radio', { name: PRIVATE })).toBeChecked();
   await expect.element(screen.getByLabelText(field(signatureDate))).toHaveValue('2026-01-15');
 
@@ -342,7 +346,9 @@ test('edit form: shows a saved decline with its reason', async () => {
   const { screen } = await renderPage(7);
 
   await expect.element(screen.getByRole('radio', { name: DECLINE })).toBeChecked();
-  await expect.element(screen.getByRole('radio', { name: /home and community waivers/ })).toBeChecked();
+  await expect
+    .element(screen.getByRole('radio', { name: /home and community waivers/ }))
+    .toBeChecked();
   await expect.element(screen.getByLabelText(field(signatureDate))).toHaveValue('2026-01-20');
 });
 
@@ -398,4 +404,44 @@ test('Cancel closes the form', async () => {
   await clickButton(screen, 'Cancel');
 
   expect(onClose).toHaveBeenCalled();
+});
+
+test('date pickers start at the date of birth and End Date at the Effective Date', async () => {
+  const { screen } = await renderPage();
+
+  await expect
+    .element(screen.getByLabelText(field('Date Completed')))
+    .toHaveAttribute('min', '2024-03-10');
+  await expect
+    .element(screen.getByLabelText(field('End Date of Policy')))
+    .not.toHaveAttribute('min');
+
+  await fill(screen, 'Effective Date of Policy', '2026-02-01');
+  await expect
+    .element(screen.getByLabelText(field('End Date of Policy')))
+    .toHaveAttribute('min', '2026-02-01');
+
+  await check(screen.getByRole('radio', { name: MEDICAID }));
+  await expect
+    .element(screen.getByLabelText(field(signatureDate)))
+    .toHaveAttribute('min', '2024-03-10');
+
+  await check(screen.getByRole('radio', { name: DECLINE }));
+  await expect
+    .element(screen.getByLabelText(field(signatureDate)))
+    .toHaveAttribute('min', '2024-03-10');
+});
+
+test('text fields allow at most 255 characters', async () => {
+  const { screen } = await renderPage();
+
+  for (const label of [
+    'Insurance Company Name',
+    'Policy #',
+    'Group # (Contract #)',
+    'Group/Employer Name',
+    'Individual Policy Holder',
+  ]) {
+    await expect.element(screen.getByLabelText(field(label))).toHaveAttribute('maxlength', '255');
+  }
 });

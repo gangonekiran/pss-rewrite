@@ -1,11 +1,10 @@
 import { useId } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
-import { Field, inputClass } from '../../common-info';
+import { Field, inputClass, Section } from '../../common-info';
 import type { ExitFormValues } from '../../../types/exit-form';
 import { formatDate } from '../../../utils/date';
 import { calculateExit } from '../utils/exit-form.calculations';
-import { Section } from './ExitFormControls';
 
 interface Props {
   dob: string | null;
