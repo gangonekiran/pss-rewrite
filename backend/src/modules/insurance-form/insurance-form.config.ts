@@ -2,7 +2,10 @@ import type { ColumnSpec } from "../../utils/sql-columns.js";
 
 export const INSURANCE_FORM_TABLE = "dbo.stblInsuranceForm";
 
-/** Legacy value stored in FormType (the column default and slstFormNames). */
+/**
+ * Legacy value stored in FormType (the column default). Reports such as
+ * GetPointInTimeActive* and GetServiceLocation* filter on this literal.
+ */
 export const INSURANCE_FORM_TYPE = "Insurance";
 
 /**

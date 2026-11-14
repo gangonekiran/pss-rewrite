@@ -754,7 +754,10 @@ test('closes the Exit form modal from its close button', async () => {
   const { screen } = await renderInputForms();
 
   await screen.getByRole('button', { name: 'Exit Entry', exact: true }).click();
-  await screen.getByRole('button', { name: 'Close', exact: true }).click();
+  // Clicked through the DOM: a coordinate click can miss the small icon button in the scaled runner.
+  const close = screen.getByRole('button', { name: 'Close', exact: true });
+  await expect.element(close).toBeVisible();
+  (close.element() as HTMLButtonElement).click();
 
   await expect.element(screen.getByTestId('exit-form-page')).not.toBeInTheDocument();
 });
@@ -816,7 +819,10 @@ test('closes the Insurance form modal from its close button', async () => {
   const { screen } = await renderInputForms();
 
   await screen.getByRole('button', { name: 'Insurance Entry', exact: true }).click();
-  await screen.getByRole('button', { name: 'Close', exact: true }).click();
+  // Clicked through the DOM: a coordinate click can miss the small icon button in the scaled runner.
+  const close = screen.getByRole('button', { name: 'Close', exact: true });
+  await expect.element(close).toBeVisible();
+  (close.element() as HTMLButtonElement).click();
 
   await expect.element(screen.getByTestId('insurance-form-page')).not.toBeInTheDocument();
 });

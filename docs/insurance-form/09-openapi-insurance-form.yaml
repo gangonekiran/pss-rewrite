@@ -7,7 +7,8 @@ info:
     OpenAPI contract entries for the **Insurance Form** module (`backend/src/modules/insurance-form`),
     mounted at `/api/insurance-forms`. Writes to `dbo.stblInsuranceForm`.
 
-    Describes the API **as implemented**. Known gaps are flagged with `x-known-issues`.
+    Describes the API **as implemented**. Known gaps are flagged with `x-known-issues` and
+    refer to `docs/insurance-form/03-business-rules.md` (IF-GAP-xx).
 
     - Bodies and responses use the **PascalCase database column names**.
     - Only the 15 whitelisted columns are written; other keys, `ID`, `ChildID` and `FormType`
@@ -41,15 +42,18 @@ security: []
 
 x-known-issues:
   STATUS-500: >
+    (IF-GAP-02)
     The shared error handler (`middleware/error.middleware.ts`) always answers HTTP 500. The
     service sets 400 (validation) and 404 (not found) on its errors, but they are not used.
-  NO-AUTH: The routes are not protected by the authentication middleware.
+  NO-AUTH: (IF-GAP-03) The routes are not protected by the authentication middleware.
   GENERIC-ROUTES: >
+    (IF-GAP-01)
     `POST/PUT /api/input-forms/insurance/{childId}[/{id}]` still write `stblInsuranceForm`
     directly, without the Insurance Form rules (consent, required dates, clearing). The screen
     uses `/api/insurance-forms`; the Input Forms grid deletes through
     `DELETE /api/input-forms/insurance/{childId}/{id}`.
   CONSENT-CODES: >
+    (IF-GAP-04)
     Only `BillingConsent = 3` is named in dbCDD (FITP "Do Not Bill"). 1 = private insurance
     and 2 = Medicaid follow the order of the options on the legacy form.
 
