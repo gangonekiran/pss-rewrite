@@ -16,6 +16,7 @@ import { activeFormRoutes } from "./modules/active-form/index.js";
 import { commonInfoRoutes } from "./modules/common-info/index.js";
 import { exitFormRoutes } from "./modules/exit-form/index.js";
 import { insuranceFormRoutes } from "./modules/insurance-form/index.js";
+import { noprFormRoutes } from "./modules/nopr-form/index.js";
 
 const app = express();
 
@@ -62,6 +63,8 @@ app.use('/api/active-forms', activeFormRoutes);
 app.use('/api/exit-forms', exitFormRoutes);
 
 app.use('/api/insurance-forms', insuranceFormRoutes);
+
+app.use('/api/nopr-forms', noprFormRoutes);
 
 app.use('/api/common-info', commonInfoRoutes);
 

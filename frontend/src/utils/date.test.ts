@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { addToDate, daysBetween, formatDate, toDateInput } from './date';
+import { addToDate, daysBetween, formatDate, isCalendarDate, toDateInput } from './date';
 
 describe('toDateInput', () => {
   it('reads YYYY-MM-DD strings and ISO timestamps', () => {
@@ -78,4 +78,17 @@ describe('formatDate', () => {
   it.each(['', null, undefined, 'not a date'])('shows a dash for %j', (value) => {
     expect(formatDate(value)).toBe('—');
   });
+});
+
+describe('isCalendarDate', () => {
+  it.each(['2026-01-15', '2024-02-29', '2026-12-31'])('accepts %s', (value) => {
+    expect(isCalendarDate(value)).toBe(true);
+  });
+
+  it.each(['2026-02-30', '2025-02-29', '2026-13-01', '2026-00-10', '01/15/2026', '2026-1-15', ''])(
+    'rejects %j',
+    (value) => {
+      expect(isCalendarDate(value)).toBe(false);
+    },
+  );
 });

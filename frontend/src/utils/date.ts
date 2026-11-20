@@ -17,6 +17,13 @@ function utc(date: string) {
   return new Date(`${date}T00:00:00Z`);
 }
 
+/** A YYYY-MM-DD string that is a real calendar day (the browser rolls 2026-02-30 over to March). */
+export function isCalendarDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const d = utc(value);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
+}
+
 /** Whole days from `from` to `to` (negative when `to` is earlier), null when either is blank or unreadable. */
 export function daysBetween(from: string, to: string): number | null {
   if (!from || !to) return null;

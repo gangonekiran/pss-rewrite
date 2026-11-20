@@ -1,0 +1,413 @@
+openapi: 3.0.3
+
+info:
+  title: PSS Rewrite – NOPR Form API
+  version: 1.0.0
+  description: |
+    OpenAPI contract entries for the **No One Plan Resulting (NOPR) Form** module
+    (`backend/src/modules/nopr-form`), mounted at `/api/nopr-forms`. Writes to
+    `dbo.stblNoOnePlanForm`.
+
+    Describes the API **as implemented**. Known gaps are flagged with `x-known-issues` and
+    refer to `docs/nopr-form/03-business-rules.md` (NOPR-GAP-xx).
+
+    - Bodies and responses use the **PascalCase database column names**.
+    - Only 4 columns are taken from the body: `Region`, `RefStatus`, `InitialEvalDate`,
+      `StatusDate`. Other keys, `ID`, `ChildID`, `FormType`, `FormDate` and the legacy
+      `MonthReporting`, `Screening`, `ReferredBack` are ignored silently, so values already
+      stored are kept.
+    - `FormType` is always saved as `No One Plan`. `FormDate` is always saved as the
+      `StatusDate`: the FITP extract reads it as the exit date (the date the Early
+      Intervention voucher is turned off).
+    - `RefStatus` 8 (new) and 1–6 can be chosen. 7 ("Turned 3 during evaluation process") is
+      retired: accepted only on a form that already has it.
+    - `StatusDate` can't be before the child's DOB or the most recent referral date (latest
+      `ReferralDate` or `ReReferralDate` on the child's Referral forms). `InitialEvalDate`
+      (new column) is optional, not before the DOB and not after `StatusDate`.
+    - Every error returns HTTP **500** `{ "success": false, "message": "..." }`, including the
+      400/404 conditions listed per operation.
+  contact:
+    name: PSS Rewrite team
+
+servers:
+  - url: http://localhost:5000
+    description: Local development server
+
+tags:
+  - name: NOPR Form
+    description: No One Plan Resulting form (reason no plan resulted and the status date)
+  - name: NOPR Form Lookups
+    description: Code lists and default values for the NOPR Form
+
+# Not protected today, like the Exit and Insurance forms. Other modules use `cookieAuth`.
+security: []
+
+x-known-issues:
+  STATUS-500: >
+    (NOPR-GAP-02)
+    The shared error handler (`middleware/error.middleware.ts`) always answers HTTP 500. The
+    service sets 400 (validation) and 404 (not found) on its errors, but they are not used.
+  NO-AUTH: (NOPR-GAP-03) The routes are not protected by the authentication middleware.
+  GENERIC-ROUTES: >
+    (NOPR-GAP-01)
+    `POST/PUT /api/input-forms/no-one-plan/{childId}[/{id}]` still write `stblNoOnePlanForm`
+    directly, without the NOPR Form rules (retired reason, date rules, FormDate = StatusDate),
+    and don't know `InitialEvalDate`. The screen uses `/api/nopr-forms`; the Input Forms grid
+    deletes through `DELETE /api/input-forms/no-one-plan/{childId}/{id}`.
+  REASON-CODES: >
+    (NOPR-GAP-10)
+    There is no lookup table for `RefStatus`; the column description in dbCDD lists 1–7 only.
+    Code 8 exists only in `nopr-form.config.ts`.
+  LEGACY-FORMDATE: >
+    (NOPR-GAP-08)
+    Saving a legacy form sets its `FormDate` (the last day of the reporting month) to the
+    status date, which changes the exit date FITP sends for that referral.
+
+paths:
+  /api/nopr-forms/lookups/options:
+    get:
+      tags: [NOPR Form Lookups]
+      operationId: getNoprFormOptions
+      summary: Reasons no plan resulted
+      description: |
+        Served from `nopr-form.config.ts` (there is no lookup table in dbCDD). `refStatus` is in
+        display order (8 first). `retiredRefStatus` is shown only on a form that already has it.
+      responses:
+        "200":
+          description: Option lists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoprFormOptions"
+        "500":
+          $ref: "#/components/responses/Error"
+      x-known-issues: [REASON-CODES]
+
+  /api/nopr-forms/{childId}:
+    parameters:
+      - $ref: "#/components/parameters/ChildId"
+    get:
+      tags: [NOPR Form]
+      operationId: getNoprForms
+      summary: Client header and all of their NOPR forms
+      description: Forms are ordered newest first (`FormDate` nulls last, then `ID DESC`).
+      responses:
+        "200":
+          description: Client and forms
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [client, forms]
+                properties:
+                  client:
+                    $ref: "#/components/schemas/NoprFormClient"
+                  forms:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/NoprForm"
+        "500":
+          description: |
+            Includes `ChildID must be a positive integer` (intended 400) and
+            `Client not found` (intended 404).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-known-issues: [NO-AUTH, STATUS-500]
+    post:
+      tags: [NOPR Form]
+      operationId: createNoprForm
+      summary: Create a NOPR form
+      description: |
+        Requires `Region`, `RefStatus` (not 7) and `StatusDate`. `InitialEvalDate` is optional.
+        Steps: parse the body → reject the retired reason → `FormDate = StatusDate` → validate
+        against the client's DOB and most recent referral date → insert with
+        `FormType = 'No One Plan'` → read the row back.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NoprFormInput"
+            examples:
+              ui:
+                summary: As sent by the screen
+                value:
+                  Region: 3
+                  RefStatus: 4
+                  InitialEvalDate: "2026-01-20"
+                  StatusDate: "2026-02-02"
+              noEvaluation:
+                summary: Without a Date of Initial Evaluation
+                value:
+                  Region: 3
+                  RefStatus: 8
+                  InitialEvalDate: null
+                  StatusDate: "2026-02-02"
+      responses:
+        "201":
+          description: The new row (`FormDate` = `StatusDate`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoprForm"
+        "500":
+          $ref: "#/components/responses/ValidationError"
+      x-known-issues: [NO-AUTH, STATUS-500, REASON-CODES]
+
+  /api/nopr-forms/{childId}/defaults:
+    parameters:
+      - $ref: "#/components/parameters/ChildId"
+    get:
+      tags: [NOPR Form Lookups]
+      operationId: getNoprFormDefaults
+      summary: Values for a new NOPR form
+      description: |
+        `Region`: the region of the latest Active form, else the latest Referral form, else the
+        client's. `MostRecentReferralDate`: the latest `ReferralDate` or `ReReferralDate` on the
+        child's Referral forms — the lower limit of `StatusDate`.
+      responses:
+        "200":
+          description: Default values
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoprFormDefaults"
+        "500":
+          description: Includes `Client not found` (intended 404).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-known-issues: [NO-AUTH, STATUS-500]
+
+  /api/nopr-forms/{childId}/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ChildId"
+      - $ref: "#/components/parameters/FormId"
+    get:
+      tags: [NOPR Form]
+      operationId: getNoprForm
+      summary: One NOPR form
+      description: Not used by the UI (the form loads the list and picks the row).
+      responses:
+        "200":
+          description: The row
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoprForm"
+        "500":
+          description: Includes `Client not found` and `NOPR Form not found` (intended 404).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      tags: [NOPR Form]
+      operationId: updateNoprForm
+      summary: Partial update
+      description: |
+        Only the keys sent are changed. Reason 7 is accepted only when the saved form already
+        has it. `FormDate` follows `StatusDate` when the body has one. Validation runs on the
+        saved row merged with the body, so the same rules as create apply to the result.
+        `MonthReporting`, `Screening` and `ReferredBack` keep their values. Sets
+        `LastUpdateDate` and `LastUpdateUser`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NoprFormInput"
+            examples:
+              ui:
+                summary: Change the reason, clear the evaluation date, move the status date
+                value:
+                  Region: 3
+                  RefStatus: 8
+                  InitialEvalDate: null
+                  StatusDate: "2026-02-10"
+              keepRetired:
+                summary: Save an older form that has the retired reason
+                value:
+                  Region: 3
+                  RefStatus: 7
+                  StatusDate: "2025-06-30"
+      responses:
+        "200":
+          description: The updated row
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoprForm"
+        "500":
+          $ref: "#/components/responses/ValidationError"
+      x-known-issues: [NO-AUTH, STATUS-500, LEGACY-FORMDATE]
+    delete:
+      tags: [NOPR Form]
+      operationId: deleteNoprForm
+      summary: Delete a NOPR form
+      description: Not used by the UI (the grid uses `DELETE /api/input-forms/no-one-plan/{childId}/{id}`).
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        "500":
+          description: Includes `NOPR Form not found` (intended 404).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-known-issues: [GENERIC-ROUTES]
+
+components:
+  parameters:
+    ChildId:
+      name: childId
+      in: path
+      required: true
+      description: Client ID (`stblPeople.ChildID`); positive integer
+      schema:
+        type: integer
+        minimum: 1
+        example: 1042
+    FormId:
+      name: id
+      in: path
+      required: true
+      description: NOPR Form ID (`stblNoOnePlanForm.ID`); positive integer
+      schema:
+        type: integer
+        minimum: 1
+        example: 12
+
+  responses:
+    Error:
+      description: Any error (always HTTP 500 today)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    ValidationError:
+      description: |
+        Validation and not-found errors (intended 400/404, sent as 500). Messages include:
+        `ChildID must be a positive integer`, `ID must be a positive integer`,
+        `Client not found`, `NOPR Form not found`,
+        `{Field} must use YYYY-MM-DD format`, `{Field} must be a valid date`,
+        `{Field} must be a whole number`, `RefStatus has an unknown value: {x}`,
+        `"Turned 3 during evaluation process" is no longer used; choose another reason`,
+        `Region must be selected`, `Select the reason a plan was not created`,
+        `Date above status was determined is required`,
+        `Date above status was determined cannot be before Date of Birth`,
+        `Date above status was determined cannot be before the most recent referral date (MM/DD/YYYY)`,
+        `Date of Initial Evaluation cannot be before Date of Birth`,
+        `Date of Initial Evaluation cannot be after the date the status was determined`.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Date above status was determined cannot be before the most recent referral date (01/05/2026)
+
+    CodeOption:
+      type: object
+      required: [code, label]
+      properties:
+        code:
+          type: integer
+        label:
+          type: string
+
+    NoprFormOptions:
+      type: object
+      required: [refStatus, retiredRefStatus]
+      properties:
+        refStatus:
+          type: array
+          description: Reasons that can be chosen, in display order
+          items:
+            $ref: "#/components/schemas/CodeOption"
+          example:
+            - { code: 8, label: Initial Contact Not Made }
+            - { code: 1, label: Initial visit made - Screening/evaluation declined }
+            - { code: 2, label: Screened - No further evaluation needed }
+            - { code: 3, label: Further Evaluation Declined by Family - Eligibility Not Determined }
+            - { code: 4, label: Evaluated - Not Eligible }
+            - { code: 5, label: Eligible - Services Declined by Family }
+            - { code: 6, label: Moved or Lost Contact }
+        retiredRefStatus:
+          type: array
+          description: Reasons kept on older forms only
+          items:
+            $ref: "#/components/schemas/CodeOption"
+          example:
+            - { code: 7, label: Turned 3 during evaluation process }
+
+    NoprFormDefaults:
+      type: object
+      required: [Region, MostRecentReferralDate]
+      properties:
+        Region: { type: integer, nullable: true, example: 3, description: "Latest Active form → latest Referral form → client" }
+        MostRecentReferralDate: { type: string, format: date, nullable: true, example: "2026-01-05", description: "Latest ReferralDate or ReReferralDate; lower limit of StatusDate" }
+
+    NoprFormClient:
+      type: object
+      description: Read-only header from `stblPeople`.
+      properties:
+        ChildID: { type: integer, example: 1042 }
+        Region: { type: integer, nullable: true, example: 3 }
+        LastName: { type: string, nullable: true, example: Austin }
+        FirstName: { type: string, nullable: true, example: Jane }
+        SS: { type: string, nullable: true, example: 123-45-6789 }
+        DOB: { type: string, nullable: true, example: "2024-03-10 00:00:00" }
+
+    NoprFormInput:
+      type: object
+      description: |
+        Writable `stblNoOnePlanForm` columns. Every field is optional on update. Dates use
+        YYYY-MM-DD and must be real calendar dates.
+      properties:
+        Region: { type: integer, description: "Reporting region (stblReportingRegion.ID). Required" }
+        RefStatus:
+          type: integer
+          enum: [8, 1, 2, 3, 4, 5, 6, 7]
+          description: "Reason no plan resulted. Required. 8 = Initial Contact Not Made (new); 7 = Turned 3 during evaluation process (retired: only on forms that already have it)"
+        InitialEvalDate: { type: string, format: date, nullable: true, description: "Date of Initial Evaluation (new column). Optional; not before DOB; not after StatusDate" }
+        StatusDate: { type: string, format: date, description: "Date above status was determined. Required; not before DOB or the most recent referral date. Also saved as FormDate" }
+
+    NoprForm:
+      description: A `stblNoOnePlanForm` row as returned by the API (all columns).
+      allOf:
+        - $ref: "#/components/schemas/NoprFormInput"
+        - type: object
+          properties:
+            ID: { type: integer, example: 12 }
+            ChildID: { type: integer, example: 1042 }
+            FormType: { type: string, example: No One Plan }
+            FormDate: { type: string, nullable: true, example: "2026-02-02 00:00:00", description: "Same as StatusDate. FITP exit date" }
+            StatusDate: { type: string, nullable: true, example: "2026-02-02 00:00:00" }
+            InitialEvalDate: { type: string, nullable: true, example: "2026-01-20 00:00:00" }
+            MonthReporting: { type: integer, nullable: true, description: "Legacy Month Reporting, not on the form" }
+            Screening: { type: integer, nullable: true, description: "Legacy Periodic Screening, not on the form" }
+            ReferredBack: { type: boolean, nullable: true, description: "Legacy Referred back to CIS Intake Team, not on the form" }
+            InsertDate: { type: string, format: date-time }
+            InsertUser: { type: string }
+            LastUpdateDate: { type: string, format: date-time }
+            LastUpdateUser: { type: string }

@@ -47,6 +47,10 @@ const swaggerOptions: swaggerJSDoc.Options = {
         name: "Insurance Forms",
         description: "Insurance form (stblInsuranceForm) APIs",
       },
+      {
+        name: "NOPR Forms",
+        description: "No One Plan Resulting form (stblNoOnePlanForm) APIs",
+      },
     ],
 
     components: {

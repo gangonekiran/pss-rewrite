@@ -6,16 +6,9 @@ import {
   DECLINE_REASON_FIELDS,
   type InsuranceFormValues,
 } from '../../../types/insurance-form';
-import { toDateInput } from '../../../utils/date';
+import { isCalendarDate, toDateInput } from '../../../utils/date';
 
-/** YYYY-MM-DD that is a real calendar day (the browser rolls 2026-02-30 over to March). */
-function isDate(value: string) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const d = new Date(`${value}T00:00:00Z`);
-  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
-}
-
-const date = z.string().refine((value) => !value || isDate(value), 'Enter a valid date.');
+const date = z.string().refine((value) => !value || isCalendarDate(value), 'Enter a valid date.');
 
 const text = z.string().max(255, 'Use 255 characters or fewer.');
 

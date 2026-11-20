@@ -5,5 +5,6 @@ export * from './nopr';
 export * from './cos';
 export * from './exit-form';
 export * from './insurance-form';
+export * from './nopr-form';
 export * from './reports';
 export * from './settings';

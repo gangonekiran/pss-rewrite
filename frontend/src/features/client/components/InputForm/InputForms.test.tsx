@@ -30,6 +30,7 @@ vi.mock('../../../../types/input-form', () => ({
     { name: 'cos-cover', label: 'COS Entry' },
     { name: 'exit', label: 'Exit Entry' },
     { name: 'insurance', label: 'Insurance Entry' },
+    { name: 'no-one-plan', label: 'NOPR Entry' },
   ],
 }));
 
@@ -103,6 +104,31 @@ vi.mock('../../../insurance-form/pages/InsuranceFormPage', () => ({
       </button>
       <button type="button" onClick={() => void onSaved()}>
         Save insurance page
+      </button>
+    </div>
+  ),
+}));
+
+vi.mock('../../../nopr-form/pages/NoprFormPage', () => ({
+  default: ({
+    childId,
+    formId,
+    onClose,
+    onSaved,
+  }: {
+    childId: number;
+    formId?: number;
+    onClose: () => void;
+    onSaved: () => Promise<void>;
+  }) => (
+    <div data-testid="nopr-form-page">
+      <p>NOPR page child: {childId}</p>
+      <p>NOPR page form: {String(formId)}</p>
+      <button type="button" onClick={onClose}>
+        Close nopr page
+      </button>
+      <button type="button" onClick={() => void onSaved()}>
+        Save nopr page
       </button>
     </div>
   ),
@@ -434,7 +460,7 @@ test('all form type checkboxes are checked by default', async () => {
   const checkboxes = screen.getByRole('checkbox');
 
   await vi.waitFor(() => {
-    expect(checkboxes.elements()).toHaveLength(6);
+    expect(checkboxes.elements()).toHaveLength(7);
   });
 
   for (let index = 0; index < 5; index++) {
@@ -847,6 +873,71 @@ test('closes the Insurance form modal and reloads history when saved', async () 
   await screen.getByRole('button', { name: 'Save insurance page', exact: true }).click();
 
   await expect.element(screen.getByTestId('insurance-form-page')).not.toBeInTheDocument();
+
+  await vi.waitFor(() => {
+    expect(inputFormService.getHistory).toHaveBeenCalledTimes(2);
+  });
+});
+
+/* =========================================================
+   NOPR FORM MODAL
+========================================================= */
+
+test('opens the NOPR form modal for a new NOPR form', async () => {
+  const { screen } = await renderInputForms();
+
+  await screen.getByRole('button', { name: 'NOPR Entry', exact: true }).click();
+
+  await expect.element(screen.getByRole('heading', { name: 'New NOPR Form' })).toBeVisible();
+  await expect.element(screen.getByText('NOPR page child: 123')).toBeVisible();
+  await expect.element(screen.getByText('NOPR page form: undefined')).toBeVisible();
+});
+
+test('opens the NOPR form modal with the form id when editing', async () => {
+  vi.mocked(inputFormService.getHistory).mockResolvedValue([
+    createItem({ id: 88, formName: 'no-one-plan', formType: 'No One Plan' }),
+  ]);
+
+  const { screen } = await renderInputForms();
+
+  await screen.getByRole('button', { name: 'View/Edit', exact: true }).click();
+
+  await expect.element(screen.getByRole('heading', { name: 'Edit NOPR Form' })).toBeVisible();
+  await expect.element(screen.getByText('NOPR page form: 88')).toBeVisible();
+});
+
+test('closes the NOPR form modal from its close button', async () => {
+  const { screen } = await renderInputForms();
+
+  await screen.getByRole('button', { name: 'NOPR Entry', exact: true }).click();
+  // Clicked through the DOM: a coordinate click can miss the small icon button in the scaled runner.
+  const close = screen.getByRole('button', { name: 'Close', exact: true });
+  await expect.element(close).toBeVisible();
+  (close.element() as HTMLButtonElement).click();
+
+  await expect.element(screen.getByTestId('nopr-form-page')).not.toBeInTheDocument();
+});
+
+test('closes the NOPR form modal when the form closes', async () => {
+  const { screen } = await renderInputForms();
+
+  await screen.getByRole('button', { name: 'NOPR Entry', exact: true }).click();
+  await screen.getByRole('button', { name: 'Close nopr page', exact: true }).click();
+
+  await expect.element(screen.getByTestId('nopr-form-page')).not.toBeInTheDocument();
+});
+
+test('closes the NOPR form modal and reloads history when saved', async () => {
+  const { screen } = await renderInputForms();
+
+  await vi.waitFor(() => {
+    expect(inputFormService.getHistory).toHaveBeenCalledTimes(1);
+  });
+
+  await screen.getByRole('button', { name: 'NOPR Entry', exact: true }).click();
+  await screen.getByRole('button', { name: 'Save nopr page', exact: true }).click();
+
+  await expect.element(screen.getByTestId('nopr-form-page')).not.toBeInTheDocument();
 
   await vi.waitFor(() => {
     expect(inputFormService.getHistory).toHaveBeenCalledTimes(2);

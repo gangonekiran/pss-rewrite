@@ -445,3 +445,72 @@ test('text fields allow at most 255 characters', async () => {
     await expect.element(screen.getByLabelText(field(label))).toHaveAttribute('maxlength', '255');
   }
 });
+
+test('without a date of birth the date pickers have no lower limit', async () => {
+  vi.mocked(insuranceFormService.get).mockResolvedValue({
+    client: { ...client, DOB: null },
+    forms: [existing],
+  });
+  const { screen } = await renderPage(7);
+
+  await expect.element(screen.getByLabelText(field('Date Completed'))).not.toHaveAttribute('min');
+  await expect.element(screen.getByLabelText(field(signatureDate))).not.toHaveAttribute('min');
+});
+
+test('shows Saving... and disables the buttons while saving', async () => {
+  let finish: (value: InsuranceFormRecord) => void = () => {};
+  vi.mocked(insuranceFormService.update).mockReturnValue(
+    new Promise((resolve) => {
+      finish = resolve;
+    }),
+  );
+  const { screen, onSaved } = await renderPage(7);
+
+  await expect.element(screen.getByLabelText(field('Date Completed'))).toHaveValue('2026-01-15');
+  await clickButton(screen, 'Save');
+
+  await expect.element(screen.getByRole('button', { name: 'Saving...' })).toBeDisabled();
+  await expect.element(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
+
+  finish({});
+  await vi.waitFor(() => expect(onSaved).toHaveBeenCalled());
+});
+
+test('ignores a load that finishes after the form was closed', async () => {
+  let finish: (value: Awaited<ReturnType<typeof insuranceFormService.get>>) => void = () => {};
+  vi.mocked(insuranceFormService.get).mockReturnValue(
+    new Promise((resolve) => {
+      finish = resolve;
+    }),
+  );
+  const { screen, onClose } = await renderPage(99);
+
+  await screen.unmount();
+  finish({ client, forms: [] });
+  await new Promise((resolve) => setTimeout(resolve, 50));
+
+  // A record that is not found would close the form and show an error, but only while it is open.
+  expect(onClose).not.toHaveBeenCalled();
+  expect(toast.error).not.toHaveBeenCalled();
+});
+
+test('ignores a load error that arrives after the form was closed', async () => {
+  let fail: (reason: Error) => void = () => {};
+  vi.mocked(insuranceFormService.get).mockReturnValue(
+    new Promise((_, reject) => {
+      fail = reject;
+    }),
+  );
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+  const { screen } = await renderPage();
+
+  await screen.unmount();
+  fail(new Error('Network Error'));
+  await new Promise((resolve) => setTimeout(resolve, 50));
+
+  expect(toast.error).not.toHaveBeenCalled();
+  expect(consoleError).not.toHaveBeenCalledWith(
+    'Failed to load Insurance Form:',
+    expect.anything(),
+  );
+});

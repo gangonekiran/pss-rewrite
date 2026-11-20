@@ -30,7 +30,7 @@ export default function Notes({
         placeholder="Enter notes here..."
         className={`min-h-[260px] flex-1 w-full resize-none rounded-md border p-2 text-sm outline-none transition-colors ${
           readOnly
-            ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-500"
+            ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-600"
             : "border-gray-300 bg-white text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
         }`}
       />
