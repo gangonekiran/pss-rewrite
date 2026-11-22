@@ -29,7 +29,9 @@ Frontend client: [nopr-form.service.ts](../../frontend/src/services/nopr-form.se
 | `Client not found` | 404 | No `stblPeople` row |
 | `NOPR Form not found` | 404 | No row for that `ChildID` + `ID` |
 | `{Field} must use YYYY-MM-DD format` / `{Field} must be a valid date` | 400 | Bad date |
-| `{Field} must be a whole number` | 400 | Bad `Region` / `RefStatus` |
+| `{Field} must be a whole number` | 400 | `Region` / `RefStatus` isn't a whole number or digits (`true`, `[4]`, `"0x4"` are rejected) |
+| `{Field} is out of range` | 400 | Outside the SQL `int` range |
+| `Region must be one of the reporting regions` | 400 | `Region` set or changed to a value not in `stblReportingRegion` (an unchanged saved region isn't checked) |
 | `RefStatus has an unknown value: {x}` | 400 | Not 1–8 |
 | `"Turned 3 during evaluation process" is no longer used; choose another reason` | 400 | `RefStatus = 7` on a new form, or changing a form to 7 |
 | `Region must be selected` | 400 | No `Region` (on create, or cleared on update) |

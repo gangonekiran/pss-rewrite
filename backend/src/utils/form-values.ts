@@ -32,10 +32,23 @@ export function parseDate(value: unknown, field: string): string | null {
   return s;
 }
 
+const INT32_MIN = -2147483648;
+const INT32_MAX = 2147483647;
+
+/**
+ * A whole number, given as a number or as digits in a string (e.g. 3, "3", " -1 ").
+ * Booleans, arrays, hex/exponent strings and values outside the SQL int range are rejected,
+ * so they can't be coerced into a code or reach the database.
+ */
 export function parseInt32(value: unknown, field: string): number | null {
   if (isBlank(value)) return null;
-  const n = Number(value);
+  const isNumber = typeof value === "number";
+  if (!isNumber && !(typeof value === "string" && /^[+-]?\d+$/.test(value.trim()))) {
+    error(`${field} must be a whole number`);
+  }
+  const n = Number(isNumber ? value : (value as string).trim());
   if (!Number.isInteger(n)) error(`${field} must be a whole number`);
+  if (n < INT32_MIN || n > INT32_MAX) error(`${field} is out of range`);
   return n;
 }
 

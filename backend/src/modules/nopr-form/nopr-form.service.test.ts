@@ -13,6 +13,7 @@ vi.mock('./nopr-form.repository.js', () => ({
   remove: vi.fn(),
   findMostRecentReferralDate: vi.fn(),
   findLatestRegion: vi.fn(),
+  regionExists: vi.fn(),
 }));
 
 const client: NoprFormClient = {
@@ -43,6 +44,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(repository.getClient).mockResolvedValue(client);
   vi.mocked(repository.findMostRecentReferralDate).mockResolvedValue('2026-01-05 00:00:00');
+  vi.mocked(repository.regionExists).mockResolvedValue(true);
 });
 
 describe('NOPR Form Service - get', () => {
@@ -234,5 +236,52 @@ describe('NOPR Form Service - lookups', () => {
 
     expect(options.refStatus.map((o) => o.code)).toEqual([8, 1, 2, 3, 4, 5, 6]);
     expect(options.retiredRefStatus.map((o) => o.code)).toEqual([7]);
+  });
+});
+
+describe('NOPR Form Service - region check', () => {
+  it('rejects a new form whose region does not exist', async () => {
+    vi.mocked(repository.regionExists).mockResolvedValue(false);
+
+    await expect(create('123', { ...validCreate, Region: 99999 })).rejects.toMatchObject({
+      message: 'Region must be one of the reporting regions',
+      status: 400,
+    });
+    expect(repository.regionExists).toHaveBeenCalledWith(99999);
+    expect(repository.insert).not.toHaveBeenCalled();
+  });
+
+  it.each([0, -5])('rejects region %j on a new form', async (region) => {
+    vi.mocked(repository.regionExists).mockResolvedValue(false);
+
+    await expect(create('123', { ...validCreate, Region: region })).rejects.toThrow(
+      'Region must be one of the reporting regions',
+    );
+  });
+
+  it('rejects changing a form to a region that does not exist', async () => {
+    vi.mocked(repository.findOne).mockResolvedValue(existingForm);
+    vi.mocked(repository.regionExists).mockResolvedValue(false);
+
+    await expect(update('123', '10', { Region: 99999 })).rejects.toThrow(
+      'Region must be one of the reporting regions',
+    );
+    expect(repository.update).not.toHaveBeenCalled();
+  });
+
+  it('does not check a region that is not changed, so older forms can still be saved', async () => {
+    vi.mocked(repository.findOne).mockResolvedValue(existingForm);
+    vi.mocked(repository.update).mockResolvedValue(existingForm);
+    vi.mocked(repository.regionExists).mockResolvedValue(false);
+
+    await expect(update('123', '10', { Region: 3, RefStatus: 1 })).resolves.toEqual(existingForm);
+    expect(repository.regionExists).not.toHaveBeenCalled();
+  });
+
+  it('leaves a missing region to the required-field rule', async () => {
+    await expect(create('123', { RefStatus: 8, StatusDate: '2026-02-02' })).rejects.toThrow(
+      'Region must be selected',
+    );
+    expect(repository.regionExists).not.toHaveBeenCalled();
   });
 });

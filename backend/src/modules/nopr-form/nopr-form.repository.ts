@@ -5,6 +5,7 @@ import {
   NOPR_FORM_TABLE,
   NOPR_FORM_TYPE,
   REFERRAL_FORM_TABLE,
+  REGION_TABLE,
   SAVED_COLUMNS,
 } from "./nopr-form.config.js";
 import type { NoprFormClient, NoprFormRecord } from "./nopr-form.types.js";
@@ -173,4 +174,18 @@ export async function findLatestRegion(childId: number): Promise<number | null> 
     `);
   const region = r.recordset[0]?.Region;
   return region === null || region === undefined ? null : Number(region);
+}
+
+/** True when the region exists in stblReportingRegion (active or not, so older forms keep theirs). */
+export async function regionExists(regionId: number): Promise<boolean> {
+  const pool = await getPool();
+  const r = await pool
+    .request()
+    .input("ID", sql.Int, regionId)
+    .query(`
+      SELECT COUNT(*) AS Found
+      FROM ${REGION_TABLE}
+      WHERE ID = @ID;
+    `);
+  return Number(r.recordset[0]?.Found ?? 0) > 0;
 }

@@ -3,6 +3,7 @@ import type { ColumnSpec } from "../../utils/sql-columns.js";
 export const NOPR_FORM_TABLE = "dbo.stblNoOnePlanForm";
 export const REFERRAL_FORM_TABLE = "dbo.stblReferralForm";
 export const ACTIVE_FORM_TABLE = "dbo.stblActiveForm";
+export const REGION_TABLE = "dbo.stblReportingRegion";
 
 /**
  * Legacy value stored in FormType (the column default). The FITP extract

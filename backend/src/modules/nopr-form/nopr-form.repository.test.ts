@@ -8,6 +8,7 @@ import {
   findOne,
   getClient,
   insert,
+  regionExists,
   remove,
   update,
 } from './nopr-form.repository.js';
@@ -194,5 +195,27 @@ describe('NOPR Form Repository - findLatestRegion', () => {
     mockQuery.mockResolvedValue({ recordset: row ? [row] : [] });
 
     expect(await findLatestRegion(123)).toBeNull();
+  });
+});
+
+describe('NOPR Form Repository - regionExists', () => {
+  it('returns true when the region is in stblReportingRegion', async () => {
+    mockQuery.mockResolvedValue({ recordset: [{ Found: 1 }] });
+
+    expect(await regionExists(3)).toBe(true);
+    expect(mockInput).toHaveBeenCalledWith('ID', 'Int', 3);
+    expect(sqlText()).toContain('FROM dbo.stblReportingRegion');
+  });
+
+  it('returns false when the region is not found', async () => {
+    mockQuery.mockResolvedValue({ recordset: [{ Found: 0 }] });
+
+    expect(await regionExists(99999)).toBe(false);
+  });
+
+  it('returns false when nothing comes back', async () => {
+    mockQuery.mockResolvedValue({ recordset: [] });
+
+    expect(await regionExists(1)).toBe(false);
   });
 });

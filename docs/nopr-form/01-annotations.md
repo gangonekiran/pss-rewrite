@@ -44,7 +44,7 @@ Request flow for a save: the page checks the form with the zod schema → `value
 
 | Location | What it does |
 | -------- | ------------ |
-| L3–5 | `stblNoOnePlanForm`, plus `stblReferralForm` and `stblActiveForm` for the defaults and the referral date |
+| L3–6 | `stblNoOnePlanForm`, plus `stblReferralForm` and `stblActiveForm` for the defaults and the referral date, and `stblReportingRegion` for the region check |
 | L11 `NOPR_FORM_TYPE` | `'No One Plan'`, the literal the legacy views match (BR-NOPR-10) |
 | L25 `COLUMNS` | The 4 columns the request may write: `Region`, `RefStatus` (int), `InitialEvalDate`, `StatusDate` (date). Leaving out `MonthReporting`, `Screening`, `ReferredBack` is what keeps their values (BR-NOPR-23, 38) |
 | L35 `SAVED_COLUMNS` | `COLUMNS` + `FormDate`, the columns the repository writes |
@@ -65,13 +65,14 @@ Request flow for a save: the page checks the form with the zod schema → `value
 | Function | What it does |
 | -------- | ------------ |
 | L13 `int` | `ChildID` / `ID` must be positive integers (BR-NOPR-03) |
-| L19 `child` | Loads the client or fails with *"Client not found"* (404) |
-| L25 `get` | Client + all their forms |
-| L41 `create` | normalize → retired check (no saved reason) → `FormDate` → validate against DOB and the most recent referral → insert → read back |
-| L56 `update` | Loads the saved row (404 if missing) → normalize → retired check against the saved reason → `FormDate` → validate the **merged** row → update |
-| L79 `remove` | Deletes; 404 when nothing was deleted |
-| L92 `defaults` | `{ Region, MostRecentReferralDate }` for a new form (BR-NOPR-21, 35) |
-| L107 `lookups.options` | `{ refStatus, retiredRefStatus }` |
+| L23 `checkRegion` | A Region that is set or changed must exist (`regionExists`); an unchanged saved region isn't checked |
+| L30 `child` | Loads the client or fails with *"Client not found"* (404) |
+| L36 `get` | Client + all their forms |
+| L52 `create` | normalize → retired check (no saved reason) → region check → `FormDate` → validate against DOB and the most recent referral → insert → read back |
+| L68 `update` | Loads the saved row (404 if missing) → normalize → retired check against the saved reason → region check (only if changed) → `FormDate` → validate the **merged** row → update |
+| L92 `remove` | Deletes; 404 when nothing was deleted |
+| L105 `defaults` | `{ Region, MostRecentReferralDate }` for a new form (BR-NOPR-21, 35) |
+| L120 `lookups.options` | `{ refStatus, retiredRefStatus }` |
 
 ### 2.4 [nopr-form.repository.ts](../../backend/src/modules/nopr-form/nopr-form.repository.ts)
 
@@ -85,6 +86,7 @@ Request flow for a save: the page checks the form with the zod schema → `value
 | L122 `remove` | `DELETE` and `@@ROWCOUNT` |
 | L142 `findMostRecentReferralDate` | `MAX` over `ReferralDate` and `ReReferralDate` of all the child's Referral forms (`CROSS APPLY (VALUES …)`) |
 | L157 `findLatestRegion` | Region of the latest Active form, else the latest Referral form |
+| L180 `regionExists` | Whether a region ID is in `stblReportingRegion` (active or not) |
 
 Dates are bound as `nvarchar(10)` `YYYY-MM-DD`: the legacy "SQL Server" ODBC driver rejects date parameters (HY004).
 
@@ -142,9 +144,11 @@ Shared pieces from `common-info`: `Field`, `FieldGroup`, `Section`, `RegionSelec
 | Backend service | `nopr-form.service.test.ts` | Create / update / get / remove / defaults, partial updates, 404s |
 | Backend repository | `nopr-form.repository.test.ts` | SQL text, parameter types, read-back, referral date, latest region |
 | Backend controller, routes | `nopr-form.controller.test.ts`, `nopr-form.routes.test.ts` | Status codes, route table |
+| Backend config | `nopr-form.config.test.ts` | Tables, `FormType` literal, writable columns, reason codes and order, retired reason |
+| Frontend components | `components/GeneralInformation.test.tsx`, `components/NoprStatus.test.tsx` | Region list and value; reasons and retired reason, required marks, date limits, hints, stored values, errors |
 | Frontend page | `NoprFormPage.test.tsx` | New / edit, defaults, reasons, retired reason, date limits, validation, saving state, API errors, closing during load |
 | Frontend schema, mappers, service | `nopr-form.schema.test.ts`, `nopr-form.mappers.test.ts`, `services/nopr-form.service.test.ts` | Rules, mapping both ways, URLs |
 | Input Forms tab | `InputForms.test.tsx` | Opens, edits, closes and saves the NOPR modal |
 | Date helper | `utils/date.test.ts` | `isCalendarDate` |
 
-Backend: 97 NOPR tests, 100% of statements, branches and lines. Frontend: 50 NOPR tests (100% of statements, branches and lines) plus the Input Forms tab and date-helper tests. The whole flow was also run end to end in Chrome against the local database: create, edit, validation messages and delete.
+Backend: 115 NOPR tests, 100% of statements, branches and lines. Frontend: 73 NOPR tests (100% of statements, branches and lines) plus the Input Forms tab and date-helper tests. The whole flow was also run end to end in Chrome against the local database: create, edit, validation messages and delete.

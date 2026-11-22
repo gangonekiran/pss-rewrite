@@ -16,6 +16,17 @@ function int(value: unknown, name: string) {
   return n;
 }
 
+/**
+ * A Region that is set must be a reporting region. Only checked when the value is new or
+ * changed, so an older form whose saved region no longer exists can still be saved.
+ */
+async function checkRegion(region: unknown, savedRegion?: unknown) {
+  if (region === undefined || region === null || region === savedRegion) return;
+  if (!(await repository.regionExists(region as number))) {
+    error("Region must be one of the reporting regions");
+  }
+}
+
 async function child(childId: number): Promise<NoprFormClient> {
   const c = await repository.getClient(childId);
   if (!c) error("Client not found", 404);
@@ -44,6 +55,7 @@ export async function create(childIdRaw: unknown, raw: NoprFormRecord) {
 
   const p = normalizePayload(raw);
   checkRetiredReason(p, undefined);
+  await checkRegion(p.Region);
   applyFormDate(p);
 
   validateRecord(p, client.DOB, await repository.findMostRecentReferralDate(childId));
@@ -63,6 +75,7 @@ export async function update(childIdRaw: unknown, idRaw: unknown, raw: NoprFormR
 
   const p = normalizePayload(raw);
   checkRetiredReason(p, existing.RefStatus);
+  await checkRegion(p.Region, existing.Region);
   applyFormDate(p);
 
   validateRecord(

@@ -30,7 +30,7 @@ Change requests are marked **[Request]**, team-lead decisions **[Decision]**, an
 
 | ID | Rule | Enforced | Source |
 | -- | ---- | -------- | ------ |
-| BR-NOPR-20 | **Region** is required: *"Region is required."* (screen) / *"Region must be selected"* (API). **[Default]** | FE, BE | schema; `validateRecord` |
+| BR-NOPR-20 | **Region** is required: *"Region is required."* (screen) / *"Region must be selected"* (API). **[Default]** A region that is set or changed must exist in `stblReportingRegion`: *"Region must be one of the reporting regions"* (API). An unchanged saved region isn't checked, so older forms can still be saved. | FE, BE | schema; `validateRecord`; service `checkRegion`, `regionExists` |
 | BR-NOPR-21 | A new form starts with the Region of the child's **latest Active form**, else the **latest Referral form**, else the client's region (`stblPeople.Region`). **[Default]** | BE, FE | `defaults`, `findLatestRegion`; `defaultsToValues` |
 | BR-NOPR-22 | The Client Information header shows the name of the region chosen in the dropdown, and the **most recent referral date** as "Referral Date (From Referral Form)". | FE | `NoprFormPage` → `ClientInformation` |
 | BR-NOPR-23 | **Month Reporting** (`MonthReporting`) is not on the screen and is **never written**, so values on older forms are kept. **[Request]** | BE | `COLUMNS` whitelist |

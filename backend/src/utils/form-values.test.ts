@@ -96,6 +96,24 @@ describe('parseInt32', () => {
   it.each(['1.5', 'abc', 2.5])('rejects %j', (value) => {
     expect(() => parseInt32(value, 'Region')).toThrow('Region must be a whole number');
   });
+
+  it.each([['+5', 5], [2147483647, 2147483647], [-2147483648, -2147483648]])(
+    'reads %j as %j',
+    (value, expected) => {
+      expect(parseInt32(value, 'Region')).toBe(expected);
+    },
+  );
+
+  it.each([true, false, [4], { a: 1 }, '0x4', '4e0', '1_000', 'Infinity', Number.NaN, Infinity])(
+    'rejects %j instead of coercing it',
+    (value) => {
+      expect(() => parseInt32(value, 'RefStatus')).toThrow('RefStatus must be a whole number');
+    },
+  );
+
+  it.each([2147483648, -2147483649, '9999999999'])('rejects %j as out of the SQL int range', (value) => {
+    expect(() => parseInt32(value, 'Region')).toThrow('Region is out of range');
+  });
 });
 
 describe('parseBit', () => {
